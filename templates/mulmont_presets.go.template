@@ -1,0 +1,15 @@
+package mont_arith
+
+{{ $limbCount := .LimbCount}}
+{{ $limbBits := .LimbBits}}
+{{ $unrolledCutoff := 11}}
+{{ $limbCountPlusOne := add .LimbCount 1}}
+
+func NewMulMontImpls() []mulMontFunc {
+    return []mulMontFunc {
+		MulMont64,
+        {{- range $i := intRange 1 $limbCountPlusOne}}
+        	MulModMont{{mul $i $limbBits}},
+        {{- end}}
+    }
+}

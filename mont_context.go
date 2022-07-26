@@ -6,7 +6,8 @@ import (
 	"math/big"
 )
 
-type MontArithContext struct {
+// TODO rename to FieldPreset?
+type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
 	Modulus               nat
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
@@ -21,6 +22,7 @@ type MontArithContext struct {
 
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
+
     montMul mulMontFunc
 }
 
@@ -70,7 +72,15 @@ func NewMontArithContext() *MontArithContext {
 }
 
 func (m *MontArithContext) MulModMont(out, x, y nat) {
-	m.montMul(out, x, y, m.Modulus, m.MontParamInterleaved)
+	m.montMul(m, out, x, y)
+}
+
+func (m *MontArithContext) AddMod(out, x, y nat) {
+	AddMod(m, out, x, y)
+}
+
+func (m *MontArithContext) SubMod(out, x, y nat) {
+	SubMod(m, out, x, y)
 }
 
 func (m *MontArithContext) ModIsSet() bool {

@@ -121,7 +121,13 @@ func genMulMont(maxLimbs int) {
 	}
 }
 
+func genPresets(maxLimbs int) {
+    params := TemplateParams{maxLimbs, 64}
+    buildTemplate("generated_mulmont_presets.go", "templates/mulmont_presets.go.template", &params)
+}
+
 func main() {
 	maxLimbs := 12
 	genMulMont(maxLimbs)
+    genPresets(maxLimbs)
 }

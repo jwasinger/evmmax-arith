@@ -121,13 +121,12 @@ func TestMulModMont(t *testing.T) {
 		}
 	}
 
-	test(t, "non-unrolled", 1, 12)
+	test(t, "gnark-mulnocarry-unrolled", 1, 12)
 }
 
 func BenchmarkMulModMont(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
-			// test x/y >= modulus
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
 				benchmarkMulModMont(b, uint(i))
 			})
@@ -135,4 +134,26 @@ func BenchmarkMulModMont(b *testing.B) {
 	}
 
 	bench(b, 1, 12)
+}
+
+func TestAddMod(t *testing.T) {
+    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
+                testAddMod(t, uint(i))
+            })
+        }
+    }
+}
+
+func TestSubMod(t *testing.T) {
+
+}
+
+func BenchmarkAddMod(t *testing.T) {
+
+}
+
+func BenchmarkSubMod(t *testing.T) {
+
 }
