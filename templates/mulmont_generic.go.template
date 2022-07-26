@@ -1,5 +1,3 @@
-/*
-
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
 func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Word) error {
 	// length x == y assumed
@@ -31,4 +29,3 @@ func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Wor
 
 	return nil
 }
-*/

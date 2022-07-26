@@ -77,6 +77,10 @@ func TestMulModMontBLS12831(t *testing.T) {
     if !Eq(montCtx.ToNorm(montY), y) {
         panic("mont form should have correct normal form")
     }
+
+    out := make(nat, limbCount)
+    montCtx.MulModMont(out, x, y)
+    // TODO assert that the result is correct
 }
 
 func benchmarkMulModMont(b *testing.B, limbCount uint) {
