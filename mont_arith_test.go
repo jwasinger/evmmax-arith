@@ -37,7 +37,9 @@ func testMulModMont(t *testing.T, limbCount uint) {
 	xLimbs := IntToLimbs(x, montCtx.NumLimbs)
 	yLimbs := IntToLimbs(y, montCtx.NumLimbs)
 
-	montCtx.MulModMont(outLimbs, xLimbs, yLimbs)
+	if err := montCtx.MulModMont(outLimbs, xLimbs, yLimbs); err != nil {
+        t.Fatal(err)
+    }
 
 	result := LimbsToInt(outLimbs)
 	if result.Cmp(expected) != 0 {
@@ -171,7 +173,13 @@ func testSubMod(t *testing.T, limbCount uint) {
     expected.Sub(one, x).Mod(expected, montCtx.ModulusNonInterleaved)
 
     // test where final addition happens
-    montCtx.SubMod(resultLimbs, oneLimbs, xLimbs)
+    if err := montCtx.SubMod(resultLimbs, oneLimbs, xLimbs); err != nil {
+        fmt.Println(xLimbs)
+        fmt.Println(oneLimbs)
+        fmt.Println(montCtx.Modulus)
+        t.Fatal(err)
+    }
+
     result := LimbsToInt(resultLimbs)
 
     if result.Cmp(expected) != 0 {
@@ -180,7 +188,12 @@ func testSubMod(t *testing.T, limbCount uint) {
     // test where final addition doesn't happen
     expected = new(big.Int)
     expected.Sub(x, one).Mod(expected, montCtx.ModulusNonInterleaved)
-    montCtx.SubMod(resultLimbs, xLimbs, oneLimbs)
+    if err = montCtx.SubMod(resultLimbs, xLimbs, oneLimbs); err != nil {
+        fmt.Println(xLimbs)
+        fmt.Println(oneLimbs)
+        fmt.Println(montCtx.Modulus)
+        t.Fatal(err)
+    }
     result = LimbsToInt(resultLimbs)
     if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)

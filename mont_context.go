@@ -71,16 +71,37 @@ func NewField() *Field {
 	return &result
 }
 
-func (m *Field) MulModMont(out, x, y nat) {
+func (m *Field) GTEMod(x, y nat) bool {
+    for i := 0; i < int(m.NumLimbs); i++ {
+        if x[i] > m.Modulus[i] || y[i] > m.Modulus[i]  {
+            return true
+        }
+    }
+    return false
+}
+
+func (m *Field) MulModMont(out, x, y nat) error {
+    if m.GTEMod(x, y) {
+        return errors.New("input value greater than or equal to modulus")
+    }
 	m.mulMont(m, out, x, y)
+    return nil
 }
 
-func (m *Field) AddMod(out, x, y nat) {
+func (m *Field) AddMod(out, x, y nat) error {
+    if m.GTEMod(x, y) {
+        return errors.New("input value greater than or equal to modulus")
+    }
 	AddMod(m, out, x, y)
+    return nil
 }
 
-func (m *Field) SubMod(out, x, y nat) {
+func (m *Field) SubMod(out, x, y nat) error {
+    if m.GTEMod(x, y) {
+        return errors.New("input value greater than or equal to modulus")
+    }
 	SubMod(m, out, x, y)
+    return nil
 }
 
 func (m *Field) ModIsSet() bool {
