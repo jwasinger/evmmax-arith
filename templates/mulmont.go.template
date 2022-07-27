@@ -11,9 +11,9 @@ var Zero{{$limbCount}}Limbs []uint = make([]uint, {{$limbCount}}, {{$limbCount}}
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [{{$limbCount}}]Word
-	var c [{{max $limbCount 3}}]Word
+func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y nat) {
+    var t [{{$limbCount}}]uint64
+	var c [{{max $limbCount 3}}]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
@@ -23,9 +23,7 @@ func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y, mod nat, modinv Word
 		// round {{$j}}
 		{{- if eq $j 0}}
 			v := x[{{$j}}]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 			{{- range $i := intRange 1 $limbCount }}
@@ -68,15 +66,11 @@ func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y, mod nat, modinv Word
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < {{$limbCount}}; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 

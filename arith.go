@@ -5,9 +5,8 @@ import (
 )
 
 // XXX implement the below methods using these types (conversions might make it awkward/slower)
-type Word uint
-type nat = []Word
-const WordSize = 8 // XXX word size in bytes, hardcoded to 64bit limbs
+
+type nat []uint64
 
 func Eq(n, other nat) bool {
     if len(n) != len(other) {
@@ -35,7 +34,7 @@ func AddMod(f *Field, z, x, y nat) {
     }
 
     for i := 0; i < limbCount; i++ {
-        z[i], c1 = bits.Sub64(tmp[i], Word(mod[i]), c1)
+        z[i], c1 = bits.Sub64(tmp[i], mod[i], c1)
     }
 
     // sub was unnecessary
@@ -46,16 +45,16 @@ func AddMod(f *Field, z, x, y nat) {
 
 func SubMod(f *Field, z, x, y nat) {
     var c, c1 uint64
+    mod := f.Modulus
     tmp := make(nat, len(mod))
-    mod = f.Modulus
     limbCount := len(mod)
 
-    for i := 0; i < limbcount; i++ {
+    for i := 0; i < limbCount; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
     for i := 0; i < limbCount; i++ {
-        z[i], c1 = bits.Add64(tmp[i], Word(mod[i]), c1)
+        z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
     if c == 0 {

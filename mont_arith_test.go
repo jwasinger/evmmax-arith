@@ -149,6 +149,8 @@ func TestAddMod(t *testing.T) {
             })
         }
     }
+
+    test(t, "addmod", 1, 12)
 }
 
 func testSubMod(t *testing.T, limbCount uint) {
@@ -161,21 +163,25 @@ func testSubMod(t *testing.T, limbCount uint) {
     one := big.NewInt(1)
     x := LimbsToInt(mod)
     x.Sub(x, one)
+    xLimbs := IntToLimbs(x, montCtx.NumLimbs)
+    oneLimbs := IntToLimbs(one, montCtx.NumLimbs)
 
-    result := make(nat, limbCount)
+    resultLimbs := make(nat, limbCount)
     expected := new(big.Int)
-    expected.Sub(one, x).Mod(expected, mod)
+    expected.Sub(one, x).Mod(expected, montCtx.ModulusNonInterleaved)
 
     // test where final addition happens
-    f.SubMod(result, one, x)
+    montCtx.SubMod(resultLimbs, oneLimbs, xLimbs)
+    result := LimbsToInt(resultLimbs)
 
     if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
     }
     // test where final addition doesn't happen
     expected = new(big.Int)
-    expected.Sub(x, one).Mod(expected, mod)
-    f.SubMod(result, x, one)
+    expected.Sub(x, one).Mod(expected, montCtx.ModulusNonInterleaved)
+    montCtx.SubMod(resultLimbs, xLimbs, oneLimbs)
+    result = LimbsToInt(resultLimbs)
     if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
     }
@@ -189,6 +195,7 @@ func TestSubMod(t *testing.T) {
             })
         }
     }
+    test(t, "submod", 1, 12)
 }
 
 func BenchmarkAddMod(b *testing.B) {

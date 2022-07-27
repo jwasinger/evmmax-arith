@@ -7,9 +7,9 @@ package mont_arith
 
 func NewMulMontImpls() []mulMontFunc {
     return []mulMontFunc {
-        MulMont64,
-        {{- range $i := intRange 1 $limbCountPlusOne}}
-            MulModMont{{mul $i $limbBits}},
+        mulMont64,
+        {{- range $i := intRange 2 $limbCountPlusOne}}
+            mulMont{{mul $i $limbBits}},
         {{- end}}
     }
 }

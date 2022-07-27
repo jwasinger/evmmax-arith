@@ -28,7 +28,7 @@ func LEBytesToInt(v []byte) *big.Int {
 	return result
 }
 
-func LimbsToLEBytes(val []uint) []byte {
+func LimbsToLEBytes(val []uint64) []byte {
 	result := make([]byte, len(val)*8)
 
 	for i := 0; i < len(val); i++ {
@@ -64,7 +64,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) nat {
 
 		// TODO: this assumes that the system is little-endian.  is that okay?
 		// on a LE system, this swaps big-endian to little-endian
-		result[i] = Word(binary.BigEndian.Uint64(val_bytes[startIdx:endIdx]))
+		result[i] = binary.BigEndian.Uint64(val_bytes[startIdx:endIdx])
 	}
 
 	return result
@@ -77,7 +77,7 @@ func LimbsToInt(limbs nat) *big.Int {
 		startIdx := (len(limbs) - (i + 1)) * 8
 		endIdx := (len(limbs) - i) * 8
 
-		binary.BigEndian.PutUint64(limbs_bytes[startIdx:endIdx], uint64(limbs[i]))
+		binary.BigEndian.PutUint64(limbs_bytes[startIdx:endIdx], limbs[i])
 	}
 
 	return new(big.Int).SetBytes(limbs_bytes)
@@ -104,7 +104,7 @@ func GenTestModulus(limbCount uint) nat {
 	return IntToLimbs(mod_int, limbCount)
 }
 
-func LimbsEq(x, y []uint) bool {
+func LimbsEq(x, y []uint64) bool {
 	if len(x) != len(y) {
 		panic("unequally-sized elements")
 	}
@@ -128,8 +128,8 @@ func LimbsToString(limbs []uint64) string {
 }
 */
 
-func One(limbCount uint) []uint {
-	one := make([]uint, limbCount, limbCount)
+func One(limbCount uint) []uint64 {
+	one := make([]uint64, limbCount, limbCount)
 	one[0] = 1
 	return one
 }
@@ -146,7 +146,7 @@ func RSquared(modulus nat) nat {
 }
 
 // does the Python equivalent of pow(-modulus, -1, 1<<64)
-func MontConstant_Interleaved(modulus nat) Word {
+func MontConstant_Interleaved(modulus nat) uint64 {
 	mod_int := LimbsToInt(modulus)
 
 	// 1<<64
@@ -154,5 +154,5 @@ func MontConstant_Interleaved(modulus nat) Word {
 	negative_one, _ := new(big.Int).SetString("-1", 10)
 
 	mod_int.Mul(mod_int, negative_one)
-	return Word(mod_int.ModInverse(mod_int, aux_mod).Uint64())
+	return mod_int.ModInverse(mod_int, aux_mod).Uint64()
 }

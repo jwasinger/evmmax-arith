@@ -6,70 +6,69 @@ package mont_arith
 
 import (
 	"math/bits"
+    "math/big"
 )
 
 type mulMontFunc func(f *Field, out, x, y nat)
 
 // madd0 hi = a*b + c (discards lo bits)
-func madd0(a, b, c Word) (Word) {
-	var carry, lo uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	_, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi)
+func madd0(a, b, c uint64) (uint64) {
+	var carry, lo uint64
+	hi, lo := bits.Mul64(a, b)
+	_, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi
 }
 
 // madd1 hi, lo = a*b + c
-func madd1(a, b, c Word) (Word, Word) {
-	var carry uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	lo, carry = bits.Add(uint(lo), uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd1(a, b, c uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
 // madd2 hi, lo = a*b + c + d
-func madd2(a, b, c, d Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-    c = Word(c_uint)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd2(a, b, c, d uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	c, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
-func madd3(a, b, c, d, e Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, c_uint, 0)
-	hi, _ = bits.Add(hi, uint(e), carry)
-	return Word(hi), Word(lo)
+func madd3(a, b, c, d, e uint64) (uint64, uint64) {
+	var carry uint64
+    var c_uint uint64
+	hi, lo := bits.Mul64(a, b)
+	c_uint, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c_uint, 0)
+	hi, _ = bits.Add64(hi, e, carry)
+	return hi, lo
 }
 
 /*
  * begin mulmont implementations
  */
 
-func mulMont64(out, x, y, mod nat, modinv Word) error {
-	var product [2]uint
-	var c Word
+func mulMont64(f *Field, out, x, y nat) {
+	var product [2]uint64
+	var c uint64
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
 
-	product[1], product[0] = bits.Mul(uint(x[0]), uint(y[0]))
-	m := Word(product[0]) * modinv
-	c, _ = madd1(m, mod[0], Word(product[0]))
-	out[0] = c + Word(product[1])
+	product[1], product[0] = bits.Mul64(x[0], y[0])
+	m := product[0] * modinv
+	c, _ = madd1(m, mod[0], product[0])
+	out[0] = c + product[1]
 
 	if out[0] > mod[0] {
 		out[0] = c - mod[0]
 	}
-
-	return nil
 }
 
 
@@ -84,18 +83,16 @@ var Zero2Limbs []uint = make([]uint, 2, 2)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont128(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [2]Word
-	var c [3]Word
+func mulMont128(f *Field, z, x, y nat) {
+    var t [2]uint64
+	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -111,16 +108,12 @@ func mulMont128(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 2; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -136,18 +129,16 @@ var Zero3Limbs []uint = make([]uint, 3, 3)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont192(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [3]Word
-	var c [3]Word
+func mulMont192(f *Field, z, x, y nat) {
+    var t [3]uint64
+	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -176,16 +167,12 @@ func mulMont192(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 3; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -201,18 +188,16 @@ var Zero4Limbs []uint = make([]uint, 4, 4)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont256(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [4]Word
-	var c [4]Word
+func mulMont256(f *Field, z, x, y nat) {
+    var t [4]uint64
+	var c [4]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -258,16 +243,12 @@ func mulMont256(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 4; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -283,18 +264,16 @@ var Zero5Limbs []uint = make([]uint, 5, 5)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont320(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [5]Word
-	var c [5]Word
+func mulMont320(f *Field, z, x, y nat) {
+    var t [5]uint64
+	var c [5]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -361,16 +340,12 @@ func mulMont320(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 5; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -386,18 +361,16 @@ var Zero6Limbs []uint = make([]uint, 6, 6)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont384(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [6]Word
-	var c [6]Word
+func mulMont384(f *Field, z, x, y nat) {
+    var t [6]uint64
+	var c [6]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -489,16 +462,12 @@ func mulMont384(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 6; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -514,18 +483,16 @@ var Zero7Limbs []uint = make([]uint, 7, 7)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont448(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [7]Word
-	var c [7]Word
+func mulMont448(f *Field, z, x, y nat) {
+    var t [7]uint64
+	var c [7]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -646,16 +613,12 @@ func mulMont448(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 7; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -671,18 +634,16 @@ var Zero8Limbs []uint = make([]uint, 8, 8)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont512(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [8]Word
-	var c [8]Word
+func mulMont512(f *Field, z, x, y nat) {
+    var t [8]uint64
+	var c [8]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -836,16 +797,12 @@ func mulMont512(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 8; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -861,18 +818,16 @@ var Zero9Limbs []uint = make([]uint, 9, 9)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont576(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [9]Word
-	var c [9]Word
+func mulMont576(f *Field, z, x, y nat) {
+    var t [9]uint64
+	var c [9]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1063,16 +1018,12 @@ func mulMont576(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 9; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -1088,18 +1039,16 @@ var Zero10Limbs []uint = make([]uint, 10, 10)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont640(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [10]Word
-	var c [10]Word
+func mulMont640(f *Field, z, x, y nat) {
+    var t [10]uint64
+	var c [10]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1331,16 +1280,12 @@ func mulMont640(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 10; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -1356,18 +1301,16 @@ var Zero11Limbs []uint = make([]uint, 11, 11)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont704(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [11]Word
-	var c [11]Word
+func mulMont704(f *Field, z, x, y nat) {
+    var t [11]uint64
+	var c [11]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1644,16 +1587,12 @@ func mulMont704(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 11; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 
@@ -1669,18 +1608,16 @@ var Zero12Limbs []uint = make([]uint, 12, 12)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulMont768(f *Field, z, x, y, mod nat, modinv Word) (error) {
-    var t [12]Word
-	var c [12]Word
+func mulMont768(f *Field, z, x, y nat) {
+    var t [12]uint64
+	var c [12]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
 
     // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
+			c[0], c[1] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -2006,46 +1943,47 @@ func mulMont768(f *Field, z, x, y, mod nat, modinv Word) (error) {
 	// final subtraction, overwriting z if z > mod
 	c[0] = 0
 	for i := 0; i < 12; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
 	}
 
 	if c[0] == 0 {
 		copy(z, t[:])
 	}
-
-	return nil
 }
 
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Word) error {
+func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
 	// length x == y assumed
 
 	product := new(big.Int)
 	x := LimbsToInt(xLimbs)
 	y := LimbsToInt(yLimbs)
 
-	if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
+    /*
+	if x.Cmp(f.ModulusNonInterleaved) > 0 || y.Cmp(f.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")
 	}
+    */
 
 	// m <- ((x*y mod R)N`) mod R
 	product.Mul(x, y)
-	x.And(product, m.mask)
-	x.Mul(x, m.MontParamNonInterleaved)
-	x.And(x, m.mask)
+	x.And(product, f.mask)
+	x.Mul(x, f.MontParamNonInterleaved)
+	x.And(x, f.mask)
 
 	// t <- (T + mN) / R
-	x.Mul(x, m.ModulusNonInterleaved)
+	x.Mul(x, f.ModulusNonInterleaved)
 	x.Add(x, product)
-	x.Rsh(x, m.NumLimbs*64)
+	x.Rsh(x, f.NumLimbs*64)
 
-	if x.Cmp(m.ModulusNonInterleaved) >= 0 {
-		x.Sub(x, m.ModulusNonInterleaved)
+	if x.Cmp(f.ModulusNonInterleaved) >= 0 {
+		x.Sub(x, f.ModulusNonInterleaved)
 	}
 
-	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, m.NumLimbs)))
+    result := IntToLimbs(x, f.NumLimbs)
+    for i := 0; i < int(f.NumLimbs); i++ {
+        outLimbs[i] = result[i]
+    }  
 
 	return nil
 }

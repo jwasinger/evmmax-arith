@@ -12,7 +12,7 @@ type Field struct {
 	Modulus               nat
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
 
-	MontParamInterleaved    Word
+	MontParamInterleaved    uint64
 	MontParamNonInterleaved *big.Int
 
 	NumLimbs uint
@@ -23,7 +23,7 @@ type Field struct {
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
 
-    montMul mulMontFunc
+    mulMont mulMontFunc
 }
 
 func (m *Field) RVal() *big.Int {
@@ -72,7 +72,7 @@ func NewField() *Field {
 }
 
 func (m *Field) MulModMont(out, x, y nat) {
-	m.montMul(m, out, x, y)
+	m.mulMont(m, out, x, y)
 }
 
 func (m *Field) AddMod(out, x, y nat) {
@@ -133,8 +133,9 @@ func (m *Field) SetMod(mod nat) error {
 	m.Modulus = IntToLimbs(modInt, m.NumLimbs)
 
 	m.MontParamNonInterleaved = montParamNonInterleaved
-	m.MontParamInterleaved = Word(montParamNonInterleaved.Uint64())
-    m.montMul = montgomeryFixedWidth[len(mod) - 1]
+	m.MontParamInterleaved = montParamNonInterleaved.Uint64()
+    mulMontImpls := NewMulMontImpls()
+    m.mulMont = mulMontImpls[len(mod) - 1]
 
 	return nil
 }
