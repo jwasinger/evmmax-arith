@@ -8,21 +8,7 @@ import (
 	"math/bits"
 )
 
-type mulMontFunc func(out, x, y, mod nat, modinv Word) error
-var montgomeryFixedWidth []mulMontFunc = []mulMontFunc {
-    mulModMont64,
-        mulModMont128,
-        mulModMont192,
-        mulModMont256,
-        mulModMont320,
-        mulModMont384,
-        mulModMont448,
-        mulModMont512,
-        mulModMont576,
-        mulModMont640,
-        mulModMont704,
-        mulModMont768,
-}
+type mulMontFunc func(f *Field, out, x, y nat)
 
 // madd0 hi = a*b + c (discards lo bits)
 func madd0(a, b, c Word) (Word) {
@@ -70,7 +56,7 @@ func madd3(a, b, c, d, e Word) (Word, Word) {
  * begin mulmont implementations
  */
 
-func mulModMont64(out, x, y, mod nat, modinv Word) error {
+func mulMont64(out, x, y, mod nat, modinv Word) error {
 	var product [2]uint
 	var c Word
 
@@ -98,9 +84,13 @@ var Zero2Limbs []uint = make([]uint, 2, 2)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont128(z, x, y, mod nat, modinv Word) (error) {
+func mulMont128(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [2]Word
 	var c [3]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -146,9 +136,13 @@ var Zero3Limbs []uint = make([]uint, 3, 3)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont192(z, x, y, mod nat, modinv Word) (error) {
+func mulMont192(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [3]Word
 	var c [3]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -207,9 +201,13 @@ var Zero4Limbs []uint = make([]uint, 4, 4)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont256(z, x, y, mod nat, modinv Word) (error) {
+func mulMont256(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [4]Word
 	var c [4]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -285,9 +283,13 @@ var Zero5Limbs []uint = make([]uint, 5, 5)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont320(z, x, y, mod nat, modinv Word) (error) {
+func mulMont320(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [5]Word
 	var c [5]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -384,9 +386,13 @@ var Zero6Limbs []uint = make([]uint, 6, 6)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont384(z, x, y, mod nat, modinv Word) (error) {
+func mulMont384(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [6]Word
 	var c [6]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -508,9 +514,13 @@ var Zero7Limbs []uint = make([]uint, 7, 7)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont448(z, x, y, mod nat, modinv Word) (error) {
+func mulMont448(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [7]Word
 	var c [7]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -661,9 +671,13 @@ var Zero8Limbs []uint = make([]uint, 8, 8)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont512(z, x, y, mod nat, modinv Word) (error) {
+func mulMont512(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [8]Word
 	var c [8]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -847,9 +861,13 @@ var Zero9Limbs []uint = make([]uint, 9, 9)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont576(z, x, y, mod nat, modinv Word) (error) {
+func mulMont576(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [9]Word
 	var c [9]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -1070,9 +1088,13 @@ var Zero10Limbs []uint = make([]uint, 10, 10)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont640(z, x, y, mod nat, modinv Word) (error) {
+func mulMont640(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [10]Word
 	var c [10]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -1334,9 +1356,13 @@ var Zero11Limbs []uint = make([]uint, 11, 11)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont704(z, x, y, mod nat, modinv Word) (error) {
+func mulMont704(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [11]Word
 	var c [11]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -1643,9 +1669,13 @@ var Zero12Limbs []uint = make([]uint, 12, 12)
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont768(z, x, y, mod nat, modinv Word) (error) {
+func mulMont768(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [12]Word
 	var c [12]Word
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
+
+    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
@@ -1988,8 +2018,6 @@ func mulModMont768(z, x, y, mod nat, modinv Word) (error) {
 	return nil
 }
 
-/*
-
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
 func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Word) error {
 	// length x == y assumed
@@ -2021,4 +2049,3 @@ func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Wor
 
 	return nil
 }
-*/

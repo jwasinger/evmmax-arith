@@ -1,5 +1,9 @@
 package mont_arith
 
+import (
+    "math/bits"
+)
+
 // XXX implement the below methods using these types (conversions might make it awkward/slower)
 type Word uint
 type nat = []Word
@@ -18,15 +22,15 @@ func Eq(n, other nat) bool {
     return true
 }
 
-func AddMod(f *Field, z, x, y, mod nat, modinv Word) {
+func AddMod(f *Field, z, x, y nat) {
     var c uint64 = 0
     var c1 uint64 = 0
 
-    mod:= f.Modulus
-    limbCount := len(m)
+    mod := f.Modulus
+    limbCount := len(mod)
     tmp := make(nat, len(mod))
 
-    for i := 0; i < limbcount; i++ {
+    for i := 0; i < limbCount; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
     }
 
@@ -40,7 +44,7 @@ func AddMod(f *Field, z, x, y, mod nat, modinv Word) {
     }
 }
 
-func SubMod(f *Field, z, x, y, mod nat, modinv Word) {
+func SubMod(f *Field, z, x, y nat) {
     var c, c1 uint64
     tmp := make(nat, len(mod))
     mod = f.Modulus

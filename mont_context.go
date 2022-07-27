@@ -26,15 +26,15 @@ type Field struct {
     montMul mulMontFunc
 }
 
-func (m *MontArithContext) RVal() *big.Int {
+func (m *Field) RVal() *big.Int {
 	return m.r
 }
 
-func (m *MontArithContext) RInv() *big.Int {
+func (m *Field) RInv() *big.Int {
 	return m.rInv
 }
 
-func (m *MontArithContext) ToMont(val nat) nat {
+func (m *Field) ToMont(val nat) nat {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.r)
@@ -44,7 +44,7 @@ func (m *MontArithContext) ToMont(val nat) nat {
     return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func (m *MontArithContext) ToNorm(val nat) nat {
+func (m *Field) ToNorm(val nat) nat {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.rInv)
@@ -53,8 +53,8 @@ func (m *MontArithContext) ToNorm(val nat) nat {
 	return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func NewMontArithContext() *MontArithContext {
-	result := MontArithContext{
+func NewField() *Field {
+	result := Field{
 		nil,
 		nil,
 		0,
@@ -71,27 +71,27 @@ func NewMontArithContext() *MontArithContext {
 	return &result
 }
 
-func (m *MontArithContext) MulModMont(out, x, y nat) {
+func (m *Field) MulModMont(out, x, y nat) {
 	m.montMul(m, out, x, y)
 }
 
-func (m *MontArithContext) AddMod(out, x, y nat) {
+func (m *Field) AddMod(out, x, y nat) {
 	AddMod(m, out, x, y)
 }
 
-func (m *MontArithContext) SubMod(out, x, y nat) {
+func (m *Field) SubMod(out, x, y nat) {
 	SubMod(m, out, x, y)
 }
 
-func (m *MontArithContext) ModIsSet() bool {
+func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-func (m *MontArithContext) ValueSize() uint {
+func (m *Field) ValueSize() uint {
 	return uint(len(m.Modulus))
 }
 
-func (m *MontArithContext) SetMod(mod nat) error {
+func (m *Field) SetMod(mod nat) error {
 	// XXX proper handling without hardcoding
 	if len(mod) == 0 || len(mod) > 12 {
 		fmt.Println(len(mod))

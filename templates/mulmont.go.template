@@ -11,7 +11,7 @@ var Zero{{$limbCount}}Limbs []uint = make([]uint, {{$limbCount}}, {{$limbCount}}
 */
 
 // NOTE: assumes x < mod and y < mod
-func mulModMont{{mul $limbCount $limbBits}}(f *Field, z, x, y, mod nat, modinv Word) (error) {
+func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y, mod nat, modinv Word) (error) {
     var t [{{$limbCount}}]Word
 	var c [{{max $limbCount 3}}]Word
     mod := f.Modulus

@@ -10,7 +10,7 @@ import (
 func testMulModMont(t *testing.T, limbCount uint) {
 	mod := GenTestModulus(limbCount)
 
-	montCtx := NewMontArithContext()
+	montCtx := NewField()
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
@@ -56,7 +56,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 }
 
 func TestMulModMontBLS12831(t *testing.T) {
-	montCtx := NewMontArithContext()
+	montCtx := NewField()
     modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
 
     var limbCount uint = 6
@@ -85,7 +85,7 @@ func TestMulModMontBLS12831(t *testing.T) {
 
 func benchmarkMulModMont(b *testing.B, limbCount uint) {
 	mod := MaxModulus(limbCount)
-	montCtx := NewMontArithContext()
+	montCtx := NewField()
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
@@ -136,6 +136,11 @@ func BenchmarkMulModMont(b *testing.B) {
 	bench(b, 1, 12)
 }
 
+func testAddMod(t *testing.T, limbCount uint) {
+    // TODO test where final addition is too much
+    // TODO test where final addition is correct
+}
+
 func TestAddMod(t *testing.T) {
     test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -146,14 +151,50 @@ func TestAddMod(t *testing.T) {
     }
 }
 
+func testSubMod(t *testing.T, limbCount uint) {
+	mod := GenTestModulus(limbCount)
+	montCtx := NewField()
+	err := montCtx.SetMod(mod)
+	if err != nil {
+		panic("error")
+	}
+    one := big.NewInt(1)
+    x := LimbsToInt(mod)
+    x.Sub(x, one)
+
+    result := make(nat, limbCount)
+    expected := new(big.Int)
+    expected.Sub(one, x).Mod(expected, mod)
+
+    // test where final addition happens
+    f.SubMod(result, one, x)
+
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+    // test where final addition doesn't happen
+    expected = new(big.Int)
+    expected.Sub(x, one).Mod(expected, mod)
+    f.SubMod(result, x, one)
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+}
+
 func TestSubMod(t *testing.T) {
+    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
+                testSubMod(t, uint(i))
+            })
+        }
+    }
+}
+
+func BenchmarkAddMod(b *testing.B) {
 
 }
 
-func BenchmarkAddMod(t *testing.T) {
-
-}
-
-func BenchmarkSubMod(t *testing.T) {
+func BenchmarkSubMod(b *testing.B) {
 
 }

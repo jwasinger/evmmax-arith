@@ -8,13 +8,7 @@ import (
 	"math/bits"
 )
 
-type mulMontFunc func(out, x, y, mod nat, modinv Word) error
-var montgomeryFixedWidth []mulMontFunc = []mulMontFunc {
-    mulModMont64,
-    {{- range $i := intRange 2 $limbCountPlusOne}}
-        mulModMont{{mul $i $limbBits}},
-    {{- end}}
-}
+type mulMontFunc func(f *Field, out, x, y nat)
 
 // madd0 hi = a*b + c (discards lo bits)
 func madd0(a, b, c Word) (Word) {
@@ -62,7 +56,7 @@ func madd3(a, b, c, d, e Word) (Word, Word) {
  * begin mulmont implementations
  */
 
-func mulModMont64(out, x, y, mod nat, modinv Word) error {
+func mulMont64(out, x, y, mod nat, modinv Word) error {
 	var product [2]uint
 	var c Word
 
