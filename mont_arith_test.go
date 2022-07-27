@@ -138,22 +138,7 @@ func BenchmarkMulModMont(b *testing.B) {
 	bench(b, 1, 12)
 }
 
-func testAddMod(t *testing.T, limbCount uint) {
-    // TODO test where final addition is too much
-    // TODO test where final addition is correct
-}
-
-func TestAddMod(t *testing.T) {
-    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
-                testAddMod(t, uint(i))
-            })
-        }
-    }
-
-    test(t, "addmod", 1, 12)
-}
+// TODO test for submod where value before reduction == modulus
 
 func testSubMod(t *testing.T, limbCount uint) {
 	mod := GenTestModulus(limbCount)
@@ -174,9 +159,6 @@ func testSubMod(t *testing.T, limbCount uint) {
 
     // test where final addition happens
     if err := montCtx.SubMod(resultLimbs, oneLimbs, xLimbs); err != nil {
-        fmt.Println(xLimbs)
-        fmt.Println(oneLimbs)
-        fmt.Println(montCtx.Modulus)
         t.Fatal(err)
     }
 
@@ -189,9 +171,6 @@ func testSubMod(t *testing.T, limbCount uint) {
     expected = new(big.Int)
     expected.Sub(x, one).Mod(expected, montCtx.ModulusNonInterleaved)
     if err = montCtx.SubMod(resultLimbs, xLimbs, oneLimbs); err != nil {
-        fmt.Println(xLimbs)
-        fmt.Println(oneLimbs)
-        fmt.Println(montCtx.Modulus)
         t.Fatal(err)
     }
     result = LimbsToInt(resultLimbs)
@@ -211,8 +190,91 @@ func TestSubMod(t *testing.T) {
     test(t, "submod", 1, 12)
 }
 
-func BenchmarkAddMod(b *testing.B) {
+func testAddMod(t *testing.T, limbCount uint) {
+	mod := GenTestModulus(limbCount)
+	montCtx := NewField()
+	err := montCtx.SetMod(mod)
+	if err != nil {
+		panic("error")
+	}
+    one := big.NewInt(1)
+    two := big.NewInt(2)
+    x := LimbsToInt(mod)
+    x.Sub(x, two)
+    xLimbs := IntToLimbs(x, montCtx.NumLimbs)
+    oneLimbs := IntToLimbs(one, montCtx.NumLimbs)
+    twoLimbs := IntToLimbs(two, montCtx.NumLimbs)
 
+    resultLimbs := make(nat, limbCount)
+    expected := new(big.Int)
+    expected.Add(one, x).Mod(expected, montCtx.ModulusNonInterleaved)
+
+    // TODO test where final subtraction doesn't 
+    if err := montCtx.AddMod(resultLimbs, oneLimbs, xLimbs); err != nil {
+        t.Fatal(err)
+    }
+
+    result := LimbsToInt(resultLimbs)
+
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+    // TODO test where final subtraction does happen
+    expected = big.NewInt(0)
+    //expected.Add(x, two).Mod(expected, montCtx.ModulusNonInterleaved)
+    if err = montCtx.AddMod(resultLimbs, xLimbs, twoLimbs); err != nil {
+        t.Fatal(err)
+    }
+    result = LimbsToInt(resultLimbs)
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+}
+
+func TestAddMod(t *testing.T) {
+    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
+                testAddMod(t, uint(i))
+            })
+        }
+    }
+    test(t, "addmod", 1, 12)
+}
+
+func benchmarkAddMod(b *testing.B, limbCount uint) {
+    modLimbs := MaxModulus(limbCount)
+    mod := LimbsToInt(modLimbs)
+	montCtx := NewField()
+
+    // ((mod - 2) + 1)
+	err := montCtx.SetMod(modLimbs)
+	if err != nil {
+		panic("error")
+	}
+	x := new(big.Int).SetBytes(mod.Bytes())
+	x = x.Sub(x, big.NewInt(2))
+    y := big.NewInt(1)
+    outLimbs := make([]uint64, limbCount)
+    xLimbs := IntToLimbs(x, limbCount)
+    yLimbs := IntToLimbs(y, limbCount)
+
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        montCtx.AddMod(outLimbs, xLimbs, yLimbs)
+    }
+}
+
+func BenchmarkAddMod(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkAddMod(b, uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, 12)
 }
 
 func BenchmarkSubMod(b *testing.B) {
