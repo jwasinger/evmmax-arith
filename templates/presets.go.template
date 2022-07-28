@@ -1,0 +1,69 @@
+package mont_arith
+
+{{ $limbCount := .LimbCount}}
+{{ $limbBits := .LimbBits}}
+{{ $unrolledCutoff := 11}}
+{{ $limbCountPlusOne := add .LimbCount 1}}
+
+type ArithPreset struct {
+	AddModImpls []arithFunc
+	SubModImpls []arithFunc
+	MulMontImpls []arithFunc
+}
+
+// Preset same as default except it uses blst's go-asm impl of the arithmetic at 384bit widths
+func Asm384Preset() *ArithPreset {
+	addModImpls := []arithFunc {
+		{{- range $i := intRange 2 $limbCountPlusOne}}
+		{{- if eq $i 6 }}
+			AddMod384_asm,
+		{{- else }}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end }}
+		{{- end}}
+	}
+
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+		{{- if eq $i 6 }}
+			SubMod384_asm,
+		{{- else }}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end }}
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			{{- if eq $i 6}}
+				MulMont384_asm,
+			{{- else }}
+
+			{{if gte $i $unrolledCutoff}}
+				MulMontNonInterleaved,
+			{{- else }}
+				mulMont{{mul $i $limbBits}},
+			{{- end}}
+			{{- end}}
+		{{- end}}
+	}
+
+	return &ArithPreset{addModImpls, subModImpls, mulMontImpls}
+}
+
+func DefaultPreset() *ArithPreset {
+	return &ArithPreset{AddModNonUnrolledImpls(), SubModNonUnrolledImpls(), MulModMontImpls()}
+}
+
+func MulMontImpls() []arithFunc {
+	result := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			{{if gte $i $unrolledCutoff}}
+				MulMontNonInterleaved,
+			{{- else }}
+				MulMont{{mul $i $limbBits}},
+			{{- end}}
+		{{- end}}
+	}
+
+	return result
+}

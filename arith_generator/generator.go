@@ -78,6 +78,74 @@ func buildTemplate(dest_path, template_path string, params *TemplateParams) {
 	f.Close()
 }
 
+func genAddMod(minLimbs, maxLimbs int) {
+	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
+	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
+
+	params := TemplateParams{0, 64}
+	buf := new(bytes.Buffer)
+
+	f, err := os.Create("generated_addmod.go")
+	if err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	if err := headerTemplate.Execute(buf, params); err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	addModNonUnrolledTemplateContent := loadTextFile("templates/addmod.go.template")
+	addModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(addModNonUnrolledTemplateContent))
+
+	for i := minLimbs; i <= maxLimbs; i++ {
+		params = TemplateParams{i, 64}
+		if err := addModNonUnrolledTemplate.Execute(buf, params); err != nil {
+			log.Fatal(err)
+			panic("")
+		}
+	}
+
+	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
+		panic(err)
+	}
+}
+
+func genSubMod(minLimbs, maxLimbs int) {
+	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
+	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
+
+	params := TemplateParams{0, 64}
+	buf := new(bytes.Buffer)
+
+	f, err := os.Create("generated_submod.go")
+	if err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	if err := headerTemplate.Execute(buf, params); err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	subModNonUnrolledTemplateContent := loadTextFile("templates/submod.go.template")
+	subModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(subModNonUnrolledTemplateContent))
+
+	for i := minLimbs; i <= maxLimbs; i++ {
+		params = TemplateParams{i, 64}
+		if err := subModNonUnrolledTemplate.Execute(buf, params); err != nil {
+			log.Fatal(err)
+			panic("")
+		}
+	}
+
+	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
+		panic(err)
+	}
+}
+
 func genMulMont(maxLimbs int) {
 	headerTemplateContent := loadTextFile("templates/mulmontheader.go.template")
 	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
@@ -123,11 +191,13 @@ func genMulMont(maxLimbs int) {
 
 func genPresets(maxLimbs int) {
     params := TemplateParams{maxLimbs, 64}
-    buildTemplate("generated_mulmont_presets.go", "templates/mulmont_presets.go.template", &params)
+    buildTemplate("generated_presets.go", "templates/presets.go.template", &params)
 }
 
 func main() {
 	maxLimbs := 12
 	genMulMont(maxLimbs)
     genPresets(maxLimbs)
+    genAddMod(1, maxLimbs)
+    genSubMod(1, maxLimbs)
 }

@@ -7,9 +7,10 @@ package mont_arith
 import (
 	"math/bits"
     "math/big"
+    "unsafe"
+    "errors"
+    "fmt"
 )
-
-type mulMontFunc func(f *Field, out, x, y nat)
 
 // madd0 hi = a*b + c (discards lo bits)
 func madd0(a, b, c uint64) (uint64) {

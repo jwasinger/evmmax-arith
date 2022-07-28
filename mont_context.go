@@ -23,7 +23,9 @@ type Field struct {
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
 
-    mulMont mulMontFunc
+    MulMontPreset arithFunc
+    AddModPreset arithFunc
+    SubModPreset arithFunc
 }
 
 func (m *Field) RVal() *big.Int {

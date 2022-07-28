@@ -37,7 +37,7 @@ func testMulMont(t *testing.T, limbCount uint) {
 	xLimbs := IntToLimbs(x, montCtx.NumLimbs)
 	yLimbs := IntToLimbs(y, montCtx.NumLimbs)
 
-	if err := montCtx.MulMont(outLimbs, xLimbs, yLimbs); err != nil {
+	if err := montCtx.MulMont(LimbsToLEBytes(outLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
         t.Fatal(err)
     }
 
@@ -81,7 +81,7 @@ func TestMulMontBLS12831(t *testing.T) {
     }
 
     out := make(nat, limbCount)
-    montCtx.MulMont(out, x, y)
+    montCtx.MulMont(LimbsToLEBytes(out), LimbsToLEBytes(x), LimbsToLEBytes(y))
     // TODO assert that the result is correct
 }
 
@@ -109,7 +109,7 @@ func benchmarkMulMont(b *testing.B, limbCount uint) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		montCtx.MulMont(outLimbs, xLimbs, yLimbs)
+		montCtx.MulMont(LimbsToLEBytes(outLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs))
 	}
 }
 
@@ -170,7 +170,7 @@ func testSubMod(t *testing.T, limbCount uint) {
     // test where final addition doesn't happen
     expected = new(big.Int)
     expected.Sub(x, one).Mod(expected, montCtx.ModulusNonInterleaved)
-    if err = montCtx.SubMod(resultLimbs, xLimbs, oneLimbs); err != nil {
+    if err = f.SubMod(f, LimbsToLEBytes(resultLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(oneLimbs)); err != nil {
         t.Fatal(err)
     }
     result = LimbsToInt(resultLimbs)
@@ -222,7 +222,7 @@ func testAddMod(t *testing.T, limbCount uint) {
     // TODO test where final subtraction does happen
     expected = big.NewInt(0)
     //expected.Add(x, two).Mod(expected, montCtx.ModulusNonInterleaved)
-    if err = montCtx.AddMod(resultLimbs, xLimbs, twoLimbs); err != nil {
+    if err = montCtx.AddMod(LimbsToLEBytes(resultLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(twoLimbs)); err != nil {
         t.Fatal(err)
     }
     result = LimbsToInt(resultLimbs)
@@ -255,13 +255,13 @@ func benchmarkAddMod(b *testing.B, limbCount uint) {
 	x := new(big.Int).SetBytes(mod.Bytes())
 	x = x.Sub(x, big.NewInt(2))
     y := big.NewInt(1)
-    outLimbs := make([]uint64, limbCount)
-    xLimbs := IntToLimbs(x, limbCount)
-    yLimbs := IntToLimbs(y, limbCount)
+    outBytes := make([]byte, limbCount * 8)
+    xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
+    yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        montCtx.AddMod(outLimbs, xLimbs, yLimbs)
+        montCtx.AddMod(f, outBytes, xBytes, yBytes)
     }
 }
 
@@ -288,13 +288,13 @@ func benchmarkSubMod(b *testing.B, limbCount uint) {
 	}
 	x := big.NewInt(0)
     y := big.NewInt(1)
-    outLimbs := make([]uint64, limbCount)
-    xLimbs := IntToLimbs(x, limbCount)
-    yLimbs := IntToLimbs(y, limbCount)
+    outBytes := make([]byte, limbCount * 8)
+    xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
+    yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
-        montCtx.SubMod(outLimbs, xLimbs, yLimbs)
+        montCtx.SubMod(outBytes, xBytes, yBytes)
     }
 }
 

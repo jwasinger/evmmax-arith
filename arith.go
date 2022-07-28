@@ -8,6 +8,8 @@ import (
 
 type nat []uint64
 
+type arithFunc func(f *Field, out, x, y []byte) error
+
 func Eq(n, other nat) bool {
     if len(n) != len(other) {
         panic("unequal lengths")
