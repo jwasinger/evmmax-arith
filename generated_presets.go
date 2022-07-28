@@ -12,7 +12,7 @@ type ArithPreset struct {
 }
 
 // Preset same as default except it uses blst's go-asm impl of the arithmetic at 384bit widths
-func Asm384Preset() *ArithPreset {
+func Asm384Preset() ArithPreset {
 	addModImpls := []arithFunc {
 			AddModNonUnrolled128,
 			AddModNonUnrolled192,
@@ -78,10 +78,10 @@ func Asm384Preset() *ArithPreset {
 				MulMontNonInterleaved,
 	}
 
-	return &ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }
 
-func DefaultPreset() *ArithPreset {
+func DefaultPreset() ArithPreset {
 	addModImpls := []arithFunc {
 			AddModNonUnrolled64,
 			AddModNonUnrolled128,
@@ -126,5 +126,5 @@ func DefaultPreset() *ArithPreset {
 			mulMont768,
 	}
 
-	return &ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }

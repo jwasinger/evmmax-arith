@@ -17,10 +17,9 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	z := (*[1]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -51,13 +50,9 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -88,16 +83,9 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -128,19 +116,9 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -171,22 +149,9 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -217,25 +182,9 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -266,28 +215,9 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -318,31 +248,9 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -373,34 +281,9 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -431,37 +314,9 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -492,40 +347,9 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[10] >= mod[10] || y[10] >= mod[10] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))
@@ -556,43 +380,9 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[10] >= mod[10] || y[10] >= mod[10] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[11] >= mod[11] || y[11] >= mod[11] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))

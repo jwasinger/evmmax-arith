@@ -21,12 +21,9 @@ func mulMont{{mul $limbCount $limbBits}}(f *Field, outBytes, xBytes, yBytes []by
     mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-    {{- range $j := intRange 0 $limbCount}}
-        if x[{{$j}}] >= mod[{{$j}}] || y[{{$j}}] >= mod[{{$j}}] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-    {{- end}}
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     {{- range $j := intRange 0 $limbCount}}
         // round {{$j}}

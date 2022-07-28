@@ -80,7 +80,7 @@ func NewField(preset ArithPreset) *Field {
 	return &result
 }
 
-func (m *Field) GTEMod(x, y nat) bool {
+func (m *Field) GTEMod(x, y []uint64) bool {
     for i := 0; i < int(m.NumLimbs); i++ {
         if x[i] > m.Modulus[i] || y[i] > m.Modulus[i]  {
             return true
@@ -97,7 +97,7 @@ func (m *Field) ValueSize() uint {
 	return uint(len(m.Modulus))
 }
 
-func (m *Field) SetMod(mod nat) error {
+func (m *Field) SetMod(mod []uint64) error {
 	// XXX proper handling without hardcoding
 	if len(mod) == 0 || len(mod) > 12 {
 		fmt.Println(len(mod))

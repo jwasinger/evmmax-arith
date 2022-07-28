@@ -6,11 +6,24 @@ import (
 
 // XXX implement the below methods using these types (conversions might make it awkward/slower)
 
-type nat []uint64
-
 type arithFunc func(f *Field, out, x, y []byte) error
 
-func Eq(n, other nat) bool {
+// TODO is it faster to compute y-m,x-m and return false if there is borrow-out?
+func GTE(x, y, m []uint64) bool {
+    for i := len(x) - 1; i > 0; i-- {
+        if x[i] > m[i] || y[i] > m[i] {
+            return true
+        }
+    }
+
+    if x[0] >= m[0] || y[0] >= m[0] {
+        return true
+    }
+
+    return false
+}
+
+func Eq(n, other []uint64) bool {
     if len(n) != len(other) {
         panic("unequal lengths")
     }
@@ -23,12 +36,12 @@ func Eq(n, other nat) bool {
     return true
 }
 
-func AddMod(f *Field, z, x, y nat) {
+func AddMod(f *Field, z, x, y []uint64) {
     var c uint64 = 0
 
     mod := f.Modulus
     limbCount := len(mod)
-    tmp := make(nat, len(mod))
+    tmp := make([]uint64, len(mod))
 
     for i := 0; i < limbCount; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -45,10 +58,10 @@ func AddMod(f *Field, z, x, y nat) {
     }
 }
 
-func SubMod(f *Field, z, x, y nat) {
+func SubMod(f *Field, z, x, y []uint64) {
     var c, c1 uint64
     mod := f.Modulus
-    tmp := make(nat, len(mod))
+    tmp := make([]uint64, len(mod))
     limbCount := len(mod)
 
     for i := 0; i < limbCount; i++ {

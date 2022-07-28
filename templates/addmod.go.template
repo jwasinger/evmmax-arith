@@ -9,12 +9,9 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    // TODO move bounds check into its own template?
-    {{- range $j := intRange 0 $limbCount}}
-        if x[{{$j}}] >= mod[{{$j}}] || y[{{$j}}] >= mod[{{$j}}] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-    {{- end}}
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
 
     var c uint64 = 0
     tmp := make([]uint64, len(mod))

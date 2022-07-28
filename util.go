@@ -43,7 +43,7 @@ func LimbsToLEBytes(val []uint64) []byte {
 }
 
 // convert big.Int (big-endian) to little-endian limbs
-func IntToLimbs(val *big.Int, num_limbs uint) nat {
+func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 	val_bytes := val.Bytes()
 
 	// pad length to be a multiple of 64bits
@@ -55,7 +55,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) nat {
 		panic("val too big to fit in specified number of limbs")
 	}
 
-	result := make(nat, len(val_bytes)/8, len(val_bytes)/8)
+	result := make([]uint64, len(val_bytes)/8, len(val_bytes)/8)
 
 	// place byteswapped (little-endian) val into result
 	for i := 0; i < len(result); i++ {
@@ -71,7 +71,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) nat {
 }
 
 // convert little-endian limbs to big.Int
-func LimbsToInt(limbs nat) *big.Int {
+func LimbsToInt(limbs []uint64) *big.Int {
 	limbs_bytes := make([]byte, 8*len(limbs), 8*len(limbs))
 	for i := 0; i < len(limbs); i++ {
 		startIdx := (len(limbs) - (i + 1)) * 8
@@ -84,8 +84,8 @@ func LimbsToInt(limbs nat) *big.Int {
 }
 
 // **NOTE** naming confusing.  actually the second-largest modulus (largest would have modinv as 1)
-func MaxModulus(limbCount uint) nat {
-	mod := make(nat, limbCount, limbCount)
+func MaxModulus(limbCount uint) []uint64 {
+	mod := make([]uint64, limbCount, limbCount)
 
 	mod[0] = 0xfffffffffffffffd
 	for i := uint(1); i < limbCount; i++ {
@@ -96,7 +96,7 @@ func MaxModulus(limbCount uint) nat {
 }
 
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
-func GenTestModulus(limbCount uint) nat {
+func GenTestModulus(limbCount uint) []uint64 {
 	mod_int := big.NewInt(1)
 	mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))
 	mod_int.Sub(mod_int, big.NewInt(1))
@@ -134,7 +134,7 @@ func One(limbCount uint) []uint64 {
 	return one
 }
 
-func RSquared(modulus nat) nat {
+func RSquared(modulus []uint64) []uint64 {
 	mod := LimbsToInt(modulus[:])
 	r := new(big.Int)
 	r.Exp(big.NewInt(2), big.NewInt(int64(len(modulus))*64), mod)
@@ -146,7 +146,7 @@ func RSquared(modulus nat) nat {
 }
 
 // does the Python equivalent of pow(-modulus, -1, 1<<64)
-func MontConstant_Interleaved(modulus nat) uint64 {
+func MontConstant_Interleaved(modulus []uint64) uint64 {
 	mod_int := LimbsToInt(modulus)
 
 	// 1<<64

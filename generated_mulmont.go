@@ -103,13 +103,9 @@ func mulMont128(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -159,16 +155,9 @@ func mulMont192(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -231,19 +220,9 @@ func mulMont256(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -323,22 +302,9 @@ func mulMont320(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -439,25 +405,9 @@ func mulMont384(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -583,28 +533,9 @@ func mulMont448(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -759,31 +690,9 @@ func mulMont512(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -971,34 +880,9 @@ func mulMont576(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -1223,37 +1107,9 @@ func mulMont640(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -1519,40 +1375,9 @@ func mulMont704(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[10] >= mod[10] || y[10] >= mod[10] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
@@ -1863,43 +1688,9 @@ func mulMont768(f *Field, outBytes, xBytes, yBytes []byte) error {
     mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
     modinv := f.MontParamInterleaved
 
-    // TODO move bounds check into its own template?
-        if x[0] >= mod[0] || y[0] >= mod[0] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[1] >= mod[1] || y[1] >= mod[1] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[2] >= mod[2] || y[2] >= mod[2] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[3] >= mod[3] || y[3] >= mod[3] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[4] >= mod[4] || y[4] >= mod[4] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[5] >= mod[5] || y[5] >= mod[5] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[6] >= mod[6] || y[6] >= mod[6] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[7] >= mod[7] || y[7] >= mod[7] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[8] >= mod[8] || y[8] >= mod[8] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[9] >= mod[9] || y[9] >= mod[9] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[10] >= mod[10] || y[10] >= mod[10] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
-        if x[11] >= mod[11] || y[11] >= mod[11] {
-            return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-        }
+    if GTE(x, y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
         // round 0
             v := x[0]
             c[1], c[0] = bits.Mul64(v, y[0])
