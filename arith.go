@@ -37,7 +37,7 @@ func AddMod(f *Field, z, x, y nat) {
         z[i], c = bits.Sub64(tmp[i], mod[i], c)
     }
 
-    // sub was unnecessary
+    // final sub was unnecessary
     if c != 0 {
         copy(z, tmp[:])
     }
@@ -57,6 +57,7 @@ func SubMod(f *Field, z, x, y nat) {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
+    // final add was unecessary
     if c == 0 {
         copy(z, tmp[:])
     }

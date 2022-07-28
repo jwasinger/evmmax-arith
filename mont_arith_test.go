@@ -247,7 +247,7 @@ func benchmarkAddMod(b *testing.B, limbCount uint) {
     mod := LimbsToInt(modLimbs)
 	montCtx := NewField()
 
-    // ((mod - 2) + 1)
+    // worst-case performance: unecessary final subtraction
 	err := montCtx.SetMod(modLimbs)
 	if err != nil {
 		panic("error")
@@ -277,6 +277,35 @@ func BenchmarkAddMod(b *testing.B) {
 	bench(b, 1, 12)
 }
 
-func BenchmarkSubMod(b *testing.B) {
+func benchmarkSubMod(b *testing.B, limbCount uint) {
+    modLimbs := MaxModulus(limbCount)
+	montCtx := NewField()
 
+    // worst-case performance: unecessary final subtraction
+	err := montCtx.SetMod(modLimbs)
+	if err != nil {
+		panic("error")
+	}
+	x := big.NewInt(0)
+    y := big.NewInt(1)
+    outLimbs := make([]uint64, limbCount)
+    xLimbs := IntToLimbs(x, limbCount)
+    yLimbs := IntToLimbs(y, limbCount)
+
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        montCtx.SubMod(outLimbs, xLimbs, yLimbs)
+    }
+}
+
+func BenchmarkSubMod(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkSubMod(b, uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, 12)
 }
