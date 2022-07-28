@@ -16,14 +16,13 @@ func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y nat) {
 	var c [{{max $limbCount 3}}]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
+	// TODO assert x < mod and y < mod
 
 	{{- range $j := intRange 0 $limbCount}}
 		// round {{$j}}
 		{{- if eq $j 0}}
 			v := x[{{$j}}]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 			{{- range $i := intRange 1 $limbCount }}
@@ -73,4 +72,3 @@ func mulMont{{mul $limbCount $limbBits}}(f *Field, z, x, y nat) {
 		copy(z, t[:])
 	}
 }
-

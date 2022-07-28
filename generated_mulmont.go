@@ -88,9 +88,10 @@ func mulMont128(f *Field, z, x, y nat) {
 	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -117,7 +118,6 @@ func mulMont128(f *Field, z, x, y nat) {
 
 
 
-
 var Zero3Limbs []uint = make([]uint, 3, 3)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -132,9 +132,10 @@ func mulMont192(f *Field, z, x, y nat) {
 	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -174,7 +175,6 @@ func mulMont192(f *Field, z, x, y nat) {
 
 
 
-
 var Zero4Limbs []uint = make([]uint, 4, 4)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -189,9 +189,10 @@ func mulMont256(f *Field, z, x, y nat) {
 	var c [4]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -248,7 +249,6 @@ func mulMont256(f *Field, z, x, y nat) {
 
 
 
-
 var Zero5Limbs []uint = make([]uint, 5, 5)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -263,9 +263,10 @@ func mulMont320(f *Field, z, x, y nat) {
 	var c [5]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -343,7 +344,6 @@ func mulMont320(f *Field, z, x, y nat) {
 
 
 
-
 var Zero6Limbs []uint = make([]uint, 6, 6)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -358,9 +358,10 @@ func mulMont384(f *Field, z, x, y nat) {
 	var c [6]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -463,7 +464,6 @@ func mulMont384(f *Field, z, x, y nat) {
 
 
 
-
 var Zero7Limbs []uint = make([]uint, 7, 7)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -478,9 +478,10 @@ func mulMont448(f *Field, z, x, y nat) {
 	var c [7]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -612,7 +613,6 @@ func mulMont448(f *Field, z, x, y nat) {
 
 
 
-
 var Zero8Limbs []uint = make([]uint, 8, 8)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -627,9 +627,10 @@ func mulMont512(f *Field, z, x, y nat) {
 	var c [8]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -794,7 +795,6 @@ func mulMont512(f *Field, z, x, y nat) {
 
 
 
-
 var Zero9Limbs []uint = make([]uint, 9, 9)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -809,9 +809,10 @@ func mulMont576(f *Field, z, x, y nat) {
 	var c [9]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1013,7 +1014,6 @@ func mulMont576(f *Field, z, x, y nat) {
 
 
 
-
 var Zero10Limbs []uint = make([]uint, 10, 10)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -1028,9 +1028,10 @@ func mulMont640(f *Field, z, x, y nat) {
 	var c [10]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1273,7 +1274,6 @@ func mulMont640(f *Field, z, x, y nat) {
 
 
 
-
 var Zero11Limbs []uint = make([]uint, 11, 11)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -1288,9 +1288,10 @@ func mulMont704(f *Field, z, x, y nat) {
 	var c [11]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1578,7 +1579,6 @@ func mulMont704(f *Field, z, x, y nat) {
 
 
 
-
 var Zero12Limbs []uint = make([]uint, 12, 12)
 
 /* NOTE: addmod/submod/mulmodmont assume:
@@ -1593,9 +1593,10 @@ func mulMont768(f *Field, z, x, y nat) {
 	var c [12]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+	// TODO assert x < mod and y < mod
 		// round 0
 			v := x[0]
-			c[0], c[1] = bits.Mul64(v, y[0])
+			c[1], c[0] = bits.Mul64(v, y[0])
 			m := c[0] * modinv
 			c[2] = madd0(m, mod[0], c[0])
 				c[1], c[0] = madd1(v, y[1], c[1])
@@ -1928,7 +1929,6 @@ func mulMont768(f *Field, z, x, y nat) {
 		copy(z, t[:])
 	}
 }
-
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
 func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
 	// length x == y assumed
