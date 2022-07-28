@@ -88,8 +88,6 @@ func mulMont128(f *Field, z, x, y nat) {
 	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -134,8 +132,6 @@ func mulMont192(f *Field, z, x, y nat) {
 	var c [3]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -193,8 +189,6 @@ func mulMont256(f *Field, z, x, y nat) {
 	var c [4]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -269,8 +263,6 @@ func mulMont320(f *Field, z, x, y nat) {
 	var c [5]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -366,8 +358,6 @@ func mulMont384(f *Field, z, x, y nat) {
 	var c [6]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -488,8 +478,6 @@ func mulMont448(f *Field, z, x, y nat) {
 	var c [7]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -639,8 +627,6 @@ func mulMont512(f *Field, z, x, y nat) {
 	var c [8]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -823,8 +809,6 @@ func mulMont576(f *Field, z, x, y nat) {
 	var c [9]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -1044,8 +1028,6 @@ func mulMont640(f *Field, z, x, y nat) {
 	var c [10]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -1306,8 +1288,6 @@ func mulMont704(f *Field, z, x, y nat) {
 	var c [11]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])
@@ -1613,8 +1593,6 @@ func mulMont768(f *Field, z, x, y nat) {
 	var c [12]uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
-
-    // TODO check that values are smaller than modulus
 		// round 0
 			v := x[0]
 			c[0], c[1] = bits.Mul64(v, y[0])

@@ -80,7 +80,7 @@ func (m *Field) GTEMod(x, y nat) bool {
     return false
 }
 
-func (m *Field) MulModMont(out, x, y nat) error {
+func (m *Field) MulMont(out, x, y nat) error {
     if m.GTEMod(x, y) {
         return errors.New("input value greater than or equal to modulus")
     }

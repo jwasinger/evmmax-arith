@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func testMulModMont(t *testing.T, limbCount uint) {
+func testMulMont(t *testing.T, limbCount uint) {
 	mod := GenTestModulus(limbCount)
 
 	montCtx := NewField()
@@ -37,7 +37,7 @@ func testMulModMont(t *testing.T, limbCount uint) {
 	xLimbs := IntToLimbs(x, montCtx.NumLimbs)
 	yLimbs := IntToLimbs(y, montCtx.NumLimbs)
 
-	if err := montCtx.MulModMont(outLimbs, xLimbs, yLimbs); err != nil {
+	if err := montCtx.MulMont(outLimbs, xLimbs, yLimbs); err != nil {
         t.Fatal(err)
     }
 
@@ -57,7 +57,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
     return res.Mod(res, modulus)
 }
 
-func TestMulModMontBLS12831(t *testing.T) {
+func TestMulMontBLS12831(t *testing.T) {
 	montCtx := NewField()
     modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
 
@@ -81,11 +81,11 @@ func TestMulModMontBLS12831(t *testing.T) {
     }
 
     out := make(nat, limbCount)
-    montCtx.MulModMont(out, x, y)
+    montCtx.MulMont(out, x, y)
     // TODO assert that the result is correct
 }
 
-func benchmarkMulModMont(b *testing.B, limbCount uint) {
+func benchmarkMulMont(b *testing.B, limbCount uint) {
 	mod := MaxModulus(limbCount)
 	montCtx := NewField()
 
@@ -109,16 +109,16 @@ func benchmarkMulModMont(b *testing.B, limbCount uint) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		montCtx.MulModMont(outLimbs, xLimbs, yLimbs)
+		montCtx.MulMont(outLimbs, xLimbs, yLimbs)
 	}
 }
 
-func TestMulModMont(t *testing.T) {
+func TestMulMont(t *testing.T) {
 	test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			// test x/y >= modulus
 			t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
-				testMulModMont(t, uint(i))
+				testMulMont(t, uint(i))
 			})
 		}
 	}
@@ -126,11 +126,11 @@ func TestMulModMont(t *testing.T) {
 	test(t, "gnark-mulnocarry-unrolled", 1, 12)
 }
 
-func BenchmarkMulModMont(b *testing.B) {
+func BenchmarkMulMont(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulModMont(b, uint(i))
+				benchmarkMulMont(b, uint(i))
 			})
 		}
 	}
