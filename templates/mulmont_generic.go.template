@@ -1,16 +1,14 @@
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
+func MulMontNonInterleaved(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// length x == y assumed
 
 	product := new(big.Int)
-	x := LimbsToInt(xLimbs)
-	y := LimbsToInt(yLimbs)
+	x := LEBytesToInt(x_bytes)
+	y := LEBytesToInt(y_bytes)
 
-    /*
 	if x.Cmp(f.ModulusNonInterleaved) > 0 || y.Cmp(f.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")
 	}
-    */
 
 	// m <- ((x*y mod R)N`) mod R
 	product.Mul(x, y)
@@ -27,10 +25,7 @@ func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
 		x.Sub(x, f.ModulusNonInterleaved)
 	}
 
-    result := IntToLimbs(x, f.NumLimbs)
-    for i := 0; i < int(f.NumLimbs); i++ {
-        outLimbs[i] = result[i]
-    }  
+	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, f.NumLimbs)))
 
 	return nil
 }

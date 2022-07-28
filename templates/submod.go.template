@@ -33,6 +33,7 @@ func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_
 			z[{{$i}}], c1  = bits.Add64(tmp[{{$i}}], mod[{{$i}}], c1)
 		{{- end}}
 	{{- end }}
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -57,11 +58,11 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 	var c, c1 uint64
 	tmp := {{ makeZeroedLimbs $limbCount}}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < {{$limbCount}}; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < {{$limbCount}}; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 

@@ -25,6 +25,7 @@ func SubModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	tmp := [1]uint64 { 0}
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			z[0], c1 = bits.Add64(tmp[0], mod[0], 0)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -47,11 +48,11 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c, c1 uint64
 	tmp := [1]uint64 { 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 1; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 1; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -86,6 +87,7 @@ func SubModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			z[0], c1 = bits.Add64(tmp[0], mod[0], 0)
 			z[1], c1  = bits.Add64(tmp[1], mod[1], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -111,11 +113,11 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [2]uint64 { 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 2; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 2; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -155,6 +157,7 @@ func SubModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[0], c1 = bits.Add64(tmp[0], mod[0], 0)
 			z[1], c1  = bits.Add64(tmp[1], mod[1], c1)
 			z[2], c1  = bits.Add64(tmp[2], mod[2], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -183,11 +186,11 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [3]uint64 { 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 3; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 3; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -232,6 +235,7 @@ func SubModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[1], c1  = bits.Add64(tmp[1], mod[1], c1)
 			z[2], c1  = bits.Add64(tmp[2], mod[2], c1)
 			z[3], c1  = bits.Add64(tmp[3], mod[3], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -263,11 +267,11 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [4]uint64 { 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 4; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 4; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -317,6 +321,7 @@ func SubModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[2], c1  = bits.Add64(tmp[2], mod[2], c1)
 			z[3], c1  = bits.Add64(tmp[3], mod[3], c1)
 			z[4], c1  = bits.Add64(tmp[4], mod[4], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -351,11 +356,11 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [5]uint64 { 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 5; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 5; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -410,6 +415,7 @@ func SubModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[3], c1  = bits.Add64(tmp[3], mod[3], c1)
 			z[4], c1  = bits.Add64(tmp[4], mod[4], c1)
 			z[5], c1  = bits.Add64(tmp[5], mod[5], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -447,11 +453,11 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [6]uint64 { 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 6; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 6; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -511,6 +517,7 @@ func SubModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[4], c1  = bits.Add64(tmp[4], mod[4], c1)
 			z[5], c1  = bits.Add64(tmp[5], mod[5], c1)
 			z[6], c1  = bits.Add64(tmp[6], mod[6], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -551,11 +558,11 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [7]uint64 { 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 7; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 7; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -620,6 +627,7 @@ func SubModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[5], c1  = bits.Add64(tmp[5], mod[5], c1)
 			z[6], c1  = bits.Add64(tmp[6], mod[6], c1)
 			z[7], c1  = bits.Add64(tmp[7], mod[7], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -663,11 +671,11 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [8]uint64 { 0, 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 8; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 8; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -737,6 +745,7 @@ func SubModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[6], c1  = bits.Add64(tmp[6], mod[6], c1)
 			z[7], c1  = bits.Add64(tmp[7], mod[7], c1)
 			z[8], c1  = bits.Add64(tmp[8], mod[8], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -783,11 +792,11 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [9]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 9; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 9; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -862,6 +871,7 @@ func SubModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[7], c1  = bits.Add64(tmp[7], mod[7], c1)
 			z[8], c1  = bits.Add64(tmp[8], mod[8], c1)
 			z[9], c1  = bits.Add64(tmp[9], mod[9], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -911,11 +921,11 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [10]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 10; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 10; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -995,6 +1005,7 @@ func SubModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[8], c1  = bits.Add64(tmp[8], mod[8], c1)
 			z[9], c1  = bits.Add64(tmp[9], mod[9], c1)
 			z[10], c1  = bits.Add64(tmp[10], mod[10], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -1047,11 +1058,11 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [11]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 11; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 11; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
@@ -1136,6 +1147,7 @@ func SubModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 			z[9], c1  = bits.Add64(tmp[9], mod[9], c1)
 			z[10], c1  = bits.Add64(tmp[10], mod[10], c1)
 			z[11], c1  = bits.Add64(tmp[11], mod[11], c1)
+    _ = c1
 
 	if c == 0 {
 		copy(z, tmp[:])
@@ -1191,11 +1203,11 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	var c, c1 uint64
 	tmp := [12]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 12; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
     }
 
-    for i := 0; i < limbCount; i++ {
+    for i := 0; i < 12; i++ {
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 

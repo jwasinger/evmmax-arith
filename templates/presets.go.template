@@ -51,19 +51,22 @@ func Asm384Preset() *ArithPreset {
 }
 
 func DefaultPreset() *ArithPreset {
-	return &ArithPreset{AddModNonUnrolledImpls(), SubModNonUnrolledImpls(), MulModMontImpls()}
-}
-
-func MulMontImpls() []arithFunc {
-	result := []arithFunc {
+	addModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-			{{if gte $i $unrolledCutoff}}
-				MulMontNonInterleaved,
-			{{- else }}
-				MulMont{{mul $i $limbBits}},
-			{{- end}}
+			AddModNonUnrolled{{mul $i $limbBits}},
 		{{- end}}
 	}
 
-	return result
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			mulMont{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	return &ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }

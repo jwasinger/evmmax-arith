@@ -56,11 +56,19 @@ func madd3(a, b, c, d, e uint64) (uint64, uint64) {
  * begin mulmont implementations
  */
 
-func mulMont64(f *Field, out, x, y nat) {
+func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 	var product [2]uint64
 	var c uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+
+    x := (*[1]uint64)(unsafe.Pointer(&xBytes[0]))[:]
+    y := (*[1]uint64)(unsafe.Pointer(&yBytes[0]))[:]
+    out := (*[1]uint64)(unsafe.Pointer(&outBytes[0]))[:]
+
+    if x[0] >= mod[0] || y[0] >= mod[0] {
+        return errors.New(fmt.Sprintf("x/y gte modulus"))
+    }
 
 	product[1], product[0] = bits.Mul64(x[0], y[0])
 	m := product[0] * modinv
@@ -70,4 +78,5 @@ func mulMont64(f *Field, out, x, y nat) {
 	if out[0] > mod[0] {
 		out[0] = c - mod[0]
 	}
+    return nil
 }

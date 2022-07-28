@@ -56,11 +56,19 @@ func madd3(a, b, c, d, e uint64) (uint64, uint64) {
  * begin mulmont implementations
  */
 
-func mulMont64(f *Field, out, x, y nat) {
+func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 	var product [2]uint64
 	var c uint64
     mod := f.Modulus
     modinv := f.MontParamInterleaved
+
+    x := (*[1]uint64)(unsafe.Pointer(&xBytes[0]))[:]
+    y := (*[1]uint64)(unsafe.Pointer(&yBytes[0]))[:]
+    out := (*[1]uint64)(unsafe.Pointer(&outBytes[0]))[:]
+
+    if x[0] >= mod[0] || y[0] >= mod[0] {
+        return errors.New(fmt.Sprintf("x/y gte modulus"))
+    }
 
 	product[1], product[0] = bits.Mul64(x[0], y[0])
 	m := product[0] * modinv
@@ -70,6 +78,7 @@ func mulMont64(f *Field, out, x, y nat) {
 	if out[0] > mod[0] {
 		out[0] = c - mod[0]
 	}
+    return nil
 }
 
 
@@ -2228,18 +2237,16 @@ func mulMont768(f *Field, outBytes, xBytes, yBytes []byte) error {
     return nil
 }
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
+func MulMontNonInterleaved(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// length x == y assumed
 
 	product := new(big.Int)
-	x := LimbsToInt(xLimbs)
-	y := LimbsToInt(yLimbs)
+	x := LEBytesToInt(x_bytes)
+	y := LEBytesToInt(y_bytes)
 
-    /*
 	if x.Cmp(f.ModulusNonInterleaved) > 0 || y.Cmp(f.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")
 	}
-    */
 
 	// m <- ((x*y mod R)N`) mod R
 	product.Mul(x, y)
@@ -2256,10 +2263,7 @@ func MulModMontNonInterleaved(f *Field, outLimbs, xLimbs, yLimbs nat) error {
 		x.Sub(x, f.ModulusNonInterleaved)
 	}
 
-    result := IntToLimbs(x, f.NumLimbs)
-    for i := 0; i < int(f.NumLimbs); i++ {
-        outLimbs[i] = result[i]
-    }  
+	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, f.NumLimbs)))
 
 	return nil
 }

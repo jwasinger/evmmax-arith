@@ -9,7 +9,7 @@ import (
 // TODO rename to FieldPreset?
 type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
-	Modulus               nat
+	Modulus               []uint64
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
 
 	MontParamInterleaved    uint64
@@ -23,9 +23,11 @@ type Field struct {
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
 
-    MulMontPreset arithFunc
-    AddModPreset arithFunc
-    SubModPreset arithFunc
+    MulMont arithFunc
+    AddMod arithFunc
+    SubMod arithFunc
+
+    preset ArithPreset
 }
 
 func (m *Field) RVal() *big.Int {
@@ -36,17 +38,16 @@ func (m *Field) RInv() *big.Int {
 	return m.rInv
 }
 
-func (m *Field) ToMont(val nat) nat {
+func (m *Field) ToMont(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.r)
 	dst_val.Mod(dst_val, LimbsToInt(m.Modulus))
 
-	//copy(dst, IntToLimbs(dst_val, m.NumLimbs))
     return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func (m *Field) ToNorm(val nat) nat {
+func (m *Field) ToNorm(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.rInv)
@@ -55,19 +56,25 @@ func (m *Field) ToNorm(val nat) nat {
 	return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func NewField() *Field {
+func NewField(preset ArithPreset) *Field {
 	result := Field{
 		nil,
 		nil,
+
 		0,
 		nil,
 
 		0,
 		nil,
 		nil,
+
 		nil,
 
         nil,
+        nil,
+        nil,
+
+        preset,
 	}
 
 	return &result
@@ -80,30 +87,6 @@ func (m *Field) GTEMod(x, y nat) bool {
         }
     }
     return false
-}
-
-func (m *Field) MulMont(out, x, y nat) error {
-    if m.GTEMod(x, y) {
-        return errors.New("input value greater than or equal to modulus")
-    }
-	m.mulMont(m, out, x, y)
-    return nil
-}
-
-func (m *Field) AddMod(out, x, y nat) error {
-    if m.GTEMod(x, y) {
-        return errors.New("input value greater than or equal to modulus")
-    }
-	AddMod(m, out, x, y)
-    return nil
-}
-
-func (m *Field) SubMod(out, x, y nat) error {
-    if m.GTEMod(x, y) {
-        return errors.New("input value greater than or equal to modulus")
-    }
-	SubMod(m, out, x, y)
-    return nil
 }
 
 func (m *Field) ModIsSet() bool {
@@ -157,8 +140,10 @@ func (m *Field) SetMod(mod nat) error {
 
 	m.MontParamNonInterleaved = montParamNonInterleaved
 	m.MontParamInterleaved = montParamNonInterleaved.Uint64()
-    mulMontImpls := NewMulMontImpls()
-    m.mulMont = mulMontImpls[len(mod) - 1]
+
+    m.MulMont = m.preset.MulMontImpls[len(mod) - 1]
+    m.AddMod = m.preset.AddModImpls[len(mod) - 1]
+    m.SubMod = m.preset.SubModImpls[len(mod) - 1]
 
 	return nil
 }
