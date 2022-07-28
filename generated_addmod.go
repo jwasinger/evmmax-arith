@@ -22,7 +22,7 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 1)
 
     for i := 0; i < 1; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -55,7 +55,7 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 2)
 
     for i := 0; i < 2; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -88,7 +88,7 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 3)
 
     for i := 0; i < 3; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -121,7 +121,7 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 4)
 
     for i := 0; i < 4; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -154,7 +154,7 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 5)
 
     for i := 0; i < 5; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -187,7 +187,7 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 6)
 
     for i := 0; i < 6; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -220,7 +220,7 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 7)
 
     for i := 0; i < 7; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -253,7 +253,7 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 8)
 
     for i := 0; i < 8; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -286,7 +286,7 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 9)
 
     for i := 0; i < 9; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -319,7 +319,7 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 10)
 
     for i := 0; i < 10; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -352,7 +352,7 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 11)
 
     for i := 0; i < 11; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -385,7 +385,7 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, 12)
 
     for i := 0; i < 12; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)

@@ -10,6 +10,7 @@ import (
 
 
 
+/*
 func SubModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[1]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[1]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -18,14 +19,11 @@ func SubModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [1]uint64 { 0}
+	tmp := make([]uint64, 1)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			z[0], c1 = bits.Add64(tmp[0], mod[0], 0)
     _ = c1
@@ -36,6 +34,7 @@ func SubModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[1]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -45,9 +44,6 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -73,6 +69,7 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 
 
+/*
 func SubModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -81,14 +78,11 @@ func SubModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [2]uint64 { 0, 0}
+	tmp := make([]uint64, 2)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			z[0], c1 = bits.Add64(tmp[0], mod[0], 0)
@@ -101,6 +95,7 @@ func SubModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -110,9 +105,6 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -138,6 +130,7 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[3]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -146,14 +139,11 @@ func SubModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [3]uint64 { 0, 0, 0}
+	tmp := make([]uint64, 3)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -168,6 +158,7 @@ func SubModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -177,9 +168,6 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -205,6 +193,7 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[4]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -213,14 +202,11 @@ func SubModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [4]uint64 { 0, 0, 0, 0}
+	tmp := make([]uint64, 4)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -237,6 +223,7 @@ func SubModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -246,9 +233,6 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -274,6 +258,7 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[5]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -282,14 +267,11 @@ func SubModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [5]uint64 { 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 5)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -308,6 +290,7 @@ func SubModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -317,9 +300,6 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -345,6 +325,7 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[6]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -353,14 +334,11 @@ func SubModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [6]uint64 { 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 6)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -381,6 +359,7 @@ func SubModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -390,9 +369,6 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -418,6 +394,7 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[7]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -426,14 +403,11 @@ func SubModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [7]uint64 { 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 7)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -456,6 +430,7 @@ func SubModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -465,9 +440,6 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -493,6 +465,7 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[8]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -501,14 +474,11 @@ func SubModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [8]uint64 { 0, 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 8)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -533,6 +503,7 @@ func SubModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -542,9 +513,6 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -570,6 +538,7 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[9]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -578,14 +547,11 @@ func SubModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [9]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 9)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -612,6 +578,7 @@ func SubModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -621,9 +588,6 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -649,6 +613,7 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[10]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -657,14 +622,11 @@ func SubModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [10]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 10)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -693,6 +655,7 @@ func SubModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -702,9 +665,6 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -730,6 +690,7 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[11]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -738,14 +699,11 @@ func SubModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [11]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 11)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -776,6 +734,7 @@ func SubModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -785,9 +744,6 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -813,6 +769,7 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
 
 
+/*
 func SubModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[12]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -821,14 +778,11 @@ func SubModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
 	var c, c1 uint64
-	tmp := [12]uint64 { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+	tmp := make([]uint64, 12)
 			tmp[0], c = bits.Sub64(x[0], y[0], 0)
 			tmp[1], c = bits.Sub64(x[1], y[1], c)
 			tmp[2], c = bits.Sub64(x[2], y[2], c)
@@ -861,6 +815,7 @@ func SubModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -870,9 +825,6 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 
     // TODO move bounds check into its own template?
     if GTE(x, y, mod) {
-        fmt.Println(x)
-        fmt.Println(y)
-        fmt.Println(mod)
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 

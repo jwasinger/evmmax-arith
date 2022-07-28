@@ -10,73 +10,72 @@ var Zero{{$limbCount}}Limbs []uint = make([]uint, {{$limbCount}}, {{$limbCount}}
     x < mod, y < mod
 */
 
-// NOTE: assumes x < mod and y < mod
-func mulMont{{mul $limbCount $limbBits}}(f *Field, outBytes, xBytes, yBytes []byte) error {
-    var t [{{$limbCount}}]uint64
-    var c [{{max $limbCount 3}}]uint64
-
-    x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&xBytes[0]))[:]
-    y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&yBytes[0]))[:]
-    z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&outBytes[0]))[:]
-    mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
-    modinv := f.MontParamInterleaved
+func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+    	var t [{{$limbCount}}]uint64
+	var c [{{max $limbCount 3}}]uint64
+	modinv := ctx.MontParamInterleaved
 
     if GTE(x, y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
-    {{- range $j := intRange 0 $limbCount}}
-        // round {{$j}}
-        {{- if eq $j 0}}
-            v := x[{{$j}}]
-            c[1], c[0] = bits.Mul64(v, y[0])
-            m := c[0] * modinv
-            c[2] = madd0(m, mod[0], c[0])
-            {{- range $i := intRange 1 $limbCount }}
-                c[1], c[0] = madd1(v, y[{{$i}}], c[1])
-                {{- if eq $i $lastLimb }}
-                    t[{{$lastLimb}}], t[{{sub $i 1}}]  = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
-                {{- else}}
-                    c[2], t[{{sub $i 1}}] = madd2(m, mod[{{$i}}], c[2], c[0])
-                {{- end}}
-            {{- end}}
-        {{- else if eq $j $lastLimb}}
-            v = x[{{$j}}]
-            c[1], c[0] = madd1(v, y[0], t[0])
-            m = c[0] * modinv
-            c[2] = madd0(m, mod[0], c[0])
-            {{- range $i := intRange 1 $limbCount}}
-                c[1], c[0] = madd2(v, y[{{$i}}],  c[1], t[{{$i}}])
-                {{- if eq $i $lastLimb}}
-                    z[{{$lastLimb}}], z[{{sub $i 1}}] = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
-                {{- else}}
-                    c[2], z[{{sub $i 1}}] = madd2(m, mod[{{$i}}],  c[2], c[0])
-                {{- end}}
-            {{- end}}
-        {{- else}}
-            v = x[{{$j}}]
-            c[1], c[0] = madd1(v, y[0], t[0])
-            m = c[0] * modinv
-            c[2] = madd0(m, mod[0], c[0])
-            {{- range $i := intRange 1 $limbCount}}
-                c[1], c[0] = madd2(v, y[{{$i}}], c[1], t[{{$i}}])
-                {{- if eq $i $lastLimb}}
-                    t[{{$lastLimb}}], t[{{sub $i 1}}] = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
-                {{- else}}
-                    c[2], t[{{sub $i 1}}] = madd2(m, mod[{{$i}}], c[2], c[0])
-                {{- end}}
-            {{- end}}
-        {{-  end }}
-    {{- end }}
+	{{- range $j := intRange 0 $limbCount}}
+		// round {{$j}}
+		{{- if eq $j 0}}
+			v := x[{{$j}}]
+			c[1], c[0] = bits.Mul64(v, y[0])
+			m := c[0] * modinv
+			c[2] = madd0(m, mod[0], c[0])
+			{{- range $i := intRange 1 $limbCount }}
+				c[1], c[0] = madd1(v, y[{{$i}}], c[1])
+				{{- if eq $i $lastLimb }}
+					t[{{$lastLimb}}], t[{{sub $i 1}}]  = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
+				{{- else}}
+					c[2], t[{{sub $i 1}}] = madd2(m, mod[{{$i}}], c[2], c[0])
+				{{- end}}
+			{{- end}}
+		{{- else if eq $j $lastLimb}}
+			v = x[{{$j}}]
+			c[1], c[0] = madd1(v, y[0], t[0])
+			m = c[0] * modinv
+			c[2] = madd0(m, mod[0], c[0])
+			{{- range $i := intRange 1 $limbCount}}
+				c[1], c[0] = madd2(v, y[{{$i}}],  c[1], t[{{$i}}])
+				{{- if eq $i $lastLimb}}
+					z[{{$lastLimb}}], z[{{sub $i 1}}] = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
+				{{- else}}
+					c[2], z[{{sub $i 1}}] = madd2(m, mod[{{$i}}],  c[2], c[0])
+				{{- end}}
+			{{- end}}
+		{{- else}}
+			v = x[{{$j}}]
+			c[1], c[0] = madd1(v, y[0], t[0])
+			m = c[0] * modinv
+			c[2] = madd0(m, mod[0], c[0])
+			{{- range $i := intRange 1 $limbCount}}
+				c[1], c[0] = madd2(v, y[{{$i}}], c[1], t[{{$i}}])
+				{{- if eq $i $lastLimb}}
+					t[{{$lastLimb}}], t[{{sub $i 1}}] = madd3(m, mod[{{$i}}], c[0], c[2], c[1])
+				{{- else}}
+					c[2], t[{{sub $i 1}}] = madd2(m, mod[{{$i}}], c[2], c[0])
+				{{- end}}
+			{{- end}}
+		{{-  end }}
+	{{- end }}
 
-    // final subtraction, overwriting z if z > mod
-    c[0] = 0
-    for i := 0; i < {{$limbCount}}; i++ {
-        t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
-    }
+	// final subtraction, overwriting z if z > mod
+	c[0] = 0
+	for i := 0; i < {{$limbCount}}; i++ {
+		t[i], c[0] = bits.Sub64(z[i], mod[i], c[0])
+	}
 
-    if c[0] == 0 {
-        copy(z, t[:])
-    }
-    return nil
+	if c[0] == 0 {
+		copy(z, t[:])
+	}
+
+	return nil
 }

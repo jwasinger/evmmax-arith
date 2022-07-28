@@ -2,6 +2,7 @@
 {{ $lastLimb := sub $limbCount 1}}
 {{ $limbBits := .LimbBits}}
 
+/*
 func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -14,7 +15,7 @@ func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_
     }
 
 	var c, c1 uint64
-	tmp := {{ makeZeroedLimbs $limbCount}}
+	tmp := make([]uint64, {{$limbCount}})
 
 	{{- range $i := intRange 0 $limbCount }}
 		{{- if eq $i 0}}
@@ -39,6 +40,7 @@ func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_
 
 	return nil
 }
+*/
 
 func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]

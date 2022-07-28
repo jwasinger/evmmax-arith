@@ -14,7 +14,7 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
     }
 
     var c uint64 = 0
-    tmp := make([]uint64, len(mod))
+    tmp := make([]uint64, {{$limbCount}})
 
     for i := 0; i < {{$limbCount}}; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)

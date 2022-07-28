@@ -33,15 +33,15 @@ func testMulMont(t *testing.T, limbCount uint) {
 	expected.Mul(expected, montCtx.RInv())
 	expected.Mod(expected, LimbsToInt(mod))
 
-	outLimbs := make([]uint64, montCtx.NumLimbs)
+    outBytes := make([]byte, montCtx.NumLimbs * 8)
 	xLimbs := IntToLimbs(x, montCtx.NumLimbs)
 	yLimbs := IntToLimbs(y, montCtx.NumLimbs)
 
-	if err := montCtx.MulMont(montCtx, LimbsToLEBytes(outLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
+	if err := montCtx.MulMont(montCtx, outBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
         t.Fatal(err)
     }
 
-	result := LimbsToInt(outLimbs)
+	result := LEBytesToInt(outBytes)
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
@@ -106,10 +106,14 @@ func benchmarkMulMont(b *testing.B, limbCount uint) {
 	xLimbs := IntToLimbs(x, limbCount)
 	yLimbs := IntToLimbs(y, limbCount)
 
+    outBytes := LimbsToLEBytes(outLimbs)
+    xBytes := LimbsToLEBytes(xLimbs)
+    yBytes := LimbsToLEBytes(yLimbs)
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		montCtx.MulMont(montCtx, LimbsToLEBytes(outLimbs), LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs))
+		montCtx.MulMont(montCtx, outBytes, xBytes, yBytes)
 	}
 }
 
@@ -285,8 +289,8 @@ func benchmarkSubMod(b *testing.B, limbCount uint) {
 	if err != nil {
 		panic("error")
 	}
-	x := big.NewInt(0)
-    y := big.NewInt(1)
+	x := big.NewInt(1)
+    y := big.NewInt(0)
     outBytes := make([]byte, limbCount * 8)
     xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
     yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
