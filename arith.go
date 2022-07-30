@@ -9,18 +9,18 @@ import (
 type arithFunc func(f *Field, out, x, y []byte) error
 
 // TODO is it faster to compute y-m,x-m and return false if there is borrow-out?
-func GTE(x, y, m []uint64) bool {
-    for i := len(x) - 1; i > 0; i-- {
-        if x[i] > m[i] || y[i] > m[i] {
-            return true
+func GTE(x, y []uint64) bool {
+    for i := 0; i < len(x); i++ {
+        if x[i] < y[i] {
+            return false
         }
     }
 
-    if x[0] >= m[0] || y[0] >= m[0] {
-        return true
+    if x[len(x) - 1] < y[len(x) - 1] {
+        return false
     }
 
-    return false
+    return true
 }
 
 func Eq(n, other []uint64) bool {

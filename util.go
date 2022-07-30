@@ -16,7 +16,7 @@ func LEBytesToInt(v []byte) *big.Int {
 		panic("invalid val length for modext bytes")
 	}
 
-	val := make([]byte, len(v), len(v))
+	val := make([]byte, len(v))
 	copy(val, v)
 
 	// byteswap 8 bytes at a time

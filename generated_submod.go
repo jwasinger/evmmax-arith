@@ -18,7 +18,7 @@ func SubModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -43,7 +43,7 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -77,7 +77,7 @@ func SubModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -104,7 +104,7 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -138,7 +138,7 @@ func SubModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -167,7 +167,7 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -201,7 +201,7 @@ func SubModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -232,7 +232,7 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -266,7 +266,7 @@ func SubModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -299,7 +299,7 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -333,7 +333,7 @@ func SubModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -368,7 +368,7 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -402,7 +402,7 @@ func SubModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -439,7 +439,7 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -473,7 +473,7 @@ func SubModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -512,7 +512,7 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -546,7 +546,7 @@ func SubModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -587,7 +587,7 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -621,7 +621,7 @@ func SubModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -664,7 +664,7 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -698,7 +698,7 @@ func SubModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -743,7 +743,7 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -777,7 +777,7 @@ func SubModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -824,7 +824,7 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 

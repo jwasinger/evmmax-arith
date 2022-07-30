@@ -2,7 +2,6 @@ package mont_arith
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 )
 
@@ -100,9 +99,10 @@ func (m *Field) ValueSize() uint {
 func (m *Field) SetMod(mod []uint64) error {
 	// XXX proper handling without hardcoding
 	if len(mod) == 0 || len(mod) > 12 {
-		fmt.Println(len(mod))
-		panic("invalid mod length")
-	}
+		return errors.New("invalid modulus length")
+	} else if mod[0] % 2 == 0 {
+        return errors.New("modulus cannot be even")
+    }
 
 	var limbCount uint = uint(len(mod))
 	var limbSize uint = 8

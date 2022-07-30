@@ -9,7 +9,7 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 

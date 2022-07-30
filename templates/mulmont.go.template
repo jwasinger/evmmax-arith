@@ -19,7 +19,7 @@ func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes
 	var c [{{max $limbCount 3}}]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 

@@ -10,7 +10,7 @@ func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -49,7 +49,7 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     // TODO move bounds check into its own template?
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 

@@ -101,7 +101,7 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [3]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -152,7 +152,7 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [3]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -216,7 +216,7 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [4]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -297,7 +297,7 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [5]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -399,7 +399,7 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [6]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -526,7 +526,7 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [7]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -682,7 +682,7 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [8]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -871,7 +871,7 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [9]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -1097,7 +1097,7 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [10]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -1364,7 +1364,7 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [11]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0
@@ -1676,7 +1676,7 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var c [12]uint64
 	modinv := ctx.MontParamInterleaved
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 		// round 0

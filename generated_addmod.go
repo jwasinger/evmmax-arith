@@ -17,7 +17,7 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	z := (*[1]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -50,7 +50,7 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -83,7 +83,7 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -116,7 +116,7 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -149,7 +149,7 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -182,7 +182,7 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -215,7 +215,7 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -248,7 +248,7 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -281,7 +281,7 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -314,7 +314,7 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -347,7 +347,7 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
@@ -380,7 +380,7 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) 
 	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, y, mod) {
+    if GTE(x, mod) || GTE(y, mod) {
         return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
     }
 
