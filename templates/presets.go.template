@@ -6,22 +6,67 @@ package mont_arith
 {{ $limbCountPlusOne := add .LimbCount 1}}
 
 type ArithPreset struct {
-	AddModImpls []ModArithFunc
-	SubModImpls []ModArithFunc
-	MulModMontImpls []ModArithFunc
+	AddModImpls []arithFunc
+	SubModImpls []arithFunc
+	MulMontImpls []arithFunc
 }
 
-func MulModMontImpls() []ModArithFunc {
-	result := []ModArithFunc {
-        MulModMont64,
+// Preset same as default except it uses blst's go-asm impl of the arithmetic at 384bit widths
+func Asm384Preset() ArithPreset {
+	addModImpls := []arithFunc {
 		{{- range $i := intRange 2 $limbCountPlusOne}}
-            MulModMont{{mul $i $limbBits}},
+		{{- if eq $i 6 }}
+			AddMod384_asm,
+		{{- else }}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end }}
 		{{- end}}
 	}
 
-	return result
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+		{{- if eq $i 6 }}
+			SubMod384_asm,
+		{{- else }}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end }}
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			{{- if eq $i 6}}
+				MulMont384_asm,
+			{{- else }}
+
+			{{if gte $i $unrolledCutoff}}
+				MulMontNonInterleaved,
+			{{- else }}
+				mulMont{{mul $i $limbBits}},
+			{{- end}}
+			{{- end}}
+		{{- end}}
+	}
+
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }
 
-func DefaultPreset() *ArithPreset {
-	return &ArithPreset{nil, nil, MulModMontImpls()}
+func DefaultPreset() ArithPreset {
+	addModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			mulMont{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }

@@ -1,34 +1,31 @@
-/*
-
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Word) error {
+func MulMontNonInterleaved(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// length x == y assumed
 
 	product := new(big.Int)
-	x := LimbsToInt(xLimbs)
-	y := LimbsToInt(yLimbs)
+	x := LEBytesToInt(x_bytes)
+	y := LEBytesToInt(y_bytes)
 
-	if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
+	if x.Cmp(f.ModulusNonInterleaved) > 0 || y.Cmp(f.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")
 	}
 
 	// m <- ((x*y mod R)N`) mod R
 	product.Mul(x, y)
-	x.And(product, m.mask)
-	x.Mul(x, m.MontParamNonInterleaved)
-	x.And(x, m.mask)
+	x.And(product, f.mask)
+	x.Mul(x, f.MontParamNonInterleaved)
+	x.And(x, f.mask)
 
 	// t <- (T + mN) / R
-	x.Mul(x, m.ModulusNonInterleaved)
+	x.Mul(x, f.ModulusNonInterleaved)
 	x.Add(x, product)
-	x.Rsh(x, m.NumLimbs*64)
+	x.Rsh(x, f.NumLimbs*64)
 
-	if x.Cmp(m.ModulusNonInterleaved) >= 0 {
-		x.Sub(x, m.ModulusNonInterleaved)
+	if x.Cmp(f.ModulusNonInterleaved) >= 0 {
+		x.Sub(x, f.ModulusNonInterleaved)
 	}
 
-	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, m.NumLimbs)))
+	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, f.NumLimbs)))
 
 	return nil
 }
-*/

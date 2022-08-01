@@ -6,128 +6,147 @@ package mont_arith
 
 import (
 	"math/bits"
+    "math/big"
+    "unsafe"
+    "errors"
+    "fmt"
 )
 
-type mulMontFunc func(out, x, y, mod nat, modinv Word) error
-var montgomeryFixedWidth []mulMontFunc = []mulMontFunc {
-    mulModMont64,
-        mulModMont128,
-        mulModMont192,
-        mulModMont256,
-        mulModMont320,
-        mulModMont384,
-        mulModMont448,
-        mulModMont512,
-        mulModMont576,
-        mulModMont640,
-        mulModMont704,
-        mulModMont768,
-}
-
 // madd0 hi = a*b + c (discards lo bits)
-func madd0(a, b, c Word) (Word) {
-	var carry, lo uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	_, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi)
+func madd0(a, b, c uint64) (uint64) {
+	var carry, lo uint64
+	hi, lo := bits.Mul64(a, b)
+	_, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi
 }
 
 // madd1 hi, lo = a*b + c
-func madd1(a, b, c Word) (Word, Word) {
-	var carry uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	lo, carry = bits.Add(uint(lo), uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd1(a, b, c uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
 // madd2 hi, lo = a*b + c + d
-func madd2(a, b, c, d Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-    c = Word(c_uint)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd2(a, b, c, d uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	c, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
-func madd3(a, b, c, d, e Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, c_uint, 0)
-	hi, _ = bits.Add(hi, uint(e), carry)
-	return Word(hi), Word(lo)
+func madd3(a, b, c, d, e uint64) (uint64, uint64) {
+	var carry uint64
+    var c_uint uint64
+	hi, lo := bits.Mul64(a, b)
+	c_uint, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c_uint, 0)
+	hi, _ = bits.Add64(hi, e, carry)
+	return hi, lo
 }
 
 /*
  * begin mulmont implementations
  */
 
-func mulModMont64(out, x, y, mod nat, modinv Word) error {
-	var product [2]uint
-	var c Word
+func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
+	var product [2]uint64
+	var c uint64
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
 
-	product[1], product[0] = bits.Mul(uint(x[0]), uint(y[0]))
-	m := Word(product[0]) * modinv
-	c, _ = madd1(m, mod[0], Word(product[0]))
-	out[0] = c + Word(product[1])
+    x := (*[1]uint64)(unsafe.Pointer(&xBytes[0]))[:]
+    y := (*[1]uint64)(unsafe.Pointer(&yBytes[0]))[:]
+    out := (*[1]uint64)(unsafe.Pointer(&outBytes[0]))[:]
+
+    if x[0] >= mod[0] || y[0] >= mod[0] {
+        return errors.New(fmt.Sprintf("x/y gte modulus"))
+    }
+
+	product[1], product[0] = bits.Mul64(x[0], y[0])
+	m := product[0] * modinv
+	c, _ = madd1(m, mod[0], product[0])
+	out[0] = c + product[1]
 
 	if out[0] > mod[0] {
 		out[0] = c - mod[0]
 	}
-
-	return nil
+    return nil
 }
 
 
 
 
-var Zero2Limbs []uint = make([]uint, 2, 2)
+func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[2]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [3]uint64
+	var D uint64
+	var m, C uint64
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+		
+		t[2], D = bits.Add64(t[2], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+		t[1], C = bits.Add64(t[2], C, 0)
+		t[2], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+		
+		t[2], D = bits.Add64(t[2], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+		t[1], C = bits.Add64(t[2], C, 0)
+		t[2], _ = bits.Add64(0, D, C)
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont128(z, x, y, mod nat, modinv Word) (error) {
-    var t [2]Word
-	var c [3]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					t[1], t[0]  = madd3(m, mod[1], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					z[1], z[0] = madd3(m, mod[1], c[0], c[2], c[1])
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[2] != 0 {
+		// we need to reduce, we have a result on 3 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], _ = bits.Sub64(t[1], mod[1], b)
+		return nil
+	}
+
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 2; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 2; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -136,59 +155,92 @@ func mulModMont128(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[3]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[3]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [4]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero3Limbs []uint = make([]uint, 3, 3)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+		
+		t[3], D = bits.Add64(t[3], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+		t[2], C = bits.Add64(t[3], C, 0)
+		t[3], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+		
+		t[3], D = bits.Add64(t[3], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+		t[2], C = bits.Add64(t[3], C, 0)
+		t[3], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+		
+		t[3], D = bits.Add64(t[3], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+		t[2], C = bits.Add64(t[3], C, 0)
+		t[3], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[3] != 0 {
+		// we need to reduce, we have a result on 4 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], _ = bits.Sub64(t[2], mod[2], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont192(z, x, y, mod nat, modinv Word) (error) {
-    var t [3]Word
-	var c [3]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					t[2], t[1]  = madd3(m, mod[2], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					t[2], t[1] = madd3(m, mod[2], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					z[2], z[1] = madd3(m, mod[2], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 3; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 3; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -197,76 +249,119 @@ func mulModMont192(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[4]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[4]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [5]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero4Limbs []uint = make([]uint, 4, 4)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+		
+		t[4], D = bits.Add64(t[4], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+		t[3], C = bits.Add64(t[4], C, 0)
+		t[4], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+		
+		t[4], D = bits.Add64(t[4], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+		t[3], C = bits.Add64(t[4], C, 0)
+		t[4], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+		
+		t[4], D = bits.Add64(t[4], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+		t[3], C = bits.Add64(t[4], C, 0)
+		t[4], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+		
+		t[4], D = bits.Add64(t[4], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+		t[3], C = bits.Add64(t[4], C, 0)
+		t[4], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[4] != 0 {
+		// we need to reduce, we have a result on 5 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], _ = bits.Sub64(t[3], mod[3], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont256(z, x, y, mod nat, modinv Word) (error) {
-    var t [4]Word
-	var c [4]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					t[3], t[2]  = madd3(m, mod[3], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					t[3], t[2] = madd3(m, mod[3], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					t[3], t[2] = madd3(m, mod[3], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					z[3], z[2] = madd3(m, mod[3], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 4; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 4; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -275,97 +370,150 @@ func mulModMont256(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[5]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[5]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [6]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero5Limbs []uint = make([]uint, 5, 5)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+		
+		t[5], D = bits.Add64(t[5], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+		t[4], C = bits.Add64(t[5], C, 0)
+		t[5], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+		
+		t[5], D = bits.Add64(t[5], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+		t[4], C = bits.Add64(t[5], C, 0)
+		t[5], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+		
+		t[5], D = bits.Add64(t[5], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+		t[4], C = bits.Add64(t[5], C, 0)
+		t[5], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+		
+		t[5], D = bits.Add64(t[5], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+		t[4], C = bits.Add64(t[5], C, 0)
+		t[5], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+		
+		t[5], D = bits.Add64(t[5], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+		t[4], C = bits.Add64(t[5], C, 0)
+		t[5], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[5] != 0 {
+		// we need to reduce, we have a result on 6 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], _ = bits.Sub64(t[4], mod[4], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont320(z, x, y, mod nat, modinv Word) (error) {
-    var t [5]Word
-	var c [5]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					t[4], t[3]  = madd3(m, mod[4], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					t[4], t[3] = madd3(m, mod[4], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					t[4], t[3] = madd3(m, mod[4], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					t[4], t[3] = madd3(m, mod[4], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					z[4], z[3] = madd3(m, mod[4], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 5; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 5; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -374,122 +522,185 @@ func mulModMont320(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[6]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[6]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [7]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero6Limbs []uint = make([]uint, 6, 6)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+		
+		t[6], D = bits.Add64(t[6], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+		t[5], C = bits.Add64(t[6], C, 0)
+		t[6], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[6] != 0 {
+		// we need to reduce, we have a result on 7 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], _ = bits.Sub64(t[5], mod[5], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont384(z, x, y, mod nat, modinv Word) (error) {
-    var t [6]Word
-	var c [6]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					t[5], t[4]  = madd3(m, mod[5], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					t[5], t[4] = madd3(m, mod[5], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					t[5], t[4] = madd3(m, mod[5], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					t[5], t[4] = madd3(m, mod[5], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					t[5], t[4] = madd3(m, mod[5], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					z[5], z[4] = madd3(m, mod[5], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 6; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 6; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -498,151 +709,224 @@ func mulModMont384(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[7]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[7]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [8]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero7Limbs []uint = make([]uint, 7, 7)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+		
+		t[7], D = bits.Add64(t[7], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+		t[6], C = bits.Add64(t[7], C, 0)
+		t[7], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[7] != 0 {
+		// we need to reduce, we have a result on 8 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], _ = bits.Sub64(t[6], mod[6], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont448(z, x, y, mod nat, modinv Word) (error) {
-    var t [7]Word
-	var c [7]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					t[6], t[5]  = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					t[6], t[5] = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					t[6], t[5] = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					t[6], t[5] = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					t[6], t[5] = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					t[6], t[5] = madd3(m, mod[6], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					z[6], z[5] = madd3(m, mod[6], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 7; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 7; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -651,184 +935,267 @@ func mulModMont448(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[8]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[8]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [9]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero8Limbs []uint = make([]uint, 8, 8)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+				C, t[7] = madd1(x[0], y[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+				C, t[7] = madd2(x[1], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+				C, t[7] = madd2(x[2], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+				C, t[7] = madd2(x[3], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+				C, t[7] = madd2(x[4], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+				C, t[7] = madd2(x[5], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+				C, t[7] = madd2(x[6], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[7], y[0], t[0])
+				C, t[1] = madd2(x[7], y[1], t[1], C)
+				C, t[2] = madd2(x[7], y[2], t[2], C)
+				C, t[3] = madd2(x[7], y[3], t[3], C)
+				C, t[4] = madd2(x[7], y[4], t[4], C)
+				C, t[5] = madd2(x[7], y[5], t[5], C)
+				C, t[6] = madd2(x[7], y[6], t[6], C)
+				C, t[7] = madd2(x[7], y[7], t[7], C)
+		
+		t[8], D = bits.Add64(t[8], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+		t[7], C = bits.Add64(t[8], C, 0)
+		t[8], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[8] != 0 {
+		// we need to reduce, we have a result on 9 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], b = bits.Sub64(t[6], mod[6], b)
+				z[7], _ = bits.Sub64(t[7], mod[7], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont512(z, x, y, mod nat, modinv Word) (error) {
-    var t [8]Word
-	var c [8]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd1(v, y[7], c[1])
-					t[7], t[6]  = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					t[7], t[6] = madd3(m, mod[7], c[0], c[2], c[1])
-		// round 7
-			v = x[7]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					c[2], z[5] = madd2(m, mod[6],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[7],  c[1], t[7])
-					z[7], z[6] = madd3(m, mod[7], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
+		z[7] = t[7]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 8; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 8; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -837,221 +1204,314 @@ func mulModMont512(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[9]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[9]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [10]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero9Limbs []uint = make([]uint, 9, 9)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+				C, t[7] = madd1(x[0], y[7], C)
+				C, t[8] = madd1(x[0], y[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+				C, t[7] = madd2(x[1], y[7], t[7], C)
+				C, t[8] = madd2(x[1], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+				C, t[7] = madd2(x[2], y[7], t[7], C)
+				C, t[8] = madd2(x[2], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+				C, t[7] = madd2(x[3], y[7], t[7], C)
+				C, t[8] = madd2(x[3], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+				C, t[7] = madd2(x[4], y[7], t[7], C)
+				C, t[8] = madd2(x[4], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+				C, t[7] = madd2(x[5], y[7], t[7], C)
+				C, t[8] = madd2(x[5], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+				C, t[7] = madd2(x[6], y[7], t[7], C)
+				C, t[8] = madd2(x[6], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[7], y[0], t[0])
+				C, t[1] = madd2(x[7], y[1], t[1], C)
+				C, t[2] = madd2(x[7], y[2], t[2], C)
+				C, t[3] = madd2(x[7], y[3], t[3], C)
+				C, t[4] = madd2(x[7], y[4], t[4], C)
+				C, t[5] = madd2(x[7], y[5], t[5], C)
+				C, t[6] = madd2(x[7], y[6], t[6], C)
+				C, t[7] = madd2(x[7], y[7], t[7], C)
+				C, t[8] = madd2(x[7], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[8], y[0], t[0])
+				C, t[1] = madd2(x[8], y[1], t[1], C)
+				C, t[2] = madd2(x[8], y[2], t[2], C)
+				C, t[3] = madd2(x[8], y[3], t[3], C)
+				C, t[4] = madd2(x[8], y[4], t[4], C)
+				C, t[5] = madd2(x[8], y[5], t[5], C)
+				C, t[6] = madd2(x[8], y[6], t[6], C)
+				C, t[7] = madd2(x[8], y[7], t[7], C)
+				C, t[8] = madd2(x[8], y[8], t[8], C)
+		
+		t[9], D = bits.Add64(t[9], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+		t[8], C = bits.Add64(t[9], C, 0)
+		t[9], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[9] != 0 {
+		// we need to reduce, we have a result on 10 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], b = bits.Sub64(t[6], mod[6], b)
+				z[7], b = bits.Sub64(t[7], mod[7], b)
+				z[8], _ = bits.Sub64(t[8], mod[8], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont576(z, x, y, mod nat, modinv Word) (error) {
-    var t [9]Word
-	var c [9]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd1(v, y[7], c[1])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd1(v, y[8], c[1])
-					t[8], t[7]  = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 7
-			v = x[7]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					t[8], t[7] = madd3(m, mod[8], c[0], c[2], c[1])
-		// round 8
-			v = x[8]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					c[2], z[5] = madd2(m, mod[6],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[7],  c[1], t[7])
-					c[2], z[6] = madd2(m, mod[7],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[8],  c[1], t[8])
-					z[8], z[7] = madd3(m, mod[8], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
+		z[7] = t[7]
+		z[8] = t[8]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 9; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 9; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -1060,262 +1520,365 @@ func mulModMont576(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[10]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[10]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [11]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero10Limbs []uint = make([]uint, 10, 10)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+				C, t[7] = madd1(x[0], y[7], C)
+				C, t[8] = madd1(x[0], y[8], C)
+				C, t[9] = madd1(x[0], y[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+				C, t[7] = madd2(x[1], y[7], t[7], C)
+				C, t[8] = madd2(x[1], y[8], t[8], C)
+				C, t[9] = madd2(x[1], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+				C, t[7] = madd2(x[2], y[7], t[7], C)
+				C, t[8] = madd2(x[2], y[8], t[8], C)
+				C, t[9] = madd2(x[2], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+				C, t[7] = madd2(x[3], y[7], t[7], C)
+				C, t[8] = madd2(x[3], y[8], t[8], C)
+				C, t[9] = madd2(x[3], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+				C, t[7] = madd2(x[4], y[7], t[7], C)
+				C, t[8] = madd2(x[4], y[8], t[8], C)
+				C, t[9] = madd2(x[4], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+				C, t[7] = madd2(x[5], y[7], t[7], C)
+				C, t[8] = madd2(x[5], y[8], t[8], C)
+				C, t[9] = madd2(x[5], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+				C, t[7] = madd2(x[6], y[7], t[7], C)
+				C, t[8] = madd2(x[6], y[8], t[8], C)
+				C, t[9] = madd2(x[6], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[7], y[0], t[0])
+				C, t[1] = madd2(x[7], y[1], t[1], C)
+				C, t[2] = madd2(x[7], y[2], t[2], C)
+				C, t[3] = madd2(x[7], y[3], t[3], C)
+				C, t[4] = madd2(x[7], y[4], t[4], C)
+				C, t[5] = madd2(x[7], y[5], t[5], C)
+				C, t[6] = madd2(x[7], y[6], t[6], C)
+				C, t[7] = madd2(x[7], y[7], t[7], C)
+				C, t[8] = madd2(x[7], y[8], t[8], C)
+				C, t[9] = madd2(x[7], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[8], y[0], t[0])
+				C, t[1] = madd2(x[8], y[1], t[1], C)
+				C, t[2] = madd2(x[8], y[2], t[2], C)
+				C, t[3] = madd2(x[8], y[3], t[3], C)
+				C, t[4] = madd2(x[8], y[4], t[4], C)
+				C, t[5] = madd2(x[8], y[5], t[5], C)
+				C, t[6] = madd2(x[8], y[6], t[6], C)
+				C, t[7] = madd2(x[8], y[7], t[7], C)
+				C, t[8] = madd2(x[8], y[8], t[8], C)
+				C, t[9] = madd2(x[8], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[9], y[0], t[0])
+				C, t[1] = madd2(x[9], y[1], t[1], C)
+				C, t[2] = madd2(x[9], y[2], t[2], C)
+				C, t[3] = madd2(x[9], y[3], t[3], C)
+				C, t[4] = madd2(x[9], y[4], t[4], C)
+				C, t[5] = madd2(x[9], y[5], t[5], C)
+				C, t[6] = madd2(x[9], y[6], t[6], C)
+				C, t[7] = madd2(x[9], y[7], t[7], C)
+				C, t[8] = madd2(x[9], y[8], t[8], C)
+				C, t[9] = madd2(x[9], y[9], t[9], C)
+		
+		t[10], D = bits.Add64(t[10], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+		t[9], C = bits.Add64(t[10], C, 0)
+		t[10], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[10] != 0 {
+		// we need to reduce, we have a result on 11 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], b = bits.Sub64(t[6], mod[6], b)
+				z[7], b = bits.Sub64(t[7], mod[7], b)
+				z[8], b = bits.Sub64(t[8], mod[8], b)
+				z[9], _ = bits.Sub64(t[9], mod[9], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont640(z, x, y, mod nat, modinv Word) (error) {
-    var t [10]Word
-	var c [10]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd1(v, y[7], c[1])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd1(v, y[8], c[1])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd1(v, y[9], c[1])
-					t[9], t[8]  = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 7
-			v = x[7]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 8
-			v = x[8]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					t[9], t[8] = madd3(m, mod[9], c[0], c[2], c[1])
-		// round 9
-			v = x[9]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					c[2], z[5] = madd2(m, mod[6],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[7],  c[1], t[7])
-					c[2], z[6] = madd2(m, mod[7],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[8],  c[1], t[8])
-					c[2], z[7] = madd2(m, mod[8],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[9],  c[1], t[9])
-					z[9], z[8] = madd3(m, mod[9], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
+		z[7] = t[7]
+		z[8] = t[8]
+		z[9] = t[9]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 10; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 10; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -1324,307 +1887,420 @@ func mulModMont640(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[11]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[11]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [12]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero11Limbs []uint = make([]uint, 11, 11)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+				C, t[7] = madd1(x[0], y[7], C)
+				C, t[8] = madd1(x[0], y[8], C)
+				C, t[9] = madd1(x[0], y[9], C)
+				C, t[10] = madd1(x[0], y[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+				C, t[7] = madd2(x[1], y[7], t[7], C)
+				C, t[8] = madd2(x[1], y[8], t[8], C)
+				C, t[9] = madd2(x[1], y[9], t[9], C)
+				C, t[10] = madd2(x[1], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+				C, t[7] = madd2(x[2], y[7], t[7], C)
+				C, t[8] = madd2(x[2], y[8], t[8], C)
+				C, t[9] = madd2(x[2], y[9], t[9], C)
+				C, t[10] = madd2(x[2], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+				C, t[7] = madd2(x[3], y[7], t[7], C)
+				C, t[8] = madd2(x[3], y[8], t[8], C)
+				C, t[9] = madd2(x[3], y[9], t[9], C)
+				C, t[10] = madd2(x[3], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+				C, t[7] = madd2(x[4], y[7], t[7], C)
+				C, t[8] = madd2(x[4], y[8], t[8], C)
+				C, t[9] = madd2(x[4], y[9], t[9], C)
+				C, t[10] = madd2(x[4], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+				C, t[7] = madd2(x[5], y[7], t[7], C)
+				C, t[8] = madd2(x[5], y[8], t[8], C)
+				C, t[9] = madd2(x[5], y[9], t[9], C)
+				C, t[10] = madd2(x[5], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+				C, t[7] = madd2(x[6], y[7], t[7], C)
+				C, t[8] = madd2(x[6], y[8], t[8], C)
+				C, t[9] = madd2(x[6], y[9], t[9], C)
+				C, t[10] = madd2(x[6], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[7], y[0], t[0])
+				C, t[1] = madd2(x[7], y[1], t[1], C)
+				C, t[2] = madd2(x[7], y[2], t[2], C)
+				C, t[3] = madd2(x[7], y[3], t[3], C)
+				C, t[4] = madd2(x[7], y[4], t[4], C)
+				C, t[5] = madd2(x[7], y[5], t[5], C)
+				C, t[6] = madd2(x[7], y[6], t[6], C)
+				C, t[7] = madd2(x[7], y[7], t[7], C)
+				C, t[8] = madd2(x[7], y[8], t[8], C)
+				C, t[9] = madd2(x[7], y[9], t[9], C)
+				C, t[10] = madd2(x[7], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[8], y[0], t[0])
+				C, t[1] = madd2(x[8], y[1], t[1], C)
+				C, t[2] = madd2(x[8], y[2], t[2], C)
+				C, t[3] = madd2(x[8], y[3], t[3], C)
+				C, t[4] = madd2(x[8], y[4], t[4], C)
+				C, t[5] = madd2(x[8], y[5], t[5], C)
+				C, t[6] = madd2(x[8], y[6], t[6], C)
+				C, t[7] = madd2(x[8], y[7], t[7], C)
+				C, t[8] = madd2(x[8], y[8], t[8], C)
+				C, t[9] = madd2(x[8], y[9], t[9], C)
+				C, t[10] = madd2(x[8], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[9], y[0], t[0])
+				C, t[1] = madd2(x[9], y[1], t[1], C)
+				C, t[2] = madd2(x[9], y[2], t[2], C)
+				C, t[3] = madd2(x[9], y[3], t[3], C)
+				C, t[4] = madd2(x[9], y[4], t[4], C)
+				C, t[5] = madd2(x[9], y[5], t[5], C)
+				C, t[6] = madd2(x[9], y[6], t[6], C)
+				C, t[7] = madd2(x[9], y[7], t[7], C)
+				C, t[8] = madd2(x[9], y[8], t[8], C)
+				C, t[9] = madd2(x[9], y[9], t[9], C)
+				C, t[10] = madd2(x[9], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[10], y[0], t[0])
+				C, t[1] = madd2(x[10], y[1], t[1], C)
+				C, t[2] = madd2(x[10], y[2], t[2], C)
+				C, t[3] = madd2(x[10], y[3], t[3], C)
+				C, t[4] = madd2(x[10], y[4], t[4], C)
+				C, t[5] = madd2(x[10], y[5], t[5], C)
+				C, t[6] = madd2(x[10], y[6], t[6], C)
+				C, t[7] = madd2(x[10], y[7], t[7], C)
+				C, t[8] = madd2(x[10], y[8], t[8], C)
+				C, t[9] = madd2(x[10], y[9], t[9], C)
+				C, t[10] = madd2(x[10], y[10], t[10], C)
+		
+		t[11], D = bits.Add64(t[11], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+		t[10], C = bits.Add64(t[11], C, 0)
+		t[11], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[11] != 0 {
+		// we need to reduce, we have a result on 12 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], b = bits.Sub64(t[6], mod[6], b)
+				z[7], b = bits.Sub64(t[7], mod[7], b)
+				z[8], b = bits.Sub64(t[8], mod[8], b)
+				z[9], b = bits.Sub64(t[9], mod[9], b)
+				z[10], _ = bits.Sub64(t[10], mod[10], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont704(z, x, y, mod nat, modinv Word) (error) {
-    var t [11]Word
-	var c [11]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd1(v, y[7], c[1])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd1(v, y[8], c[1])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd1(v, y[9], c[1])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd1(v, y[10], c[1])
-					t[10], t[9]  = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 7
-			v = x[7]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 8
-			v = x[8]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 9
-			v = x[9]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					t[10], t[9] = madd3(m, mod[10], c[0], c[2], c[1])
-		// round 10
-			v = x[10]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					c[2], z[5] = madd2(m, mod[6],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[7],  c[1], t[7])
-					c[2], z[6] = madd2(m, mod[7],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[8],  c[1], t[8])
-					c[2], z[7] = madd2(m, mod[8],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[9],  c[1], t[9])
-					c[2], z[8] = madd2(m, mod[9],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[10],  c[1], t[10])
-					z[10], z[9] = madd3(m, mod[10], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
+		z[7] = t[7]
+		z[8] = t[8]
+		z[9] = t[9]
+		z[10] = t[10]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 11; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 11; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
@@ -1633,392 +2309,511 @@ func mulModMont704(z, x, y, mod nat, modinv Word) (error) {
 
 
 
+func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[12]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[12]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [13]uint64
+	var D uint64
+	var m, C uint64
 
-var Zero12Limbs []uint = make([]uint, 12, 12)
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = bits.Mul64(x[0], y[0])
+				C, t[1] = madd1(x[0], y[1], C)
+				C, t[2] = madd1(x[0], y[2], C)
+				C, t[3] = madd1(x[0], y[3], C)
+				C, t[4] = madd1(x[0], y[4], C)
+				C, t[5] = madd1(x[0], y[5], C)
+				C, t[6] = madd1(x[0], y[6], C)
+				C, t[7] = madd1(x[0], y[7], C)
+				C, t[8] = madd1(x[0], y[8], C)
+				C, t[9] = madd1(x[0], y[9], C)
+				C, t[10] = madd1(x[0], y[10], C)
+				C, t[11] = madd1(x[0], y[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[1], y[0], t[0])
+				C, t[1] = madd2(x[1], y[1], t[1], C)
+				C, t[2] = madd2(x[1], y[2], t[2], C)
+				C, t[3] = madd2(x[1], y[3], t[3], C)
+				C, t[4] = madd2(x[1], y[4], t[4], C)
+				C, t[5] = madd2(x[1], y[5], t[5], C)
+				C, t[6] = madd2(x[1], y[6], t[6], C)
+				C, t[7] = madd2(x[1], y[7], t[7], C)
+				C, t[8] = madd2(x[1], y[8], t[8], C)
+				C, t[9] = madd2(x[1], y[9], t[9], C)
+				C, t[10] = madd2(x[1], y[10], t[10], C)
+				C, t[11] = madd2(x[1], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[2], y[0], t[0])
+				C, t[1] = madd2(x[2], y[1], t[1], C)
+				C, t[2] = madd2(x[2], y[2], t[2], C)
+				C, t[3] = madd2(x[2], y[3], t[3], C)
+				C, t[4] = madd2(x[2], y[4], t[4], C)
+				C, t[5] = madd2(x[2], y[5], t[5], C)
+				C, t[6] = madd2(x[2], y[6], t[6], C)
+				C, t[7] = madd2(x[2], y[7], t[7], C)
+				C, t[8] = madd2(x[2], y[8], t[8], C)
+				C, t[9] = madd2(x[2], y[9], t[9], C)
+				C, t[10] = madd2(x[2], y[10], t[10], C)
+				C, t[11] = madd2(x[2], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[3], y[0], t[0])
+				C, t[1] = madd2(x[3], y[1], t[1], C)
+				C, t[2] = madd2(x[3], y[2], t[2], C)
+				C, t[3] = madd2(x[3], y[3], t[3], C)
+				C, t[4] = madd2(x[3], y[4], t[4], C)
+				C, t[5] = madd2(x[3], y[5], t[5], C)
+				C, t[6] = madd2(x[3], y[6], t[6], C)
+				C, t[7] = madd2(x[3], y[7], t[7], C)
+				C, t[8] = madd2(x[3], y[8], t[8], C)
+				C, t[9] = madd2(x[3], y[9], t[9], C)
+				C, t[10] = madd2(x[3], y[10], t[10], C)
+				C, t[11] = madd2(x[3], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[4], y[0], t[0])
+				C, t[1] = madd2(x[4], y[1], t[1], C)
+				C, t[2] = madd2(x[4], y[2], t[2], C)
+				C, t[3] = madd2(x[4], y[3], t[3], C)
+				C, t[4] = madd2(x[4], y[4], t[4], C)
+				C, t[5] = madd2(x[4], y[5], t[5], C)
+				C, t[6] = madd2(x[4], y[6], t[6], C)
+				C, t[7] = madd2(x[4], y[7], t[7], C)
+				C, t[8] = madd2(x[4], y[8], t[8], C)
+				C, t[9] = madd2(x[4], y[9], t[9], C)
+				C, t[10] = madd2(x[4], y[10], t[10], C)
+				C, t[11] = madd2(x[4], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[5], y[0], t[0])
+				C, t[1] = madd2(x[5], y[1], t[1], C)
+				C, t[2] = madd2(x[5], y[2], t[2], C)
+				C, t[3] = madd2(x[5], y[3], t[3], C)
+				C, t[4] = madd2(x[5], y[4], t[4], C)
+				C, t[5] = madd2(x[5], y[5], t[5], C)
+				C, t[6] = madd2(x[5], y[6], t[6], C)
+				C, t[7] = madd2(x[5], y[7], t[7], C)
+				C, t[8] = madd2(x[5], y[8], t[8], C)
+				C, t[9] = madd2(x[5], y[9], t[9], C)
+				C, t[10] = madd2(x[5], y[10], t[10], C)
+				C, t[11] = madd2(x[5], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[6], y[0], t[0])
+				C, t[1] = madd2(x[6], y[1], t[1], C)
+				C, t[2] = madd2(x[6], y[2], t[2], C)
+				C, t[3] = madd2(x[6], y[3], t[3], C)
+				C, t[4] = madd2(x[6], y[4], t[4], C)
+				C, t[5] = madd2(x[6], y[5], t[5], C)
+				C, t[6] = madd2(x[6], y[6], t[6], C)
+				C, t[7] = madd2(x[6], y[7], t[7], C)
+				C, t[8] = madd2(x[6], y[8], t[8], C)
+				C, t[9] = madd2(x[6], y[9], t[9], C)
+				C, t[10] = madd2(x[6], y[10], t[10], C)
+				C, t[11] = madd2(x[6], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[7], y[0], t[0])
+				C, t[1] = madd2(x[7], y[1], t[1], C)
+				C, t[2] = madd2(x[7], y[2], t[2], C)
+				C, t[3] = madd2(x[7], y[3], t[3], C)
+				C, t[4] = madd2(x[7], y[4], t[4], C)
+				C, t[5] = madd2(x[7], y[5], t[5], C)
+				C, t[6] = madd2(x[7], y[6], t[6], C)
+				C, t[7] = madd2(x[7], y[7], t[7], C)
+				C, t[8] = madd2(x[7], y[8], t[8], C)
+				C, t[9] = madd2(x[7], y[9], t[9], C)
+				C, t[10] = madd2(x[7], y[10], t[10], C)
+				C, t[11] = madd2(x[7], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[8], y[0], t[0])
+				C, t[1] = madd2(x[8], y[1], t[1], C)
+				C, t[2] = madd2(x[8], y[2], t[2], C)
+				C, t[3] = madd2(x[8], y[3], t[3], C)
+				C, t[4] = madd2(x[8], y[4], t[4], C)
+				C, t[5] = madd2(x[8], y[5], t[5], C)
+				C, t[6] = madd2(x[8], y[6], t[6], C)
+				C, t[7] = madd2(x[8], y[7], t[7], C)
+				C, t[8] = madd2(x[8], y[8], t[8], C)
+				C, t[9] = madd2(x[8], y[9], t[9], C)
+				C, t[10] = madd2(x[8], y[10], t[10], C)
+				C, t[11] = madd2(x[8], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[9], y[0], t[0])
+				C, t[1] = madd2(x[9], y[1], t[1], C)
+				C, t[2] = madd2(x[9], y[2], t[2], C)
+				C, t[3] = madd2(x[9], y[3], t[3], C)
+				C, t[4] = madd2(x[9], y[4], t[4], C)
+				C, t[5] = madd2(x[9], y[5], t[5], C)
+				C, t[6] = madd2(x[9], y[6], t[6], C)
+				C, t[7] = madd2(x[9], y[7], t[7], C)
+				C, t[8] = madd2(x[9], y[8], t[8], C)
+				C, t[9] = madd2(x[9], y[9], t[9], C)
+				C, t[10] = madd2(x[9], y[10], t[10], C)
+				C, t[11] = madd2(x[9], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[10], y[0], t[0])
+				C, t[1] = madd2(x[10], y[1], t[1], C)
+				C, t[2] = madd2(x[10], y[2], t[2], C)
+				C, t[3] = madd2(x[10], y[3], t[3], C)
+				C, t[4] = madd2(x[10], y[4], t[4], C)
+				C, t[5] = madd2(x[10], y[5], t[5], C)
+				C, t[6] = madd2(x[10], y[6], t[6], C)
+				C, t[7] = madd2(x[10], y[7], t[7], C)
+				C, t[8] = madd2(x[10], y[8], t[8], C)
+				C, t[9] = madd2(x[10], y[9], t[9], C)
+				C, t[10] = madd2(x[10], y[10], t[10], C)
+				C, t[11] = madd2(x[10], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
+		// -----------------------------------
+		// First loop
+		
+			C, t[0] = madd1(x[11], y[0], t[0])
+				C, t[1] = madd2(x[11], y[1], t[1], C)
+				C, t[2] = madd2(x[11], y[2], t[2], C)
+				C, t[3] = madd2(x[11], y[3], t[3], C)
+				C, t[4] = madd2(x[11], y[4], t[4], C)
+				C, t[5] = madd2(x[11], y[5], t[5], C)
+				C, t[6] = madd2(x[11], y[6], t[6], C)
+				C, t[7] = madd2(x[11], y[7], t[7], C)
+				C, t[8] = madd2(x[11], y[8], t[8], C)
+				C, t[9] = madd2(x[11], y[9], t[9], C)
+				C, t[10] = madd2(x[11], y[10], t[10], C)
+				C, t[11] = madd2(x[11], y[11], t[11], C)
+		
+		t[12], D = bits.Add64(t[12], C, 0)
+		// m = t[0]n'[0] mod W
+		m = t[0] * ctx.MontParamInterleaved
+		// -----------------------------------
+		// Second loop
+		C = madd0(m, mod[0], t[0])
+				C, t[0] = madd2(m, mod[1], t[1], C)
+				C, t[1] = madd2(m, mod[2], t[2], C)
+				C, t[2] = madd2(m, mod[3], t[3], C)
+				C, t[3] = madd2(m, mod[4], t[4], C)
+				C, t[4] = madd2(m, mod[5], t[5], C)
+				C, t[5] = madd2(m, mod[6], t[6], C)
+				C, t[6] = madd2(m, mod[7], t[7], C)
+				C, t[7] = madd2(m, mod[8], t[8], C)
+				C, t[8] = madd2(m, mod[9], t[9], C)
+				C, t[9] = madd2(m, mod[10], t[10], C)
+				C, t[10] = madd2(m, mod[11], t[11], C)
+		t[11], C = bits.Add64(t[12], C, 0)
+		t[12], _ = bits.Add64(0, D, C)
 
-/* NOTE: addmod/submod/mulmodmont assume:
-	len(z) == len(x) == len(y) == len(mod)
-    and
-    x < mod, y < mod
-*/
+    // TODO this shows up here, but I can't find reference to it in any paper
+    // that references CIOS. is this just a quick hack for the final subtraction?
+	if t[12] != 0 {
+		// we need to reduce, we have a result on 13 words
+		var b uint64
+		z[0],b = bits.Sub64(t[0], mod[0], 0)
+				z[1], b = bits.Sub64(t[1], mod[1], b)
+				z[2], b = bits.Sub64(t[2], mod[2], b)
+				z[3], b = bits.Sub64(t[3], mod[3], b)
+				z[4], b = bits.Sub64(t[4], mod[4], b)
+				z[5], b = bits.Sub64(t[5], mod[5], b)
+				z[6], b = bits.Sub64(t[6], mod[6], b)
+				z[7], b = bits.Sub64(t[7], mod[7], b)
+				z[8], b = bits.Sub64(t[8], mod[8], b)
+				z[9], b = bits.Sub64(t[9], mod[9], b)
+				z[10], b = bits.Sub64(t[10], mod[10], b)
+				z[11], _ = bits.Sub64(t[11], mod[11], b)
+		return nil
+	}
 
-// NOTE: assumes x < mod and y < mod
-func mulModMont768(z, x, y, mod nat, modinv Word) (error) {
-    var t [12]Word
-	var c [12]Word
-		// round 0
-			v := x[0]
-			c1_uint, c0_uint := bits.Mul(uint(v), uint(y[0]))
-            c[0] = Word(c0_uint)
-            c[1] = Word(c1_uint)
-			m := c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd1(v, y[1], c[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd1(v, y[2], c[1])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd1(v, y[3], c[1])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd1(v, y[4], c[1])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd1(v, y[5], c[1])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd1(v, y[6], c[1])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd1(v, y[7], c[1])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd1(v, y[8], c[1])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd1(v, y[9], c[1])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd1(v, y[10], c[1])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd1(v, y[11], c[1])
-					t[11], t[10]  = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 1
-			v = x[1]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 2
-			v = x[2]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 3
-			v = x[3]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 4
-			v = x[4]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 5
-			v = x[5]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 6
-			v = x[6]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 7
-			v = x[7]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 8
-			v = x[8]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 9
-			v = x[9]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 10
-			v = x[10]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1], c[1], t[1])
-					c[2], t[0] = madd2(m, mod[1], c[2], c[0])
-				c[1], c[0] = madd2(v, y[2], c[1], t[2])
-					c[2], t[1] = madd2(m, mod[2], c[2], c[0])
-				c[1], c[0] = madd2(v, y[3], c[1], t[3])
-					c[2], t[2] = madd2(m, mod[3], c[2], c[0])
-				c[1], c[0] = madd2(v, y[4], c[1], t[4])
-					c[2], t[3] = madd2(m, mod[4], c[2], c[0])
-				c[1], c[0] = madd2(v, y[5], c[1], t[5])
-					c[2], t[4] = madd2(m, mod[5], c[2], c[0])
-				c[1], c[0] = madd2(v, y[6], c[1], t[6])
-					c[2], t[5] = madd2(m, mod[6], c[2], c[0])
-				c[1], c[0] = madd2(v, y[7], c[1], t[7])
-					c[2], t[6] = madd2(m, mod[7], c[2], c[0])
-				c[1], c[0] = madd2(v, y[8], c[1], t[8])
-					c[2], t[7] = madd2(m, mod[8], c[2], c[0])
-				c[1], c[0] = madd2(v, y[9], c[1], t[9])
-					c[2], t[8] = madd2(m, mod[9], c[2], c[0])
-				c[1], c[0] = madd2(v, y[10], c[1], t[10])
-					c[2], t[9] = madd2(m, mod[10], c[2], c[0])
-				c[1], c[0] = madd2(v, y[11], c[1], t[11])
-					t[11], t[10] = madd3(m, mod[11], c[0], c[2], c[1])
-		// round 11
-			v = x[11]
-			c[1], c[0] = madd1(v, y[0], t[0])
-			m = c[0] * modinv
-			c[2] = madd0(m, mod[0], c[0])
-				c[1], c[0] = madd2(v, y[1],  c[1], t[1])
-					c[2], z[0] = madd2(m, mod[1],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[2],  c[1], t[2])
-					c[2], z[1] = madd2(m, mod[2],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[3],  c[1], t[3])
-					c[2], z[2] = madd2(m, mod[3],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[4],  c[1], t[4])
-					c[2], z[3] = madd2(m, mod[4],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[5],  c[1], t[5])
-					c[2], z[4] = madd2(m, mod[5],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[6],  c[1], t[6])
-					c[2], z[5] = madd2(m, mod[6],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[7],  c[1], t[7])
-					c[2], z[6] = madd2(m, mod[7],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[8],  c[1], t[8])
-					c[2], z[7] = madd2(m, mod[8],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[9],  c[1], t[9])
-					c[2], z[8] = madd2(m, mod[9],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[10],  c[1], t[10])
-					c[2], z[9] = madd2(m, mod[10],  c[2], c[0])
-				c[1], c[0] = madd2(v, y[11],  c[1], t[11])
-					z[11], z[10] = madd3(m, mod[11], c[0], c[2], c[1])
+	// copy t into z
+		z[0] = t[0]
+		z[1] = t[1]
+		z[2] = t[2]
+		z[3] = t[3]
+		z[4] = t[4]
+		z[5] = t[5]
+		z[6] = t[6]
+		z[7] = t[7]
+		z[8] = t[8]
+		z[9] = t[9]
+		z[10] = t[10]
+		z[11] = t[11]
 
 	// final subtraction, overwriting z if z > mod
-	c[0] = 0
-	for i := 0; i < 12; i++ {
-		tUint, cUint := bits.Sub(uint(z[i]), uint(mod[i]), uint(c[0]))
-        t[i] = Word(tUint)
-        c[0] = Word(cUint)
-	}
-
-	if c[0] == 0 {
-		copy(z, t[:])
+	if GTE(z, mod) {
+		C = 0
+		for i := 0; i < 12; i++ {
+			z[i], C = bits.Sub64(z[i], mod[i], C)
+		}
 	}
 
 	return nil
 }
-
-/*
-
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(outLimbs, xLimbs, yLimbs, modLimbs nat, modinv Word) error {
+func MulMontNonInterleaved(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// length x == y assumed
 
 	product := new(big.Int)
-	x := LimbsToInt(xLimbs)
-	y := LimbsToInt(yLimbs)
+	x := LEBytesToInt(x_bytes)
+	y := LEBytesToInt(y_bytes)
 
-	if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
+	if x.Cmp(f.ModulusNonInterleaved) > 0 || y.Cmp(f.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")
 	}
 
 	// m <- ((x*y mod R)N`) mod R
 	product.Mul(x, y)
-	x.And(product, m.mask)
-	x.Mul(x, m.MontParamNonInterleaved)
-	x.And(x, m.mask)
+	x.And(product, f.mask)
+	x.Mul(x, f.MontParamNonInterleaved)
+	x.And(x, f.mask)
 
 	// t <- (T + mN) / R
-	x.Mul(x, m.ModulusNonInterleaved)
+	x.Mul(x, f.ModulusNonInterleaved)
 	x.Add(x, product)
-	x.Rsh(x, m.NumLimbs*64)
+	x.Rsh(x, f.NumLimbs*64)
 
-	if x.Cmp(m.ModulusNonInterleaved) >= 0 {
-		x.Sub(x, m.ModulusNonInterleaved)
+	if x.Cmp(f.ModulusNonInterleaved) >= 0 {
+		x.Sub(x, f.ModulusNonInterleaved)
 	}
 
-	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, m.NumLimbs)))
+	copy(out_bytes, LimbsToLEBytes(IntToLimbs(x, f.NumLimbs)))
 
 	return nil
 }
-*/

@@ -1,0 +1,73 @@
+{{ $limbCount := .LimbCount}}
+{{ $lastLimb := sub $limbCount 1}}
+{{ $limbBits := .LimbBits}}
+
+/*
+func SubModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+
+    // TODO move bounds check into its own template?
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+
+	var c, c1 uint64
+	tmp := make([]uint64, {{$limbCount}})
+
+	{{- range $i := intRange 0 $limbCount }}
+		{{- if eq $i 0}}
+			tmp[{{$i}}], c = bits.Sub64(x[{{$i}}], y[{{$i}}], 0)
+		{{- else}}
+			tmp[{{$i}}], c = bits.Sub64(x[{{$i}}], y[{{$i}}], c)
+		{{- end}}
+	{{- end }}
+
+	{{- range $i := intRange 0 $limbCount }}
+		{{- if eq $i 0}}
+			z[{{$i}}], c1 = bits.Add64(tmp[{{$i}}], mod[{{$i}}], 0)
+		{{- else}}
+			z[{{$i}}], c1  = bits.Add64(tmp[{{$i}}], mod[{{$i}}], c1)
+		{{- end}}
+	{{- end }}
+    _ = c1
+
+	if c == 0 {
+		copy(z, tmp[:])
+	}
+
+	return nil
+}
+*/
+
+func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+
+    // TODO move bounds check into its own template?
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
+    }
+
+	var c, c1 uint64
+	tmp := {{ makeZeroedLimbs $limbCount}}
+
+    for i := 0; i < {{$limbCount}}; i++ {
+        tmp[i], c = bits.Sub64(x[i], y[i], c)
+    }
+
+    for i := 0; i < {{$limbCount}}; i++ {
+        z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
+    }
+
+	if c == 0 {
+		copy(z, tmp[:])
+	}
+
+	return nil
+}
+

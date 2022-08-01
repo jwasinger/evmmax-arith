@@ -7,39 +7,49 @@ import (
 	"testing"
 )
 
-func testMulModMont(t *testing.T, limbCount uint) {
+func testMulMont(t *testing.T, limbCount uint) {
 	mod := GenTestModulus(limbCount)
 
-	montCtx := NewMontArithContext()
+	montCtx := NewField(DefaultPreset())
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
-		panic("error")
+		panic(err)
 	}
 	x := LimbsToInt(mod)
-	x = x.Sub(x, big.NewInt(10))
+	x = x.Sub(x, big.NewInt(1))
 	y := LimbsToInt(mod)
-	y = y.Sub(y, big.NewInt(15))
+	y = y.Sub(y, big.NewInt(1))
+
+    /*
+    x := big.NewInt(1)
+    y := big.NewInt(1)
+    */
 
 	// convert to montgomery form
+
+/*
 	x.Mul(x, montCtx.RVal())
 	x.Mod(x, LimbsToInt(mod))
 
 	y.Mul(y, montCtx.RVal())
 	y.Mod(y, LimbsToInt(mod))
+    */
 
 	expected := new(big.Int)
 	expected.Mul(x, y)
 	expected.Mul(expected, montCtx.RInv())
 	expected.Mod(expected, LimbsToInt(mod))
 
-	outLimbs := make(nat, montCtx.NumLimbs)
+    outBytes := make([]byte, montCtx.NumLimbs * 8)
 	xLimbs := IntToLimbs(x, montCtx.NumLimbs)
 	yLimbs := IntToLimbs(y, montCtx.NumLimbs)
 
-	montCtx.MulModMont(outLimbs, xLimbs, yLimbs)
+	if err := montCtx.MulMont(montCtx, outBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
+        t.Fatal(err)
+    }
 
-	result := LimbsToInt(outLimbs)
+	result := LEBytesToInt(outBytes)
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
@@ -55,8 +65,8 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
     return res.Mod(res, modulus)
 }
 
-func TestMulModMontBLS12831(t *testing.T) {
-	montCtx := NewMontArithContext()
+func TestMulMontBLS12831(t *testing.T) {
+	montCtx := NewField(DefaultPreset())
     modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
 
     var limbCount uint = 6
@@ -77,11 +87,15 @@ func TestMulModMontBLS12831(t *testing.T) {
     if !Eq(montCtx.ToNorm(montY), y) {
         panic("mont form should have correct normal form")
     }
+
+    out := make([]uint64, limbCount)
+    montCtx.MulMont(montCtx, LimbsToLEBytes(out), LimbsToLEBytes(x), LimbsToLEBytes(y))
+    // TODO assert that the result is correct
 }
 
-func benchmarkMulModMont(b *testing.B, limbCount uint) {
+func benchmarkMulMont(b *testing.B, limbCount uint) {
 	mod := MaxModulus(limbCount)
-	montCtx := NewMontArithContext()
+	montCtx := NewField(DefaultPreset())
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
@@ -96,36 +110,210 @@ func benchmarkMulModMont(b *testing.B, limbCount uint) {
 
 	// convert x/y to montgomery
 
-	outLimbs := make(nat, montCtx.NumLimbs)
+	outLimbs := make([]uint64, montCtx.NumLimbs)
 	xLimbs := IntToLimbs(x, limbCount)
 	yLimbs := IntToLimbs(y, limbCount)
+
+    outBytes := LimbsToLEBytes(outLimbs)
+    xBytes := LimbsToLEBytes(xLimbs)
+    yBytes := LimbsToLEBytes(yLimbs)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		montCtx.MulModMont(outLimbs, xLimbs, yLimbs)
+		montCtx.MulMont(montCtx, outBytes, xBytes, yBytes)
 	}
 }
 
-func TestMulModMont(t *testing.T) {
+func TestMulMont(t *testing.T) {
 	test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			// test x/y >= modulus
 			t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
-				testMulModMont(t, uint(i))
+				testMulMont(t, uint(i))
 			})
 		}
 	}
 
-	test(t, "non-unrolled", 1, 12)
+	test(t, "gnark-mulnocarry-unrolled", 1, 12)
 }
 
-func BenchmarkMulModMont(b *testing.B) {
+func BenchmarkMulMont(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
-			// test x/y >= modulus
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulModMont(b, uint(i))
+				benchmarkMulMont(b, uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, 12)
+}
+
+// TODO test for submod where value before reduction == modulus
+
+func testSubMod(t *testing.T, limbCount uint) {
+	mod := GenTestModulus(limbCount)
+	montCtx := NewField(DefaultPreset())
+	err := montCtx.SetMod(mod)
+	if err != nil {
+		panic("error")
+	}
+    one := big.NewInt(1)
+    x := LimbsToInt(mod)
+    x.Sub(x, one)
+    xLimbs := IntToLimbs(x, montCtx.NumLimbs)
+    oneLimbs := IntToLimbs(one, montCtx.NumLimbs)
+
+    resultBytes := make([]byte, limbCount * 8)
+    expected := new(big.Int)
+    expected.Sub(one, x).Mod(expected, montCtx.ModulusNonInterleaved)
+
+    // test where final addition happens
+    if err := montCtx.SubMod(montCtx, resultBytes, LimbsToLEBytes(oneLimbs), LimbsToLEBytes(xLimbs)); err != nil {
+        t.Fatal(err)
+    }
+
+    result := LEBytesToInt(resultBytes)
+
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+    // test where final addition doesn't happen
+    expected = new(big.Int)
+    expected.Sub(x, one).Mod(expected, montCtx.ModulusNonInterleaved)
+    if err = montCtx.SubMod(montCtx, resultBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(oneLimbs)); err != nil {
+        t.Fatal(err)
+    }
+    result = LEBytesToInt(resultBytes)
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+}
+
+func TestSubMod(t *testing.T) {
+    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
+                testSubMod(t, uint(i))
+            })
+        }
+    }
+    test(t, "submod", 1, 12)
+}
+
+func testAddMod(t *testing.T, limbCount uint) {
+	mod := GenTestModulus(limbCount)
+	montCtx := NewField(DefaultPreset())
+	err := montCtx.SetMod(mod)
+	if err != nil {
+		panic("error")
+	}
+    one := big.NewInt(1)
+    two := big.NewInt(2)
+    x := LimbsToInt(mod)
+    x.Sub(x, two)
+    xLimbs := IntToLimbs(x, montCtx.NumLimbs)
+    oneLimbs := IntToLimbs(one, montCtx.NumLimbs)
+    twoLimbs := IntToLimbs(two, montCtx.NumLimbs)
+
+    resultBytes := make([]byte, limbCount * 8)
+    expected := new(big.Int)
+    expected.Add(one, x).Mod(expected, montCtx.ModulusNonInterleaved)
+
+    // TODO test where final subtraction doesn't 
+    if err := montCtx.AddMod(montCtx, resultBytes, LimbsToLEBytes(oneLimbs), LimbsToLEBytes(xLimbs)); err != nil {
+        t.Fatal(err)
+    }
+
+    result := LEBytesToInt(resultBytes)
+
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+    // TODO test where final subtraction does happen
+    expected = big.NewInt(0)
+    if err = montCtx.AddMod(montCtx, resultBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(twoLimbs)); err != nil {
+        t.Fatal(err)
+    }
+    result = LEBytesToInt(resultBytes)
+    if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+    }
+}
+
+func TestAddMod(t *testing.T) {
+    test := func(t *testing.T, name string, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+            t.Run(fmt.Sprintf("%s/%d-bit", name, i*64), func(t *testing.T) {
+                testAddMod(t, uint(i))
+            })
+        }
+    }
+    test(t, "addmod", 1, 12)
+}
+
+func benchmarkAddMod(b *testing.B, limbCount uint) {
+    modLimbs := MaxModulus(limbCount)
+    mod := LimbsToInt(modLimbs)
+	montCtx := NewField(DefaultPreset())
+
+    // worst-case performance: unecessary final subtraction
+	err := montCtx.SetMod(modLimbs)
+	if err != nil {
+		panic("error")
+	}
+	x := new(big.Int).SetBytes(mod.Bytes())
+	x = x.Sub(x, big.NewInt(2))
+    y := big.NewInt(1)
+    outBytes := make([]byte, limbCount * 8)
+    xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
+    yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
+
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        montCtx.AddMod(montCtx, outBytes, xBytes, yBytes)
+    }
+}
+
+func BenchmarkAddMod(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkAddMod(b, uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, 12)
+}
+
+func benchmarkSubMod(b *testing.B, limbCount uint) {
+    modLimbs := MaxModulus(limbCount)
+	montCtx := NewField(DefaultPreset())
+
+    // worst-case performance: unecessary final subtraction
+	err := montCtx.SetMod(modLimbs)
+	if err != nil {
+		panic("error")
+	}
+	x := big.NewInt(1)
+    y := big.NewInt(0)
+    outBytes := make([]byte, limbCount * 8)
+    xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
+    yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
+
+    b.ResetTimer()
+    for i := 0; i < b.N; i++ {
+        montCtx.SubMod(montCtx, outBytes, xBytes, yBytes)
+    }
+}
+
+func BenchmarkSubMod(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkSubMod(b, uint(i))
 			})
 		}
 	}

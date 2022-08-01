@@ -3,6 +3,7 @@ package mont_arith
 import (
 	"encoding/binary"
 	"math/big"
+    "math"
 )
 
 /*
@@ -16,7 +17,7 @@ func LEBytesToInt(v []byte) *big.Int {
 		panic("invalid val length for modext bytes")
 	}
 
-	val := make([]byte, len(v), len(v))
+	val := make([]byte, len(v))
 	copy(val, v)
 
 	// byteswap 8 bytes at a time
@@ -28,7 +29,7 @@ func LEBytesToInt(v []byte) *big.Int {
 	return result
 }
 
-func LimbsToLEBytes(val []uint) []byte {
+func LimbsToLEBytes(val []uint64) []byte {
 	result := make([]byte, len(val)*8)
 
 	for i := 0; i < len(val); i++ {
@@ -43,7 +44,7 @@ func LimbsToLEBytes(val []uint) []byte {
 }
 
 // convert big.Int (big-endian) to little-endian limbs
-func IntToLimbs(val *big.Int, num_limbs uint) nat {
+func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 	val_bytes := val.Bytes()
 
 	// pad length to be a multiple of 64bits
@@ -55,7 +56,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) nat {
 		panic("val too big to fit in specified number of limbs")
 	}
 
-	result := make(nat, len(val_bytes)/8, len(val_bytes)/8)
+	result := make([]uint64, len(val_bytes)/8, len(val_bytes)/8)
 
 	// place byteswapped (little-endian) val into result
 	for i := 0; i < len(result); i++ {
@@ -64,47 +65,50 @@ func IntToLimbs(val *big.Int, num_limbs uint) nat {
 
 		// TODO: this assumes that the system is little-endian.  is that okay?
 		// on a LE system, this swaps big-endian to little-endian
-		result[i] = Word(binary.BigEndian.Uint64(val_bytes[startIdx:endIdx]))
+		result[i] = binary.BigEndian.Uint64(val_bytes[startIdx:endIdx])
 	}
 
 	return result
 }
 
 // convert little-endian limbs to big.Int
-func LimbsToInt(limbs nat) *big.Int {
+func LimbsToInt(limbs []uint64) *big.Int {
 	limbs_bytes := make([]byte, 8*len(limbs), 8*len(limbs))
 	for i := 0; i < len(limbs); i++ {
 		startIdx := (len(limbs) - (i + 1)) * 8
 		endIdx := (len(limbs) - i) * 8
 
-		binary.BigEndian.PutUint64(limbs_bytes[startIdx:endIdx], uint64(limbs[i]))
+		binary.BigEndian.PutUint64(limbs_bytes[startIdx:endIdx], limbs[i])
 	}
 
 	return new(big.Int).SetBytes(limbs_bytes)
 }
 
 // **NOTE** naming confusing.  actually the second-largest modulus (largest would have modinv as 1)
-func MaxModulus(limbCount uint) nat {
-	mod := make(nat, limbCount, limbCount)
+func MaxModulus(limbCount uint) []uint64 {
+	mod := make([]uint64, limbCount, limbCount)
 
-	mod[0] = 0xfffffffffffffffd
+	mod[0] = math.MaxUint64 - 2
 	for i := uint(1); i < limbCount; i++ {
-		mod[i] = 0xffffffffffffffff
+		mod[i] = math.MaxUint64
 	}
 
 	return mod
 }
 
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
-func GenTestModulus(limbCount uint) nat {
+func GenTestModulus(limbCount uint) []uint64 {
+    /*
 	mod_int := big.NewInt(1)
 	mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))
 	mod_int.Sub(mod_int, big.NewInt(1))
 
 	return IntToLimbs(mod_int, limbCount)
+    */
+    return MaxModulus(limbCount)
 }
 
-func LimbsEq(x, y []uint) bool {
+func LimbsEq(x, y []uint64) bool {
 	if len(x) != len(y) {
 		panic("unequally-sized elements")
 	}
@@ -128,13 +132,13 @@ func LimbsToString(limbs []uint64) string {
 }
 */
 
-func One(limbCount uint) []uint {
-	one := make([]uint, limbCount, limbCount)
+func One(limbCount uint) []uint64 {
+	one := make([]uint64, limbCount, limbCount)
 	one[0] = 1
 	return one
 }
 
-func RSquared(modulus nat) nat {
+func RSquared(modulus []uint64) []uint64 {
 	mod := LimbsToInt(modulus[:])
 	r := new(big.Int)
 	r.Exp(big.NewInt(2), big.NewInt(int64(len(modulus))*64), mod)
@@ -146,7 +150,7 @@ func RSquared(modulus nat) nat {
 }
 
 // does the Python equivalent of pow(-modulus, -1, 1<<64)
-func MontConstant_Interleaved(modulus nat) Word {
+func MontConstant_Interleaved(modulus []uint64) uint64 {
 	mod_int := LimbsToInt(modulus)
 
 	// 1<<64
@@ -154,5 +158,5 @@ func MontConstant_Interleaved(modulus nat) Word {
 	negative_one, _ := new(big.Int).SetString("-1", 10)
 
 	mod_int.Mul(mod_int, negative_one)
-	return Word(mod_int.ModInverse(mod_int, aux_mod).Uint64())
+	return mod_int.ModInverse(mod_int, aux_mod).Uint64()
 }

@@ -1,17 +1,18 @@
 package mont_arith
 
 import (
+    "fmt"
 	"errors"
-	"fmt"
 	"math/big"
 )
 
-type MontArithContext struct {
+// TODO rename to FieldPreset?
+type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
-	Modulus               nat
+	Modulus               []uint64
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
 
-	MontParamInterleaved    Word
+	MontParamInterleaved    uint64
 	MontParamNonInterleaved *big.Int
 
 	NumLimbs uint
@@ -21,28 +22,32 @@ type MontArithContext struct {
 
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
-    montMul mulMontFunc
+
+    MulMont arithFunc
+    AddMod arithFunc
+    SubMod arithFunc
+
+    preset ArithPreset
 }
 
-func (m *MontArithContext) RVal() *big.Int {
+func (m *Field) RVal() *big.Int {
 	return m.r
 }
 
-func (m *MontArithContext) RInv() *big.Int {
+func (m *Field) RInv() *big.Int {
 	return m.rInv
 }
 
-func (m *MontArithContext) ToMont(val nat) nat {
+func (m *Field) ToMont(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.r)
 	dst_val.Mod(dst_val, LimbsToInt(m.Modulus))
 
-	//copy(dst, IntToLimbs(dst_val, m.NumLimbs))
     return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func (m *MontArithContext) ToNorm(val nat) nat {
+func (m *Field) ToNorm(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.rInv)
@@ -51,42 +56,62 @@ func (m *MontArithContext) ToNorm(val nat) nat {
 	return IntToLimbs(dst_val, m.NumLimbs)
 }
 
-func NewMontArithContext() *MontArithContext {
-	result := MontArithContext{
+func NewField(preset ArithPreset) *Field {
+	result := Field{
 		nil,
 		nil,
+
 		0,
 		nil,
 
 		0,
 		nil,
 		nil,
+
 		nil,
 
         nil,
+        nil,
+        nil,
+
+        preset,
 	}
 
 	return &result
 }
 
-func (m *MontArithContext) MulModMont(out, x, y nat) {
-	m.montMul(out, x, y, m.Modulus, m.MontParamInterleaved)
+func (m *Field) GTEMod(x, y []uint64) bool {
+    for i := 0; i < int(m.NumLimbs); i++ {
+        if x[i] > m.Modulus[i] || y[i] > m.Modulus[i]  {
+            return true
+        }
+    }
+    return false
 }
 
-func (m *MontArithContext) ModIsSet() bool {
+func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-func (m *MontArithContext) ValueSize() uint {
+func (m *Field) ValueSize() uint {
 	return uint(len(m.Modulus))
 }
 
-func (m *MontArithContext) SetMod(mod nat) error {
+func (m *Field) SetMod(mod []uint64) error {
 	// XXX proper handling without hardcoding
 	if len(mod) == 0 || len(mod) > 12 {
-		fmt.Println(len(mod))
-		panic("invalid mod length")
-	}
+        fmt.Println("1")
+		return errors.New("invalid modulus length")
+	} else if mod[0] % 2 == 0 {
+        fmt.Println(mod)
+        fmt.Println("2")
+        return errors.New("modulus cannot be even")
+    }
+
+    if mod[len(mod) - 1] == 0 {
+        fmt.Printf("modErr = %x\n", mod)
+        return errors.New("modulus representation must occupy all limbs")
+    }
 
 	var limbCount uint = uint(len(mod))
 	var limbSize uint = 8
@@ -104,11 +129,13 @@ func (m *MontArithContext) SetMod(mod nat) error {
 	montParamNonInterleaved.Mod(montParamNonInterleaved, rVal)
 
 	if montParamNonInterleaved.ModInverse(montParamNonInterleaved, rVal) == nil {
+        fmt.Println("modinverse failed")
 		return errors.New("modinverse failed")
 	}
 
 	rInv := new(big.Int)
 	if rInv.ModInverse(rVal, modInt) == nil {
+        fmt.Println("modinverse failed: 2")
 		return errors.New("modinverse to compute rInv failed")
 	}
 
@@ -123,8 +150,11 @@ func (m *MontArithContext) SetMod(mod nat) error {
 	m.Modulus = IntToLimbs(modInt, m.NumLimbs)
 
 	m.MontParamNonInterleaved = montParamNonInterleaved
-	m.MontParamInterleaved = Word(montParamNonInterleaved.Uint64())
-    m.montMul = montgomeryFixedWidth[len(mod) - 1]
+	m.MontParamInterleaved = montParamNonInterleaved.Uint64()
+
+    m.MulMont = m.preset.MulMontImpls[len(mod) - 1]
+    m.AddMod = m.preset.AddModImpls[len(mod) - 1]
+    m.SubMod = m.preset.SubModImpls[len(mod) - 1]
 
 	return nil
 }

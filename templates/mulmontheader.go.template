@@ -6,74 +6,77 @@ package mont_arith
 
 import (
 	"math/bits"
+    "math/big"
+    "unsafe"
+    "errors"
+    "fmt"
 )
 
-type mulMontFunc func(out, x, y, mod nat, modinv Word) error
-var montgomeryFixedWidth []mulMontFunc = []mulMontFunc {
-    mulModMont64,
-    {{- range $i := intRange 2 $limbCountPlusOne}}
-        mulModMont{{mul $i $limbBits}},
-    {{- end}}
-}
-
 // madd0 hi = a*b + c (discards lo bits)
-func madd0(a, b, c Word) (Word) {
-	var carry, lo uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	_, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi)
+func madd0(a, b, c uint64) (uint64) {
+	var carry, lo uint64
+	hi, lo := bits.Mul64(a, b)
+	_, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi
 }
 
 // madd1 hi, lo = a*b + c
-func madd1(a, b, c Word) (Word, Word) {
-	var carry uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	lo, carry = bits.Add(uint(lo), uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd1(a, b, c uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
 // madd2 hi, lo = a*b + c + d
-func madd2(a, b, c, d Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-    c = Word(c_uint)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, uint(c), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	return Word(hi), Word(lo)
+func madd2(a, b, c, d uint64) (uint64, uint64) {
+	var carry uint64
+	hi, lo := bits.Mul64(a, b)
+	c, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	return hi, lo
 }
 
-func madd3(a, b, c, d, e Word) (Word, Word) {
-	var carry uint
-    var c_uint uint
-	hi, lo := bits.Mul(uint(a), uint(b))
-	c_uint, carry = bits.Add(uint(c), uint(d), 0)
-	hi, _ = bits.Add(hi, 0, carry)
-	lo, carry = bits.Add(lo, c_uint, 0)
-	hi, _ = bits.Add(hi, uint(e), carry)
-	return Word(hi), Word(lo)
+func madd3(a, b, c, d, e uint64) (uint64, uint64) {
+	var carry uint64
+    var c_uint uint64
+	hi, lo := bits.Mul64(a, b)
+	c_uint, carry = bits.Add64(c, d, 0)
+	hi, _ = bits.Add64(hi, 0, carry)
+	lo, carry = bits.Add64(lo, c_uint, 0)
+	hi, _ = bits.Add64(hi, e, carry)
+	return hi, lo
 }
 
 /*
  * begin mulmont implementations
  */
 
-func mulModMont64(out, x, y, mod nat, modinv Word) error {
-	var product [2]uint
-	var c Word
+func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
+	var product [2]uint64
+	var c uint64
+    mod := f.Modulus
+    modinv := f.MontParamInterleaved
 
-	product[1], product[0] = bits.Mul(uint(x[0]), uint(y[0]))
-	m := Word(product[0]) * modinv
-	c, _ = madd1(m, mod[0], Word(product[0]))
-	out[0] = c + Word(product[1])
+    x := (*[1]uint64)(unsafe.Pointer(&xBytes[0]))[:]
+    y := (*[1]uint64)(unsafe.Pointer(&yBytes[0]))[:]
+    out := (*[1]uint64)(unsafe.Pointer(&outBytes[0]))[:]
+
+    if x[0] >= mod[0] || y[0] >= mod[0] {
+        return errors.New(fmt.Sprintf("x/y gte modulus"))
+    }
+
+	product[1], product[0] = bits.Mul64(x[0], y[0])
+	m := product[0] * modinv
+	c, _ = madd1(m, mod[0], product[0])
+	out[0] = c + product[1]
 
 	if out[0] > mod[0] {
 		out[0] = c - mod[0]
 	}
-
-	return nil
+    return nil
 }
