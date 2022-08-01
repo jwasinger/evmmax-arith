@@ -14,19 +14,27 @@ func testMulMont(t *testing.T, limbCount uint) {
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
-		panic("error")
+		panic(err)
 	}
 	x := LimbsToInt(mod)
-	x = x.Sub(x, big.NewInt(10))
+	x = x.Sub(x, big.NewInt(1))
 	y := LimbsToInt(mod)
-	y = y.Sub(y, big.NewInt(15))
+	y = y.Sub(y, big.NewInt(1))
+
+    /*
+    x := big.NewInt(1)
+    y := big.NewInt(1)
+    */
 
 	// convert to montgomery form
+
+/*
 	x.Mul(x, montCtx.RVal())
 	x.Mod(x, LimbsToInt(mod))
 
 	y.Mul(y, montCtx.RVal())
 	y.Mod(y, LimbsToInt(mod))
+    */
 
 	expected := new(big.Int)
 	expected.Mul(x, y)

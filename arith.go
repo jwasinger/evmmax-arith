@@ -10,17 +10,17 @@ type arithFunc func(f *Field, out, x, y []byte) error
 
 // TODO is it faster to compute y-m,x-m and return false if there is borrow-out?
 func GTE(x, y []uint64) bool {
-    for i := 0; i < len(x); i++ {
+    for i := len(x) - 1; i > 0; i-- {
         if x[i] < y[i] {
             return false
         }
     }
 
-    if x[len(x) - 1] < y[len(x) - 1] {
-        return false
+    if x[0] >= y[0] {
+        return true
     }
 
-    return true
+    return false
 }
 
 func Eq(n, other []uint64) bool {

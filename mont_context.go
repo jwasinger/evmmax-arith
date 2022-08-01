@@ -1,6 +1,7 @@
 package mont_arith
 
 import (
+    "fmt"
 	"errors"
 	"math/big"
 )
@@ -99,9 +100,17 @@ func (m *Field) ValueSize() uint {
 func (m *Field) SetMod(mod []uint64) error {
 	// XXX proper handling without hardcoding
 	if len(mod) == 0 || len(mod) > 12 {
+        fmt.Println("1")
 		return errors.New("invalid modulus length")
 	} else if mod[0] % 2 == 0 {
+        fmt.Println(mod)
+        fmt.Println("2")
         return errors.New("modulus cannot be even")
+    }
+
+    if mod[len(mod) - 1] == 0 {
+        fmt.Printf("modErr = %x\n", mod)
+        return errors.New("modulus representation must occupy all limbs")
     }
 
 	var limbCount uint = uint(len(mod))
@@ -120,11 +129,13 @@ func (m *Field) SetMod(mod []uint64) error {
 	montParamNonInterleaved.Mod(montParamNonInterleaved, rVal)
 
 	if montParamNonInterleaved.ModInverse(montParamNonInterleaved, rVal) == nil {
+        fmt.Println("modinverse failed")
 		return errors.New("modinverse failed")
 	}
 
 	rInv := new(big.Int)
 	if rInv.ModInverse(rVal, modInt) == nil {
+        fmt.Println("modinverse failed: 2")
 		return errors.New("modinverse to compute rInv failed")
 	}
 

@@ -3,6 +3,7 @@ package mont_arith
 import (
 	"encoding/binary"
 	"math/big"
+    "math"
 )
 
 /*
@@ -87,9 +88,9 @@ func LimbsToInt(limbs []uint64) *big.Int {
 func MaxModulus(limbCount uint) []uint64 {
 	mod := make([]uint64, limbCount, limbCount)
 
-	mod[0] = 0xfffffffffffffffd
+	mod[0] = math.MaxUint64 - 2
 	for i := uint(1); i < limbCount; i++ {
-		mod[i] = 0xffffffffffffffff
+		mod[i] = math.MaxUint64
 	}
 
 	return mod
@@ -97,11 +98,14 @@ func MaxModulus(limbCount uint) []uint64 {
 
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
 func GenTestModulus(limbCount uint) []uint64 {
+    /*
 	mod_int := big.NewInt(1)
 	mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))
 	mod_int.Sub(mod_int, big.NewInt(1))
 
 	return IntToLimbs(mod_int, limbCount)
+    */
+    return MaxModulus(limbCount)
 }
 
 func LimbsEq(x, y []uint64) bool {
