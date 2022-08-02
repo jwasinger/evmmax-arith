@@ -88,7 +88,7 @@ func LimbsToInt(limbs []uint64) *big.Int {
 func MaxModulus(limbCount uint) []uint64 {
 	mod := make([]uint64, limbCount, limbCount)
 
-	mod[0] = math.MaxUint64 - 2
+	mod[0] = math.MaxUint64
 	for i := uint(1); i < limbCount; i++ {
 		mod[i] = math.MaxUint64
 	}
