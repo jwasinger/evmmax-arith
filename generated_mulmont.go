@@ -84,6 +84,9 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 
 
 
+
+
+
 func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
@@ -93,9 +96,18 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -126,31 +138,19 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[0] = madd2(m, mod[1], t[1], C)
 		t[1], C = bits.Add64(t[2], C, 0)
 		t[2], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[2] != 0 {
-		// we need to reduce, we have a result on 3 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], _ = bits.Sub64(t[1], mod[1], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 2; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[2] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:2])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -164,9 +164,20 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -218,33 +229,20 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[1] = madd2(m, mod[2], t[2], C)
 		t[2], C = bits.Add64(t[3], C, 0)
 		t[3], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[3] != 0 {
-		// we need to reduce, we have a result on 4 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], _ = bits.Sub64(t[2], mod[2], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 3; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[3] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:3])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -258,9 +256,22 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -337,35 +348,21 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[2] = madd2(m, mod[3], t[3], C)
 		t[3], C = bits.Add64(t[4], C, 0)
 		t[4], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[4] != 0 {
-		// we need to reduce, we have a result on 5 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], _ = bits.Sub64(t[3], mod[3], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 4; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[4] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:4])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -379,9 +376,24 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -487,37 +499,22 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[3] = madd2(m, mod[4], t[4], C)
 		t[4], C = bits.Add64(t[5], C, 0)
 		t[5], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[5] != 0 {
-		// we need to reduce, we have a result on 6 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], _ = bits.Sub64(t[4], mod[4], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 5; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[5] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:5])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -531,9 +528,26 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -672,39 +686,23 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[4] = madd2(m, mod[5], t[5], C)
 		t[5], C = bits.Add64(t[6], C, 0)
 		t[6], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[6] != 0 {
-		// we need to reduce, we have a result on 7 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], _ = bits.Sub64(t[5], mod[5], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 6; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[6] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:6])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -718,9 +716,28 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -896,41 +913,24 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[5] = madd2(m, mod[6], t[6], C)
 		t[6], C = bits.Add64(t[7], C, 0)
 		t[7], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[7] != 0 {
-		// we need to reduce, we have a result on 8 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], _ = bits.Sub64(t[6], mod[6], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 7; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[7] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:7])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -944,9 +944,30 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC1 = bits.Sub64(mod[7], x[7], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+    _, gteC2 = bits.Sub64(mod[7], x[7], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -1163,43 +1184,25 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[6] = madd2(m, mod[7], t[7], C)
 		t[7], C = bits.Add64(t[8], C, 0)
 		t[8], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
+            z[7], D = bits.Sub64(t[7], mod[7], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[8] != 0 {
-		// we need to reduce, we have a result on 9 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], b = bits.Sub64(t[6], mod[6], b)
-				z[7], _ = bits.Sub64(t[7], mod[7], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-		z[7] = t[7]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 8; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[8] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:8])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -1213,9 +1216,32 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC1 = bits.Sub64(mod[7], x[7], gteC1)
+    _, gteC1 = bits.Sub64(mod[8], x[8], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+    _, gteC2 = bits.Sub64(mod[7], x[7], gteC2)
+    _, gteC2 = bits.Sub64(mod[8], x[8], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -1477,45 +1503,26 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[7] = madd2(m, mod[8], t[8], C)
 		t[8], C = bits.Add64(t[9], C, 0)
 		t[9], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
+            z[7], D = bits.Sub64(t[7], mod[7], D)
+            z[8], D = bits.Sub64(t[8], mod[8], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[9] != 0 {
-		// we need to reduce, we have a result on 10 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], b = bits.Sub64(t[6], mod[6], b)
-				z[7], b = bits.Sub64(t[7], mod[7], b)
-				z[8], _ = bits.Sub64(t[8], mod[8], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-		z[7] = t[7]
-		z[8] = t[8]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 9; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[9] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:9])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -1529,9 +1536,34 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC1 = bits.Sub64(mod[7], x[7], gteC1)
+    _, gteC1 = bits.Sub64(mod[8], x[8], gteC1)
+    _, gteC1 = bits.Sub64(mod[9], x[9], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+    _, gteC2 = bits.Sub64(mod[7], x[7], gteC2)
+    _, gteC2 = bits.Sub64(mod[8], x[8], gteC2)
+    _, gteC2 = bits.Sub64(mod[9], x[9], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -1842,47 +1874,27 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[8] = madd2(m, mod[9], t[9], C)
 		t[9], C = bits.Add64(t[10], C, 0)
 		t[10], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
+            z[7], D = bits.Sub64(t[7], mod[7], D)
+            z[8], D = bits.Sub64(t[8], mod[8], D)
+            z[9], D = bits.Sub64(t[9], mod[9], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[10] != 0 {
-		// we need to reduce, we have a result on 11 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], b = bits.Sub64(t[6], mod[6], b)
-				z[7], b = bits.Sub64(t[7], mod[7], b)
-				z[8], b = bits.Sub64(t[8], mod[8], b)
-				z[9], _ = bits.Sub64(t[9], mod[9], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-		z[7] = t[7]
-		z[8] = t[8]
-		z[9] = t[9]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 10; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[10] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:10])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -1896,9 +1908,36 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC1 = bits.Sub64(mod[7], x[7], gteC1)
+    _, gteC1 = bits.Sub64(mod[8], x[8], gteC1)
+    _, gteC1 = bits.Sub64(mod[9], x[9], gteC1)
+    _, gteC1 = bits.Sub64(mod[10], x[10], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+    _, gteC2 = bits.Sub64(mod[7], x[7], gteC2)
+    _, gteC2 = bits.Sub64(mod[8], x[8], gteC2)
+    _, gteC2 = bits.Sub64(mod[9], x[9], gteC2)
+    _, gteC2 = bits.Sub64(mod[10], x[10], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -2262,49 +2301,28 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[9] = madd2(m, mod[10], t[10], C)
 		t[10], C = bits.Add64(t[11], C, 0)
 		t[11], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
+            z[7], D = bits.Sub64(t[7], mod[7], D)
+            z[8], D = bits.Sub64(t[8], mod[8], D)
+            z[9], D = bits.Sub64(t[9], mod[9], D)
+            z[10], D = bits.Sub64(t[10], mod[10], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[11] != 0 {
-		// we need to reduce, we have a result on 12 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], b = bits.Sub64(t[6], mod[6], b)
-				z[7], b = bits.Sub64(t[7], mod[7], b)
-				z[8], b = bits.Sub64(t[8], mod[8], b)
-				z[9], b = bits.Sub64(t[9], mod[9], b)
-				z[10], _ = bits.Sub64(t[10], mod[10], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-		z[7] = t[7]
-		z[8] = t[8]
-		z[9] = t[9]
-		z[10] = t[10]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 11; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[11] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:11])
+    }
 
 	return nil
 }
+
+
+
 
 
 
@@ -2318,9 +2336,38 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    
+
+var gteC1, gteC2 uint64
+    _, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+    _, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
+    _, gteC1 = bits.Sub64(mod[2], x[2], gteC1)
+    _, gteC1 = bits.Sub64(mod[3], x[3], gteC1)
+    _, gteC1 = bits.Sub64(mod[4], x[4], gteC1)
+    _, gteC1 = bits.Sub64(mod[5], x[5], gteC1)
+    _, gteC1 = bits.Sub64(mod[6], x[6], gteC1)
+    _, gteC1 = bits.Sub64(mod[7], x[7], gteC1)
+    _, gteC1 = bits.Sub64(mod[8], x[8], gteC1)
+    _, gteC1 = bits.Sub64(mod[9], x[9], gteC1)
+    _, gteC1 = bits.Sub64(mod[10], x[10], gteC1)
+    _, gteC1 = bits.Sub64(mod[11], x[11], gteC1)
+    _, gteC2 = bits.Sub64(mod[0], x[0], gteC2)
+    _, gteC2 = bits.Sub64(mod[1], x[1], gteC2)
+    _, gteC2 = bits.Sub64(mod[2], x[2], gteC2)
+    _, gteC2 = bits.Sub64(mod[3], x[3], gteC2)
+    _, gteC2 = bits.Sub64(mod[4], x[4], gteC2)
+    _, gteC2 = bits.Sub64(mod[5], x[5], gteC2)
+    _, gteC2 = bits.Sub64(mod[6], x[6], gteC2)
+    _, gteC2 = bits.Sub64(mod[7], x[7], gteC2)
+    _, gteC2 = bits.Sub64(mod[8], x[8], gteC2)
+    _, gteC2 = bits.Sub64(mod[9], x[9], gteC2)
+    _, gteC2 = bits.Sub64(mod[10], x[10], gteC2)
+    _, gteC2 = bits.Sub64(mod[11], x[11], gteC2)
+
+if gteC1 != 0 || gteC2 != 0 {
+    return errors.New(fmt.Sprintf("input gte modulus"))
+}
+
 		// -----------------------------------
 		// First loop
 		
@@ -2741,48 +2788,23 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 				C, t[10] = madd2(m, mod[11], t[11], C)
 		t[11], C = bits.Add64(t[12], C, 0)
 		t[12], _ = bits.Add64(0, D, C)
+            z[0], D = bits.Sub64(t[0], mod[0], 0)
+            z[1], D = bits.Sub64(t[1], mod[1], D)
+            z[2], D = bits.Sub64(t[2], mod[2], D)
+            z[3], D = bits.Sub64(t[3], mod[3], D)
+            z[4], D = bits.Sub64(t[4], mod[4], D)
+            z[5], D = bits.Sub64(t[5], mod[5], D)
+            z[6], D = bits.Sub64(t[6], mod[6], D)
+            z[7], D = bits.Sub64(t[7], mod[7], D)
+            z[8], D = bits.Sub64(t[8], mod[8], D)
+            z[9], D = bits.Sub64(t[9], mod[9], D)
+            z[10], D = bits.Sub64(t[10], mod[10], D)
+            z[11], D = bits.Sub64(t[11], mod[11], D)
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[12] != 0 {
-		// we need to reduce, we have a result on 13 words
-		var b uint64
-		z[0],b = bits.Sub64(t[0], mod[0], 0)
-				z[1], b = bits.Sub64(t[1], mod[1], b)
-				z[2], b = bits.Sub64(t[2], mod[2], b)
-				z[3], b = bits.Sub64(t[3], mod[3], b)
-				z[4], b = bits.Sub64(t[4], mod[4], b)
-				z[5], b = bits.Sub64(t[5], mod[5], b)
-				z[6], b = bits.Sub64(t[6], mod[6], b)
-				z[7], b = bits.Sub64(t[7], mod[7], b)
-				z[8], b = bits.Sub64(t[8], mod[8], b)
-				z[9], b = bits.Sub64(t[9], mod[9], b)
-				z[10], b = bits.Sub64(t[10], mod[10], b)
-				z[11], _ = bits.Sub64(t[11], mod[11], b)
-		return nil
-	}
-
-	// copy t into z
-		z[0] = t[0]
-		z[1] = t[1]
-		z[2] = t[2]
-		z[3] = t[3]
-		z[4] = t[4]
-		z[5] = t[5]
-		z[6] = t[6]
-		z[7] = t[7]
-		z[8] = t[8]
-		z[9] = t[9]
-		z[10] = t[10]
-		z[11] = t[11]
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < 12; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[12] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:12])
+    }
 
 	return nil
 }

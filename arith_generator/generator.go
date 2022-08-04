@@ -8,6 +8,9 @@ import (
 	"os"
 	"strings"
 	"text/template"
+    "github.com/jwasinger/mont-arith/templates"
+
+    "errors"
 )
 
 type TemplateParams struct {
@@ -22,6 +25,23 @@ func loadTextFile(file_name string) string {
 	}
 
 	return string(content)
+}
+
+
+// from Bavard
+func dict(values ...interface{}) (map[string]interface{}, error) {
+    if len(values)%2 != 0 {
+        return nil, errors.New("invalid dict call")
+    }
+    dict := make(map[string]interface{}, len(values)/2)
+    for i := 0; i < len(values); i += 2 {
+        key, ok := values[i].(string)
+        if !ok {
+            return nil, errors.New("dict keys must be strings")
+        }
+        dict[key] = values[i+1]
+    }
+    return dict, nil
 }
 
 var funcs = template.FuncMap{
@@ -57,6 +77,22 @@ var funcs = template.FuncMap{
 		result := fmt.Sprintf("[%d]uint64 {", numLimbs)
 		return result + strings.Repeat(" 0,", numLimbs-1) + " 0}"
 	},
+    "dict": dict,
+}
+
+func aggregate(values []string) string {
+    var sb strings.Builder
+    for _, v := range values {
+        sb.WriteString(v)
+    }
+    return sb.String()
+}
+
+var tmplDeps []string = []string{
+    templates.GTE,
+}
+func prependDeps(tmplContent string) string {
+    return aggregate([]string{aggregate(tmplDeps), tmplContent})
 }
 
 func buildTemplate(dest_path, template_path string, params *TemplateParams) {
@@ -97,7 +133,7 @@ func genAddMod(minLimbs, maxLimbs int) {
 	}
 
 	addModNonUnrolledTemplateContent := loadTextFile("templates/addmod.go.template")
-	addModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(addModNonUnrolledTemplateContent))
+	addModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(addModNonUnrolledTemplateContent)))
 
 	for i := minLimbs; i <= maxLimbs; i++ {
 		params = TemplateParams{i, 64}
@@ -131,7 +167,7 @@ func genSubMod(minLimbs, maxLimbs int) {
 	}
 
 	subModNonUnrolledTemplateContent := loadTextFile("templates/submod.go.template")
-	subModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(subModNonUnrolledTemplateContent))
+	subModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(subModNonUnrolledTemplateContent)))
 
 	for i := minLimbs; i <= maxLimbs; i++ {
 		params = TemplateParams{i, 64}
@@ -165,7 +201,7 @@ func genMulMont(maxLimbs int) {
 	}
 
 	mulMontTemplateContent := loadTextFile("templates/mulmont.go.template")
-	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(mulMontTemplateContent))
+	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(mulMontTemplateContent)))
 
 	for i := 2; i <= maxLimbs; i++ {
 		params = TemplateParams{i, 64}

@@ -21,21 +21,6 @@ func testMulMont(t *testing.T, limbCount uint) {
 	y := LimbsToInt(mod)
 	y = y.Sub(y, big.NewInt(1))
 
-    /*
-    x := big.NewInt(1)
-    y := big.NewInt(1)
-    */
-
-	// convert to montgomery form
-
-/*
-	x.Mul(x, montCtx.RVal())
-	x.Mod(x, LimbsToInt(mod))
-
-	y.Mul(y, montCtx.RVal())
-	y.Mod(y, LimbsToInt(mod))
-    */
-
 	expected := new(big.Int)
 	expected.Mul(x, y)
 	expected.Mul(expected, montCtx.RInv())
@@ -94,7 +79,7 @@ func TestMulMontBLS12831(t *testing.T) {
 }
 
 func benchmarkMulMont(b *testing.B, limbCount uint) {
-	mod := MaxModulus(limbCount)
+	mod := GenTestModulus(limbCount)
 	montCtx := NewField(DefaultPreset())
 
 	err := montCtx.SetMod(mod)
@@ -102,13 +87,15 @@ func benchmarkMulMont(b *testing.B, limbCount uint) {
 		panic("error")
 	}
 
-	x := big.NewInt(2)
-	x.Lsh(x, (limbCount*64)-10)
+    x := big.NewInt(1)
+    y := big.NewInt(1)
+    /*
+	x := LimbsToInt(mod)
+    x = x.Sub(x, big.NewInt(1))
 
-	y := big.NewInt(2)
-	y.Lsh(y, (limbCount*64)-10)
-
-	// convert x/y to montgomery
+	y := new(big.Int).SetBytes(LimbsToInt(mod).Bytes())
+    y = y.Sub(y, big.NewInt(1))
+    */
 
 	outLimbs := make([]uint64, montCtx.NumLimbs)
 	xLimbs := IntToLimbs(x, limbCount)
@@ -135,7 +122,7 @@ func TestMulMont(t *testing.T) {
 		}
 	}
 
-	test(t, "gnark-mulnocarry-unrolled", 1, 12)
+	test(t, "gnark-mulnocarry-unrolled", 2, 11)
 }
 
 func BenchmarkMulMont(b *testing.B) {
@@ -201,6 +188,12 @@ func TestSubMod(t *testing.T) {
     }
     test(t, "submod", 1, 12)
 }
+
+/*
+func genWorstCaseAddModInputs(limbCount uint) ([]uint64, []uint64) {
+
+}
+*/
 
 func testAddMod(t *testing.T, limbCount uint) {
 	mod := GenTestModulus(limbCount)

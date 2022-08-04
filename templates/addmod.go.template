@@ -9,21 +9,19 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
     mod := f.Modulus
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
     var c uint64 = 0
     tmp := make([]uint64, {{$limbCount}})
 
-    for i := 0; i < {{$limbCount}}; i++ {
-        tmp[i], c = bits.Add64(x[i], y[i], c)
-    }
+    {{- range $i := intRange 0 $limbCount }}
+        tmp[{{$i}}], c = bits.Add64(x[{{$i}}], y[{{$i}}], c)
+    {{- end }}
 
     c = 0
-    for i := 0; i < {{$limbCount}}; i++ {
-        z[i], c = bits.Sub64(tmp[i], mod[i], c)
-    }
+    {{- range $i := intRange 0 $limbCount }}
+        z[{{$i}}], c = bits.Sub64(tmp[{{$i}}], mod[{{$i}}], c)
+    {{- end }}
 
     // final sub was unnecessary
     if c != 0 {

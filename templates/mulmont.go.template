@@ -1,6 +1,7 @@
 {{ $limbCount := .LimbCount}}
 {{ $lastLimb := sub $limbCount 1}}
 {{ $limbBits := .LimbBits}}
+{{ $limbCountPlusOne := add .LimbCount 1 }}
 
 func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
@@ -11,9 +12,7 @@ func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes
 	var D uint64
 	var m, C uint64
 
-    if GTE(x, mod) || GTE(y, mod) {
-        return errors.New(fmt.Sprintf("input greater than or equal to modulus"))
-    }
+    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
 	{{- range $j := intRange 0 $limbCount}}
 		// -----------------------------------
@@ -42,36 +41,18 @@ func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes
 		t[{{$limbCount}}], _ = bits.Add64(0, D, C)
 	{{- end}}
 
-    // TODO this shows up here, but I can't find reference to it in any paper
-    // that references CIOS. is this just a quick hack for the final subtraction?
-	if t[{{$limbCount}}] != 0 {
-		// we need to reduce, we have a result on {{add 1 $limbCount}} words
-		{{- if gt $limbCount 1}}
-		var b uint64
-		{{- end}}
-		z[0], {{- if gt $limbCount 1}}b{{- else}}_{{- end}} = bits.Sub64(t[0], mod[0], 0)
-		{{- range $i := intRange 1 $limbCount}}
-			{{-  if eq $i $lastLimb}}
-				z[{{$i}}], _ = bits.Sub64(t[{{$i}}], mod[{{$i}}], b)
-			{{-  else  }}
-				z[{{$i}}], b = bits.Sub64(t[{{$i}}], mod[{{$i}}], b)
-			{{- end}}
-		{{- end}}
-		return nil
-	}
+    {{- range $i := intRange 0 $limbCount}}
+        {{-  if eq $i 0 }}
+            z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
+        {{-  else  }}
+            z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
+        {{- end}}
+    {{- end}}
 
-	// copy t into z 
-	{{- range $i := intRange 0 $limbCount }}
-		z[{{$i}}] = t[{{$i}}]
-	{{- end}}
-
-	// final subtraction, overwriting z if z > mod
-	if GTE(z, mod) {
-		C = 0
-		for i := 0; i < {{$limbCount}}; i++ {
-			z[i], C = bits.Sub64(z[i], mod[i], C)
-		}
-	}
+    if D != 0 && t[{{$limbCount}}] == 0 {
+        // reduction was not necessary
+        copy(z[:], t[:{{$limbCount}}])
+    }
 
 	return nil
 }
