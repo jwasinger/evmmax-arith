@@ -52,7 +52,9 @@ func mulMont{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes
     if D != 0 && t[{{$limbCount}}] == 0 {
         // reduction was not necessary
         copy(z[:], t[:{{$limbCount}}])
-    }
+    }/* else {
+        panic("not worst case performance")
+    }*/
 
 	return nil
 }

@@ -26,6 +26,8 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
     // final sub was unnecessary
     if c != 0 {
         copy(z, tmp[:])
-    }
+    }/* else {
+        panic("not worst case performance")
+    }*/
     return nil
 }

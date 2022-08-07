@@ -32,7 +32,9 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -65,7 +67,9 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -102,7 +106,9 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -143,7 +149,9 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -188,7 +196,9 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -237,7 +247,9 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -290,7 +302,9 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -347,7 +361,9 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -408,7 +424,9 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -473,7 +491,9 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -542,7 +562,9 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }
 
@@ -615,6 +637,8 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	// final sub was unnecessary
 	if c != 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 	return nil
 }

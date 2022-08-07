@@ -6,6 +6,8 @@ import (
 	"math/big"
 )
 
+const limbSize = 8
+
 // TODO rename to FieldPreset?
 type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
@@ -31,18 +33,22 @@ type Field struct {
 }
 
 func (m *Field) RVal() *big.Int {
-	return m.r
+    r := big.NewInt(1)
+    r.Lsh(r, limbSize * m.NumLimbs * 8)
+    return r
 }
 
 func (m *Field) RInv() *big.Int {
-	return m.rInv
+    r := m.RVal()
+    r.ModInverse(r, m.ModulusNonInterleaved)
+    return r
 }
 
 func (m *Field) ToMont(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
-	dst_val.Mul(src_val, m.r)
-	dst_val.Mod(dst_val, LimbsToInt(m.Modulus))
+	dst_val.Mul(src_val, m.RVal())
+	dst_val.Mod(dst_val, m.ModulusNonInterleaved)
 
     return IntToLimbs(dst_val, m.NumLimbs)
 }
@@ -50,8 +56,8 @@ func (m *Field) ToMont(val []uint64) []uint64 {
 func (m *Field) ToNorm(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
-	dst_val.Mul(src_val, m.rInv)
-	dst_val.Mod(dst_val, LimbsToInt(m.Modulus))
+	dst_val.Mul(src_val, m.RInv())
+	dst_val.Mod(dst_val, m.ModulusNonInterleaved)
 
 	return IntToLimbs(dst_val, m.NumLimbs)
 }
@@ -80,15 +86,6 @@ func NewField(preset ArithPreset) *Field {
 	return &result
 }
 
-func (m *Field) GTEMod(x, y []uint64) bool {
-    for i := 0; i < int(m.NumLimbs); i++ {
-        if x[i] > m.Modulus[i] || y[i] > m.Modulus[i]  {
-            return true
-        }
-    }
-    return false
-}
-
 func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
@@ -99,7 +96,8 @@ func (m *Field) ValueSize() uint {
 
 func (m *Field) SetMod(mod []uint64) error {
 	// XXX proper handling without hardcoding
-	if len(mod) == 0 || len(mod) > 12 {
+	var limbCount uint = uint(len(mod))
+	if limbCount == 0 || limbCount > 12 {
         fmt.Println("1")
 		return errors.New("invalid modulus length")
 	} else if mod[0] % 2 == 0 {
@@ -108,53 +106,30 @@ func (m *Field) SetMod(mod []uint64) error {
         return errors.New("modulus cannot be even")
     }
 
-    if mod[len(mod) - 1] == 0 {
+    if mod[limbCount - 1] == 0 {
         fmt.Printf("modErr = %x\n", mod)
-        return errors.New("modulus representation must occupy all limbs")
+        return errors.New("modulus must occupy all limbs")
     }
 
-	var limbCount uint = uint(len(mod))
-	var limbSize uint = 8
-
-	// r val chosen as max representable value for limbCount + 1: 0x1000...000
-	rVal := new(big.Int)
-	rVal.Lsh(big.NewInt(1), limbCount*limbSize*8)
-
-	rValMask := new(big.Int)
-	rValMask.Sub(rVal, big.NewInt(1))
 
 	modInt := LimbsToInt(mod)
-	montParamNonInterleaved := new(big.Int)
-	montParamNonInterleaved = montParamNonInterleaved.Mul(modInt, big.NewInt(-1))
-	montParamNonInterleaved.Mod(montParamNonInterleaved, rVal)
+    negModInt := new(big.Int)
+    negModInt.Neg(modInt)
+    m.ModulusNonInterleaved = modInt
 
-	if montParamNonInterleaved.ModInverse(montParamNonInterleaved, rVal) == nil {
-        fmt.Println("modinverse failed")
-		return errors.New("modinverse failed")
-	}
+    modInv := new(big.Int)
+    smallBase, _ := new(big.Int).SetString("18446744073709551616", 10)
+    modInv.ModInverse(negModInt, smallBase)
 
-	rInv := new(big.Int)
-	if rInv.ModInverse(rVal, modInt) == nil {
-        fmt.Println("modinverse failed: 2")
-		return errors.New("modinverse to compute rInv failed")
-	}
-
+    m.Modulus = make([]uint64, limbCount)
+    copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
-	m.r = rVal
-	m.rInv = rInv
-	m.mask = rValMask
 
-	// mod % (1 << limb_count_bits)  == mod % (1 << limb_count_bytes * 8)
-	m.ModulusNonInterleaved = modInt
+	m.MontParamInterleaved = modInv.Uint64()
 
-	m.Modulus = IntToLimbs(modInt, m.NumLimbs)
-
-	m.MontParamNonInterleaved = montParamNonInterleaved
-	m.MontParamInterleaved = montParamNonInterleaved.Uint64()
-
-    m.MulMont = m.preset.MulMontImpls[len(mod) - 1]
-    m.AddMod = m.preset.AddModImpls[len(mod) - 1]
-    m.SubMod = m.preset.SubModImpls[len(mod) - 1]
+    m.MulMont = m.preset.MulMontImpls[limbCount - 1]
+    m.AddMod = m.preset.AddModImpls[limbCount - 1]
+    m.SubMod = m.preset.SubModImpls[limbCount - 1]
 
 	return nil
 }

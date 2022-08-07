@@ -28,7 +28,9 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -58,7 +60,9 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -92,7 +96,9 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -130,7 +136,9 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -172,7 +180,9 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -218,7 +228,9 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -268,7 +280,9 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -322,7 +336,9 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -380,7 +396,9 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -442,7 +460,9 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -508,7 +528,9 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -578,7 +600,9 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 
 	if c == 0 {
 		copy(z, tmp[:])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }

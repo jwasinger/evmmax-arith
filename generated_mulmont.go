@@ -132,7 +132,9 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[2] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:2])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -216,7 +218,9 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[3] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:3])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -328,7 +332,9 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[4] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:4])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -472,7 +478,9 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[5] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:5])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -652,7 +660,9 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[6] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:6])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -872,7 +882,9 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[7] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:7])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -1136,7 +1148,9 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[8] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:8])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -1448,7 +1462,9 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[9] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:9])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -1812,7 +1828,9 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[10] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:10])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -2232,7 +2250,9 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[11] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:11])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }
@@ -2712,7 +2732,9 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	if D != 0 && t[12] == 0 {
 		// reduction was not necessary
 		copy(z[:], t[:12])
-	}
+	} /* else {
+	    panic("not worst case performance")
+	}*/
 
 	return nil
 }

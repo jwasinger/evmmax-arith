@@ -96,6 +96,19 @@ func MaxModulus(limbCount uint) []uint64 {
 	return mod
 }
 
+func MidModulus(limbCount uint) []uint64 {
+	mod := make([]uint64, limbCount, limbCount)
+
+	mod[0] = math.MaxUint64
+	for i := uint(1); i < limbCount; i++ {
+		mod[i] = math.MaxUint64
+	}
+
+    mod[limbCount - 1] >>= 16
+
+	return mod
+}
+
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
 func GenTestModulus(limbCount uint) []uint64 {
     /*
