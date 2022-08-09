@@ -12,19 +12,19 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
     var c uint64 = 0
+    var c1 uint64 = 0
     tmp := make([]uint64, {{$limbCount}})
 
     {{- range $i := intRange 0 $limbCount }}
         tmp[{{$i}}], c = bits.Add64(x[{{$i}}], y[{{$i}}], c)
     {{- end }}
 
-    c = 0
     {{- range $i := intRange 0 $limbCount }}
-        z[{{$i}}], c = bits.Sub64(tmp[{{$i}}], mod[{{$i}}], c)
+        z[{{$i}}], c1 = bits.Sub64(tmp[{{$i}}], mod[{{$i}}], c1)
     {{- end }}
 
     // final sub was unnecessary
-    if c != 0 {
+    if c == 0 && c1 != 0 {
         copy(z, tmp[:])
     }/* else {
         panic("not worst case performance")

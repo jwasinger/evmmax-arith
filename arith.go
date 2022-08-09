@@ -38,6 +38,7 @@ func Eq(n, other []uint64) bool {
 
 func AddMod(f *Field, z, x, y []uint64) {
     var c uint64 = 0
+    var c1 uint64 = 0
 
     mod := f.Modulus
     limbCount := len(mod)
@@ -47,13 +48,12 @@ func AddMod(f *Field, z, x, y []uint64) {
         tmp[i], c = bits.Add64(x[i], y[i], c)
     }
 
-    c = 0
     for i := 0; i < limbCount; i++ {
-        z[i], c = bits.Sub64(tmp[i], mod[i], c)
+        z[i], c1 = bits.Sub64(tmp[i], mod[i], c1)
     }
 
     // final sub was unnecessary
-    if c != 0 {
+    if c == 0 && c1 != 0 {
         copy(z, tmp[:])
     }
 }

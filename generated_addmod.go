@@ -23,14 +23,13 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 1)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -56,16 +55,15 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 2)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -93,18 +91,17 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 3)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
 	tmp[2], c = bits.Add64(x[2], y[2], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -134,20 +131,19 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 4)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
 	tmp[2], c = bits.Add64(x[2], y[2], c)
 	tmp[3], c = bits.Add64(x[3], y[3], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -179,22 +175,21 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 5)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
 	tmp[2], c = bits.Add64(x[2], y[2], c)
 	tmp[3], c = bits.Add64(x[3], y[3], c)
 	tmp[4], c = bits.Add64(x[4], y[4], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -228,6 +223,7 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 6)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -235,17 +231,15 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[3], c = bits.Add64(x[3], y[3], c)
 	tmp[4], c = bits.Add64(x[4], y[4], c)
 	tmp[5], c = bits.Add64(x[5], y[5], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -281,6 +275,7 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 7)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -289,18 +284,16 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[4], c = bits.Add64(x[4], y[4], c)
 	tmp[5], c = bits.Add64(x[5], y[5], c)
 	tmp[6], c = bits.Add64(x[6], y[6], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -338,6 +331,7 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 8)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -347,19 +341,17 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[5], c = bits.Add64(x[5], y[5], c)
 	tmp[6], c = bits.Add64(x[6], y[6], c)
 	tmp[7], c = bits.Add64(x[7], y[7], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
-	z[7], c = bits.Sub64(tmp[7], mod[7], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
+	z[7], c1 = bits.Sub64(tmp[7], mod[7], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -399,6 +391,7 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 9)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -409,20 +402,18 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[6], c = bits.Add64(x[6], y[6], c)
 	tmp[7], c = bits.Add64(x[7], y[7], c)
 	tmp[8], c = bits.Add64(x[8], y[8], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
-	z[7], c = bits.Sub64(tmp[7], mod[7], c)
-	z[8], c = bits.Sub64(tmp[8], mod[8], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
+	z[7], c1 = bits.Sub64(tmp[7], mod[7], c1)
+	z[8], c1 = bits.Sub64(tmp[8], mod[8], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -464,6 +455,7 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 10)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -475,21 +467,19 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[7], c = bits.Add64(x[7], y[7], c)
 	tmp[8], c = bits.Add64(x[8], y[8], c)
 	tmp[9], c = bits.Add64(x[9], y[9], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
-	z[7], c = bits.Sub64(tmp[7], mod[7], c)
-	z[8], c = bits.Sub64(tmp[8], mod[8], c)
-	z[9], c = bits.Sub64(tmp[9], mod[9], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
+	z[7], c1 = bits.Sub64(tmp[7], mod[7], c1)
+	z[8], c1 = bits.Sub64(tmp[8], mod[8], c1)
+	z[9], c1 = bits.Sub64(tmp[9], mod[9], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -533,6 +523,7 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 11)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -545,22 +536,20 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[8], c = bits.Add64(x[8], y[8], c)
 	tmp[9], c = bits.Add64(x[9], y[9], c)
 	tmp[10], c = bits.Add64(x[10], y[10], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
-	z[7], c = bits.Sub64(tmp[7], mod[7], c)
-	z[8], c = bits.Sub64(tmp[8], mod[8], c)
-	z[9], c = bits.Sub64(tmp[9], mod[9], c)
-	z[10], c = bits.Sub64(tmp[10], mod[10], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
+	z[7], c1 = bits.Sub64(tmp[7], mod[7], c1)
+	z[8], c1 = bits.Sub64(tmp[8], mod[8], c1)
+	z[9], c1 = bits.Sub64(tmp[9], mod[9], c1)
+	z[10], c1 = bits.Sub64(tmp[10], mod[10], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
@@ -606,6 +595,7 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	}
 
 	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := make([]uint64, 12)
 	tmp[0], c = bits.Add64(x[0], y[0], c)
 	tmp[1], c = bits.Add64(x[1], y[1], c)
@@ -619,23 +609,21 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	tmp[9], c = bits.Add64(x[9], y[9], c)
 	tmp[10], c = bits.Add64(x[10], y[10], c)
 	tmp[11], c = bits.Add64(x[11], y[11], c)
-
-	c = 0
-	z[0], c = bits.Sub64(tmp[0], mod[0], c)
-	z[1], c = bits.Sub64(tmp[1], mod[1], c)
-	z[2], c = bits.Sub64(tmp[2], mod[2], c)
-	z[3], c = bits.Sub64(tmp[3], mod[3], c)
-	z[4], c = bits.Sub64(tmp[4], mod[4], c)
-	z[5], c = bits.Sub64(tmp[5], mod[5], c)
-	z[6], c = bits.Sub64(tmp[6], mod[6], c)
-	z[7], c = bits.Sub64(tmp[7], mod[7], c)
-	z[8], c = bits.Sub64(tmp[8], mod[8], c)
-	z[9], c = bits.Sub64(tmp[9], mod[9], c)
-	z[10], c = bits.Sub64(tmp[10], mod[10], c)
-	z[11], c = bits.Sub64(tmp[11], mod[11], c)
+	z[0], c1 = bits.Sub64(tmp[0], mod[0], c1)
+	z[1], c1 = bits.Sub64(tmp[1], mod[1], c1)
+	z[2], c1 = bits.Sub64(tmp[2], mod[2], c1)
+	z[3], c1 = bits.Sub64(tmp[3], mod[3], c1)
+	z[4], c1 = bits.Sub64(tmp[4], mod[4], c1)
+	z[5], c1 = bits.Sub64(tmp[5], mod[5], c1)
+	z[6], c1 = bits.Sub64(tmp[6], mod[6], c1)
+	z[7], c1 = bits.Sub64(tmp[7], mod[7], c1)
+	z[8], c1 = bits.Sub64(tmp[8], mod[8], c1)
+	z[9], c1 = bits.Sub64(tmp[9], mod[9], c1)
+	z[10], c1 = bits.Sub64(tmp[10], mod[10], c1)
+	z[11], c1 = bits.Sub64(tmp[11], mod[11], c1)
 
 	// final sub was unnecessary
-	if c != 0 {
+	if c == 0 && c1 != 0 {
 		copy(z, tmp[:])
 	} /* else {
 	    panic("not worst case performance")
