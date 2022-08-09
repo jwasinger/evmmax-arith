@@ -21,6 +21,18 @@ func Asm384Preset() ArithPreset {
 		AddModNonUnrolled640,
 		AddModNonUnrolled704,
 		AddModNonUnrolled768,
+		AddModNonUnrolled832,
+		AddModNonUnrolled896,
+		AddModNonUnrolled960,
+		AddModNonUnrolled1024,
+		AddModNonUnrolled1088,
+		AddModNonUnrolled1152,
+		AddModNonUnrolled1216,
+		AddModNonUnrolled1280,
+		AddModNonUnrolled1344,
+		AddModNonUnrolled1408,
+		AddModNonUnrolled1472,
+		AddModNonUnrolled1536,
 	}
 
 	subModImpls := []arithFunc{
@@ -36,6 +48,18 @@ func Asm384Preset() ArithPreset {
 		SubModNonUnrolled640,
 		SubModNonUnrolled704,
 		SubModNonUnrolled768,
+		SubModNonUnrolled832,
+		SubModNonUnrolled896,
+		SubModNonUnrolled960,
+		SubModNonUnrolled1024,
+		SubModNonUnrolled1088,
+		SubModNonUnrolled1152,
+		SubModNonUnrolled1216,
+		SubModNonUnrolled1280,
+		SubModNonUnrolled1344,
+		SubModNonUnrolled1408,
+		SubModNonUnrolled1472,
+		SubModNonUnrolled1536,
 	}
 	mulMontImpls := []arithFunc{
 		mulMont64,
@@ -50,6 +74,18 @@ func Asm384Preset() ArithPreset {
 		mulMont640,
 		mulMont704,
 		mulMont768,
+		mulMont832,
+		mulMont896,
+		mulMont960,
+		mulMont1024,
+		mulMont1088,
+		mulMont1152,
+		mulMont1216,
+		mulMont1280,
+		mulMont1344,
+		mulMont1408,
+		mulMont1472,
+		mulMont1536,
 	}
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
@@ -69,6 +105,18 @@ func DefaultPreset() ArithPreset {
 		AddModNonUnrolled640,
 		AddModNonUnrolled704,
 		AddModNonUnrolled768,
+		AddModNonUnrolled832,
+		AddModNonUnrolled896,
+		AddModNonUnrolled960,
+		AddModNonUnrolled1024,
+		AddModNonUnrolled1088,
+		AddModNonUnrolled1152,
+		AddModNonUnrolled1216,
+		AddModNonUnrolled1280,
+		AddModNonUnrolled1344,
+		AddModNonUnrolled1408,
+		AddModNonUnrolled1472,
+		AddModNonUnrolled1536,
 	}
 
 	subModImpls := []arithFunc{
@@ -84,6 +132,18 @@ func DefaultPreset() ArithPreset {
 		SubModNonUnrolled640,
 		SubModNonUnrolled704,
 		SubModNonUnrolled768,
+		SubModNonUnrolled832,
+		SubModNonUnrolled896,
+		SubModNonUnrolled960,
+		SubModNonUnrolled1024,
+		SubModNonUnrolled1088,
+		SubModNonUnrolled1152,
+		SubModNonUnrolled1216,
+		SubModNonUnrolled1280,
+		SubModNonUnrolled1344,
+		SubModNonUnrolled1408,
+		SubModNonUnrolled1472,
+		SubModNonUnrolled1536,
 	}
 	mulMontImpls := []arithFunc{
 		mulMont64,
@@ -98,6 +158,18 @@ func DefaultPreset() ArithPreset {
 		mulMont640,
 		mulMont704,
 		mulMont768,
+		mulMont832,
+		mulMont896,
+		mulMont960,
+		mulMont1024,
+		mulMont1088,
+		mulMont1152,
+		mulMont1216,
+		mulMont1280,
+		mulMont1344,
+		mulMont1408,
+		mulMont1472,
+		mulMont1536,
 	}
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls}

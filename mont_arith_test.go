@@ -19,7 +19,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 }
 
 func TestMulMontBLS12831(t *testing.T) {
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(MaxLimbs, DefaultPreset())
     modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
 
     var limbCount uint = 6
@@ -81,7 +81,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
     yLimbs := IntToLimbs(yInt, uint(limbCount))
     resultBytes := make([]byte, limbCount * 8)
 
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(MaxLimbs, DefaultPreset())
 	err = montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")
@@ -131,7 +131,7 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
     yLimbs := IntToLimbs(yInt, uint(limbCount))
     resultBytes := make([]byte, limbCount * 8)
 
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(MaxLimbs, DefaultPreset())
 	err = montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")
@@ -191,7 +191,7 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
     expected.Mul(expected, rInv)
     expected.Mod(expected, modInt)
 
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(MaxLimbs, DefaultPreset())
 	err = montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")

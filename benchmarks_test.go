@@ -6,9 +6,12 @@ import (
     "math/big"
 )
 
+var MaxLimbs uint = 24
+var MaxLimbsEVMMAX uint = 12
+
 func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	mod := GenTestModulus(limbCount)
-	montCtx := NewField(preset)
+	montCtx := NewField(MaxLimbs, preset)
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
@@ -42,23 +45,23 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 
 func BenchmarkMulMontGo(b *testing.B) {
     preset := DefaultPreset()
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, uint(i))
+				benchmarkMulMont(b, preset, i)
 			})
 		}
 	}
 
-	bench(b, 1, 12)
+	bench(b, 1, MaxLimbs)
 }
 
 
 func BenchmarkMulMontAsm(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, Asm384Preset(), uint(i))
+				benchmarkMulMont(b, Asm384Preset(), i)
 			})
 		}
 	}
@@ -69,7 +72,7 @@ func BenchmarkMulMontAsm(b *testing.B) {
 func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
     modLimbs := MaxModulus(limbCount)
     mod := LimbsToInt(modLimbs)
-	montCtx := NewField(preset)
+	montCtx := NewField(MaxLimbs, preset)
 
     // worst-case performance: unecessary final subtraction
 	err := montCtx.SetMod(modLimbs)
@@ -90,15 +93,15 @@ func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
 }
 
 func BenchmarkAddModGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, DefaultPreset(), uint(i))
+				benchmarkAddMod(b, DefaultPreset(), i)
 			})
 		}
 	}
 
-	bench(b, 1, 12)
+	bench(b, 1, MaxLimbsEVMMAX)
 }
 
 func BenchmarkAddModAsm(b *testing.B) {
@@ -115,7 +118,7 @@ func BenchmarkAddModAsm(b *testing.B) {
 
 func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
     modLimbs := MaxModulus(limbCount)
-	montCtx := NewField(preset)
+	montCtx := NewField(MaxLimbs, preset)
 
     // worst-case performance: unecessary final subtraction
 	err := montCtx.SetMod(modLimbs)
@@ -135,7 +138,7 @@ func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
 }
 
 func BenchmarkSubModGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
 				benchmarkSubMod(b, DefaultPreset(), uint(i))
@@ -143,7 +146,7 @@ func BenchmarkSubModGo(b *testing.B) {
 		}
 	}
 
-	bench(b, 1, 12)
+	bench(b, 1, MaxLimbsEVMMAX)
 }
 
 func BenchmarkSubModAsm(b *testing.B) {
@@ -160,7 +163,7 @@ func BenchmarkSubModAsm(b *testing.B) {
 
 func benchmarkSetMod(b *testing.B, limbCount uint) {
     modLimbs := MidModulus(limbCount)
-    montCtx := NewField(DefaultPreset())
+    montCtx := NewField(MaxLimbs, DefaultPreset())
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
@@ -169,14 +172,14 @@ func benchmarkSetMod(b *testing.B, limbCount uint) {
 }
 
 func BenchmarkSetMod(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSetMod(b, uint(i))
+				benchmarkSetMod(b, i)
 			})
 		}
 	}
 
-	bench(b, 1, 12)
+	bench(b, 1, MaxLimbsEVMMAX)
 
 }

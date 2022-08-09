@@ -231,7 +231,7 @@ func genPresets(maxLimbs int) {
 }
 
 func main() {
-	maxLimbs := 12
+	maxLimbs := 24
 	genMulMont(maxLimbs)
     genPresets(maxLimbs)
     genAddMod(1, maxLimbs)
