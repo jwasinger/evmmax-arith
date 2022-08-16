@@ -6,6 +6,10 @@ type ArithPreset struct {
 	MulMontImpls []arithFunc
 }
 
+func (a *ArithPreset) MaxLimbCount() uint {
+	return uint(len(a.MulMontImpls))
+}
+
 // Preset same as default except it uses blst's go-asm impl of the arithmetic at 384bit widths
 func Asm384Preset() ArithPreset {
 	addModImpls := []arithFunc{

@@ -3,14 +3,15 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/jwasinger/mont-arith/templates"
 	"io/ioutil"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
-    "github.com/jwasinger/mont-arith/templates"
 
-    "errors"
+	"errors"
 )
 
 type TemplateParams struct {
@@ -27,21 +28,20 @@ func loadTextFile(file_name string) string {
 	return string(content)
 }
 
-
 // from Bavard
 func dict(values ...interface{}) (map[string]interface{}, error) {
-    if len(values)%2 != 0 {
-        return nil, errors.New("invalid dict call")
-    }
-    dict := make(map[string]interface{}, len(values)/2)
-    for i := 0; i < len(values); i += 2 {
-        key, ok := values[i].(string)
-        if !ok {
-            return nil, errors.New("dict keys must be strings")
-        }
-        dict[key] = values[i+1]
-    }
-    return dict, nil
+	if len(values)%2 != 0 {
+		return nil, errors.New("invalid dict call")
+	}
+	dict := make(map[string]interface{}, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, errors.New("dict keys must be strings")
+		}
+		dict[key] = values[i+1]
+	}
+	return dict, nil
 }
 
 var funcs = template.FuncMap{
@@ -77,22 +77,23 @@ var funcs = template.FuncMap{
 		result := fmt.Sprintf("[%d]uint64 {", numLimbs)
 		return result + strings.Repeat(" 0,", numLimbs-1) + " 0}"
 	},
-    "dict": dict,
+	"dict": dict,
 }
 
 func aggregate(values []string) string {
-    var sb strings.Builder
-    for _, v := range values {
-        sb.WriteString(v)
-    }
-    return sb.String()
+	var sb strings.Builder
+	for _, v := range values {
+		sb.WriteString(v)
+	}
+	return sb.String()
 }
 
 var tmplDeps []string = []string{
-    templates.GTE,
+	templates.GTE,
 }
+
 func prependDeps(tmplContent string) string {
-    return aggregate([]string{aggregate(tmplDeps), tmplContent})
+	return aggregate([]string{aggregate(tmplDeps), tmplContent})
 }
 
 func buildTemplate(dest_path, template_path string, params *TemplateParams) {
@@ -226,14 +227,23 @@ func genMulMont(maxLimbs int) {
 }
 
 func genPresets(maxLimbs int) {
-    params := TemplateParams{maxLimbs, 64}
-    buildTemplate("generated_presets.go", "templates/presets.go.template", &params)
+	params := TemplateParams{maxLimbs, 64}
+	buildTemplate("generated_presets.go", "templates/presets.go.template", &params)
 }
 
 func main() {
-	maxLimbs := 24
+	fmt.Println(len(os.Args))
+	if len(os.Args) != 2 {
+		panic("bad args")
+	}
+
+	maxLimbs, err := strconv.Atoi(os.Args[1])
+	if err != nil {
+		panic("input wasn't a number")
+	}
+
 	genMulMont(maxLimbs)
-    genPresets(maxLimbs)
-    genAddMod(1, maxLimbs)
-    genSubMod(1, maxLimbs)
+	genPresets(maxLimbs)
+	genAddMod(1, maxLimbs)
+	genSubMod(1, maxLimbs)
 }
