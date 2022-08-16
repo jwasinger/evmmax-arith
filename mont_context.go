@@ -22,6 +22,8 @@ type Field struct {
 	r    *big.Int
 	rInv *big.Int
 
+    rSquared []uint64
+
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
 
@@ -31,6 +33,12 @@ type Field struct {
 
     preset ArithPreset
     maxLimbs uint
+}
+
+func (m *Field) RSquared() []uint64 {
+    rSquared := make([]uint64, m.NumLimbs)
+    copy(rSquared, m.rSquared)
+    return rSquared
 }
 
 func (m *Field) RVal() *big.Int {
@@ -72,6 +80,7 @@ func NewField(maxLimbs uint, preset ArithPreset) *Field {
 		nil,
 
 		0,
+		nil,
 		nil,
 		nil,
 
@@ -122,6 +131,13 @@ func (m *Field) SetMod(mod []uint64) error {
     modInv := new(big.Int)
     smallBase, _ := new(big.Int).SetString("18446744073709551616", 10)
     modInv.ModInverse(negModInt, smallBase)
+
+    rSquared := big.NewInt(1)
+    rSquared.Lsh(rSquared, 64 * limbCount)
+    rSquared = rSquared.Mod(rSquared, modInt)
+    rSquared = rSquared.Mul(rSquared, rSquared)
+    rSquared = rSquared.Mod(rSquared, modInt)
+    m.rSquared = IntToLimbs(rSquared, limbCount)
 
     m.Modulus = make([]uint64, limbCount)
     copy(m.Modulus, mod[:])

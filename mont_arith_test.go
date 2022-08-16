@@ -210,3 +210,9 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
     }
 }
+
+func TestMontgomeryConversion(t *testing.T) {
+    for i := 0; i < MAX_LIMBS; i++ {
+        // convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
+    }
+}
