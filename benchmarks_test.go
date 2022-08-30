@@ -45,6 +45,7 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 func BenchmarkMulMontGo(b *testing.B) {
 	preset := DefaultPreset()
 	maxLimbs := preset.MaxLimbCount()
+    _ = maxLimbs
 
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -54,7 +55,7 @@ func BenchmarkMulMontGo(b *testing.B) {
 		}
 	}
 
-	bench(b, 1, maxLimbs)
+	bench(b, 64, 64)
 }
 
 func BenchmarkMulMontAsm(b *testing.B) {

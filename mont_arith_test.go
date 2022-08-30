@@ -216,13 +216,16 @@ func TestMontgomeryConversion(t *testing.T) {
 	montCtx := NewField(preset)
 	maxLimbCount := preset.MaxLimbCount()
 
-	for limbCount := uint(1); limbCount <= maxLimbCount; limbCount++ {
+    _ = maxLimbCount
+
+	for limbCount := uint(2); limbCount < 3; limbCount++ {
 		mod := MaxModulus(limbCount)
 		if err := montCtx.SetMod(mod); err != nil {
 			t.Fatal(err)
 		}
 
-		one := big.NewInt(1)
+		one := new(big.Int)
+        one.Sub(LimbsToInt(mod), big.NewInt(3))
 
 		xNorm := IntToLimbs(one, limbCount)
 		xMont := make([]byte, limbCount*8)
@@ -231,9 +234,53 @@ func TestMontgomeryConversion(t *testing.T) {
 		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
 
 		result := LEBytesToInt(xMont)
+        /*
 		if result.Cmp(big.NewInt(1)) != 0 {
 			t.Fatalf("bad result")
 		}
+        */
+        fmt.Println()
+        fmt.Println(result.String())
+		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
+	}
+}
+
+func TestMontgomeryConversion2(t *testing.T) {
+	preset := DefaultPreset()
+	montCtx := NewField(preset)
+	maxLimbCount := preset.MaxLimbCount()
+
+    _ = maxLimbCount
+
+	for limbCount := uint(4); limbCount < 5; limbCount++ {
+        modint := new(big.Int)
+        modint.SetString("26959946667150639794667015087019630673637144422540572481103610249215", 10)
+        mod := IntToLimbs(modint, limbCount)
+		if err := montCtx.SetMod(mod); err != nil {
+			t.Fatal(err)
+		}
+
+        fmt.Println(mod)
+
+        one := big.NewInt(1)
+
+        xInt := new(big.Int)
+        xInt.Sub(modint, big.NewInt(3))
+
+		xNorm := IntToLimbs(xInt, limbCount)
+		xMont := make([]byte, limbCount*8)
+
+		montCtx.MulMont(montCtx, xMont, LimbsToLEBytes(xNorm), LimbsToLEBytes(montCtx.RSquared()))
+		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
+
+		result := LEBytesToInt(xMont)
+        /*
+		if result.Cmp(big.NewInt(1)) != 0 {
+			t.Fatalf("bad result")
+		}
+        */
+        fmt.Println()
+        fmt.Println(result.String())
 		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
 	}
 }

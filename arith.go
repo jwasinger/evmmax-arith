@@ -77,3 +77,34 @@ func SubMod(f *Field, z, x, y []uint64) {
         copy(z, tmp[:])
     }
 }
+
+// NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
+func MulModMontNonInterleaved(f *Field, zLimbs, xLimbs, yLimbs []uint64) error {
+    // length x == y assumed
+
+    product := new(big.Int)
+    x := LimbsToInt(xLimbs)
+    y := LimbsToInt(yLimbs)
+
+    if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
+        return errors.New("x/y >= modulus")
+    }
+
+    // m <- ((x*y mod R)N`) mod R
+    product.Mul(x, y)
+    x.And(product, m.mask)
+    x.Mul(x, m.MontParamNonInterleaved)
+    x.And(x, m.mask)
+
+    // t <- (T + mN) / R
+    x.Mul(x, m.ModulusNonInterleaved)
+    x.Add(x, product)
+    x.Rsh(x, m.NumLimbs*64)
+
+    if x.Cmp(m.ModulusNonInterleaved) >= 0 {
+        x.Sub(x, m.ModulusNonInterleaved)
+    }
+
+    copy(zLimbs, IntToLimbs(x, m.NumLimbs))
+    return nil
+}

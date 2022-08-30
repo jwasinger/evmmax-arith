@@ -8,7 +8,7 @@ import (
 
 const limbSize = 8
 
-// TODO rename to FieldPreset?
+// TODO rename to Context
 type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
 	Modulus               []uint64
@@ -33,6 +33,13 @@ type Field struct {
 
 	preset ArithPreset
 }
+
+/*
+// TODO: ToMont that does MulMont(val, rSquared)
+func (m *Field) ToMont(result, val []uint64) {
+    
+}
+*/
 
 func (m *Field) RSquared() []uint64 {
 	rSquared := make([]uint64, m.NumLimbs)
@@ -130,11 +137,15 @@ func (m *Field) SetMod(mod []uint64) error {
 	rSquared = rSquared.Mod(rSquared, modInt)
 	rSquared = rSquared.Mul(rSquared, rSquared)
 	rSquared = rSquared.Mod(rSquared, modInt)
+
 	m.rSquared = IntToLimbs(rSquared, limbCount)
+    fmt.Printf("rSquared - %+v\n", m.rSquared)
 
 	m.Modulus = make([]uint64, limbCount)
 	copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
+
+    fmt.Printf("SetMod,\n   rSquared - %x\n   mod - %x\n", m.rSquared, m.Modulus)
 
 	m.MontParamInterleaved = modInv.Uint64()
 

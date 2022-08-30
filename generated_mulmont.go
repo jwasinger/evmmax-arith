@@ -86,6 +86,8 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var D uint64
 	var m, C uint64
 
+	fmt.Printf("mulMont128 - %+v, %+v, mod=%+v\n", x, y, mod)
+
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
 	_, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
@@ -136,6 +138,8 @@ func mulMont128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont128 result - %+v\n", z)
+
 	return nil
 }
 
@@ -147,6 +151,8 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [4]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont192 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -222,6 +228,8 @@ func mulMont192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont192 result - %+v\n", z)
+
 	return nil
 }
 
@@ -233,6 +241,8 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [5]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont256 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -336,6 +346,8 @@ func mulMont256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont256 result - %+v\n", z)
+
 	return nil
 }
 
@@ -347,6 +359,8 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [6]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont320 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -482,6 +496,8 @@ func mulMont320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont320 result - %+v\n", z)
+
 	return nil
 }
 
@@ -493,6 +509,8 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [7]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont384 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -664,6 +682,8 @@ func mulMont384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont384 result - %+v\n", z)
+
 	return nil
 }
 
@@ -675,6 +695,8 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [8]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont448 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -886,6 +908,8 @@ func mulMont448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont448 result - %+v\n", z)
+
 	return nil
 }
 
@@ -897,6 +921,8 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [9]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont512 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1152,6 +1178,8 @@ func mulMont512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont512 result - %+v\n", z)
+
 	return nil
 }
 
@@ -1163,6 +1191,8 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [10]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont576 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1466,6 +1496,8 @@ func mulMont576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont576 result - %+v\n", z)
+
 	return nil
 }
 
@@ -1477,6 +1509,8 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [11]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont640 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1832,6 +1866,8 @@ func mulMont640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont640 result - %+v\n", z)
+
 	return nil
 }
 
@@ -1843,6 +1879,8 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [12]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont704 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2254,6 +2292,8 @@ func mulMont704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont704 result - %+v\n", z)
+
 	return nil
 }
 
@@ -2265,6 +2305,8 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [13]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont768 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2736,6 +2778,8 @@ func mulMont768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont768 result - %+v\n", z)
+
 	return nil
 }
 
@@ -2747,6 +2791,8 @@ func mulMont832(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [14]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont832 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3282,6 +3328,8 @@ func mulMont832(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont832 result - %+v\n", z)
+
 	return nil
 }
 
@@ -3293,6 +3341,8 @@ func mulMont896(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [15]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont896 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3896,6 +3946,8 @@ func mulMont896(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont896 result - %+v\n", z)
+
 	return nil
 }
 
@@ -3907,6 +3959,8 @@ func mulMont960(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [16]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont960 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4582,6 +4636,8 @@ func mulMont960(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont960 result - %+v\n", z)
+
 	return nil
 }
 
@@ -4593,6 +4649,8 @@ func mulMont1024(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [17]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1024 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5344,6 +5402,8 @@ func mulMont1024(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1024 result - %+v\n", z)
+
 	return nil
 }
 
@@ -5355,6 +5415,8 @@ func mulMont1088(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [18]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1088 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6186,6 +6248,8 @@ func mulMont1088(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1088 result - %+v\n", z)
+
 	return nil
 }
 
@@ -6197,6 +6261,8 @@ func mulMont1152(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [19]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1152 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7112,6 +7178,8 @@ func mulMont1152(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1152 result - %+v\n", z)
+
 	return nil
 }
 
@@ -7123,6 +7191,8 @@ func mulMont1216(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [20]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1216 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8126,6 +8196,8 @@ func mulMont1216(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1216 result - %+v\n", z)
+
 	return nil
 }
 
@@ -8137,6 +8209,8 @@ func mulMont1280(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [21]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1280 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9232,6 +9306,8 @@ func mulMont1280(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1280 result - %+v\n", z)
+
 	return nil
 }
 
@@ -9243,6 +9319,8 @@ func mulMont1344(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [22]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1344 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10434,6 +10512,8 @@ func mulMont1344(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1344 result - %+v\n", z)
+
 	return nil
 }
 
@@ -10445,6 +10525,8 @@ func mulMont1408(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [23]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1408 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11736,6 +11818,8 @@ func mulMont1408(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1408 result - %+v\n", z)
+
 	return nil
 }
 
@@ -11747,6 +11831,8 @@ func mulMont1472(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [24]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1472 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -13142,6 +13228,8 @@ func mulMont1472(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	    panic("not worst case performance")
 	}*/
 
+	fmt.Printf("mulMont1472 result - %+v\n", z)
+
 	return nil
 }
 
@@ -13153,6 +13241,8 @@ func mulMont1536(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	var t [25]uint64
 	var D uint64
 	var m, C uint64
+
+	fmt.Printf("mulMont1536 - %+v, %+v, mod=%+v\n", x, y, mod)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -14655,6 +14745,8 @@ func mulMont1536(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	} /* else {
 	    panic("not worst case performance")
 	}*/
+
+	fmt.Printf("mulMont1536 result - %+v\n", z)
 
 	return nil
 }
