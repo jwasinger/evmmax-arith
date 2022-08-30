@@ -139,15 +139,17 @@ func (m *Field) SetMod(mod []uint64) error {
 	rSquared = rSquared.Mod(rSquared, modInt)
 
 	m.rSquared = IntToLimbs(rSquared, limbCount)
-    fmt.Printf("rSquared - %+v\n", m.rSquared)
+
+    m.mask = big.NewInt(1)
+    m.mask.Lsh(m.mask, 64 * limbCount)
+    m.mask.Sub(m.mask, big.NewInt(1))
 
 	m.Modulus = make([]uint64, limbCount)
 	copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
 
-    fmt.Printf("SetMod,\n   rSquared - %x\n   mod - %x\n", m.rSquared, m.Modulus)
-
 	m.MontParamInterleaved = modInv.Uint64()
+    m.MontParamNonInterleaved = modInv
 
 	m.MulMont = m.preset.MulMontImpls[limbCount-1]
 	m.AddMod = m.preset.AddModImpls[limbCount-1]

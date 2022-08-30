@@ -2,7 +2,7 @@ package mont_arith
 
 {{ $limbCount := .LimbCount}}
 {{ $limbBits := .LimbBits}}
-{{ $unrolledCutoff := 11}}
+{{ $unrolledCutoff := 11}} // TODO move this config out of the preset template (into the generator?)
 {{ $limbCountPlusOne := add .LimbCount 1}}
 
 type ArithPreset struct {
@@ -41,7 +41,11 @@ func Asm384Preset() ArithPreset {
 			{{- if eq $i 6}}
 				MulMont384_asm,
 			{{- else }}
-                mulMont{{mul $i $limbBits}},
+                {{- if gte $i $unrolledCutoff }}
+                    MulMontNonInterleaved,
+                {{- else }}
+                    mulMont{{mul $i $limbBits}},
+                {{- end}}
 			{{- end}}
 		{{- end}}
 	}
@@ -63,7 +67,32 @@ func DefaultPreset() ArithPreset {
 	}
 	mulMontImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-			mulMont{{mul $i $limbBits}},
+            {{- if gte $i $unrolledCutoff }}
+                MulMontNonInterleaved,
+            {{- else }}
+                mulMont{{mul $i $limbBits}},
+            {{- end}}
+		{{- end}}
+	}
+
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+}
+
+func MulMontNonInterleavedPreset() ArithPreset {
+	addModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			MulMontNonInterleaved,
 		{{- end}}
 	}
 

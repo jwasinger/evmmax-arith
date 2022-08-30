@@ -14,9 +14,12 @@ import (
 	"errors"
 )
 
+const UnrolledCutoff = 11
+
 type TemplateParams struct {
 	LimbCount int
 	LimbBits  int
+    UnrolledCutoff int
 }
 
 func loadTextFile(file_name string) string {
@@ -119,7 +122,7 @@ func genAddMod(minLimbs, maxLimbs int) {
 	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
 	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
 
-	params := TemplateParams{0, 64}
+	params := TemplateParams{0, 64, UnrolledCutoff}
 	buf := new(bytes.Buffer)
 
 	f, err := os.Create("generated_addmod.go")
@@ -137,7 +140,7 @@ func genAddMod(minLimbs, maxLimbs int) {
 	addModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(addModNonUnrolledTemplateContent)))
 
 	for i := minLimbs; i <= maxLimbs; i++ {
-		params = TemplateParams{i, 64}
+		params = TemplateParams{i, 64, UnrolledCutoff}
 		if err := addModNonUnrolledTemplate.Execute(buf, params); err != nil {
 			log.Fatal(err)
 			panic("")
@@ -153,7 +156,7 @@ func genSubMod(minLimbs, maxLimbs int) {
 	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
 	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
 
-	params := TemplateParams{0, 64}
+	params := TemplateParams{0, 64, UnrolledCutoff}
 	buf := new(bytes.Buffer)
 
 	f, err := os.Create("generated_submod.go")
@@ -171,7 +174,7 @@ func genSubMod(minLimbs, maxLimbs int) {
 	subModNonUnrolledTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(subModNonUnrolledTemplateContent)))
 
 	for i := minLimbs; i <= maxLimbs; i++ {
-		params = TemplateParams{i, 64}
+		params = TemplateParams{i, 64, UnrolledCutoff}
 		if err := subModNonUnrolledTemplate.Execute(buf, params); err != nil {
 			log.Fatal(err)
 			panic("")
@@ -187,7 +190,7 @@ func genMulMont(maxLimbs int) {
 	headerTemplateContent := loadTextFile("templates/mulmontheader.go.template")
 	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
 
-	params := TemplateParams{maxLimbs, 64}
+	params := TemplateParams{maxLimbs, 64, UnrolledCutoff}
 	buf := new(bytes.Buffer)
 
 	f, err := os.Create("generated_mulmont.go")
@@ -204,8 +207,8 @@ func genMulMont(maxLimbs int) {
 	mulMontTemplateContent := loadTextFile("templates/mulmont.go.template")
 	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(mulMontTemplateContent)))
 
-	for i := 2; i <= maxLimbs; i++ {
-		params = TemplateParams{i, 64}
+	for i := 2; i <= UnrolledCutoff; i++ {
+		params = TemplateParams{i, 64, UnrolledCutoff}
 		if err := mulMontTemplate.Execute(buf, params); err != nil {
 			log.Fatal(err)
 			panic("")
@@ -215,19 +218,10 @@ func genMulMont(maxLimbs int) {
 	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
 		panic(err)
 	}
-
-	mulMontGenericContent, err := ioutil.ReadFile("templates/mulmont_generic.go.template")
-	if err != nil {
-		panic(err)
-	}
-
-	if n, err := f.Write(mulMontGenericContent); err != nil || n != len(mulMontGenericContent) {
-		panic(err)
-	}
 }
 
 func genPresets(maxLimbs int) {
-	params := TemplateParams{maxLimbs, 64}
+	params := TemplateParams{maxLimbs, 64, UnrolledCutoff}
 	buildTemplate("generated_presets.go", "templates/presets.go.template", &params)
 }
 

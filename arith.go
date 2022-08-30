@@ -2,6 +2,8 @@ package mont_arith
 
 import (
     "math/bits"
+    "math/big"
+    "errors"
 )
 
 // XXX implement the below methods using these types (conversions might make it awkward/slower)
@@ -79,12 +81,12 @@ func SubMod(f *Field, z, x, y []uint64) {
 }
 
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
-func MulModMontNonInterleaved(f *Field, zLimbs, xLimbs, yLimbs []uint64) error {
+func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
     // length x == y assumed
 
     product := new(big.Int)
-    x := LimbsToInt(xLimbs)
-    y := LimbsToInt(yLimbs)
+    x := LEBytesToInt(xBytes)
+    y := LEBytesToInt(yBytes)
 
     if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
         return errors.New("x/y >= modulus")
@@ -105,6 +107,6 @@ func MulModMontNonInterleaved(f *Field, zLimbs, xLimbs, yLimbs []uint64) error {
         x.Sub(x, m.ModulusNonInterleaved)
     }
 
-    copy(zLimbs, IntToLimbs(x, m.NumLimbs))
+    copy(zBytes, LimbsToLEBytes(IntToLimbs(x, m.NumLimbs)))
     return nil
 }

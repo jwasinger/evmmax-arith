@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var MaxLimbsEVMMAX uint = 12
+var MaxLimbsEVMMAX uint = 64
 
 func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	mod := GenTestModulus(limbCount)
@@ -55,7 +55,7 @@ func BenchmarkMulMontGo(b *testing.B) {
 		}
 	}
 
-	bench(b, 64, 64)
+	bench(b, 1, MaxLimbsEVMMAX)
 }
 
 func BenchmarkMulMontAsm(b *testing.B) {
