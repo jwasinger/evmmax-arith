@@ -136,7 +136,7 @@ func genAddMod(addModType string, maxLimbs int) {
 	addModTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(addModTemplateContent)))
 
     // TODO account for the implementations at 1 limb
-	for i := 2; i <= maxLimbs; i++ {
+	for i := 1; i <= maxLimbs; i++ {
 		params = TemplateParams{i, 64}
 		if err := addModTemplate.Execute(buf, params); err != nil {
 			log.Fatal(err)
@@ -173,7 +173,7 @@ func genSubMod(subModType string, maxLimbs int) {
 	subModTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(subModTemplateContent)))
 
     fmt.Println("submod loop")
-	for i := 2; i <= maxLimbs; i++ {
+	for i := 1; i <= maxLimbs; i++ {
         fmt.Println("iteration")
 		params = TemplateParams{i, 64}
 		if err := subModTemplate.Execute(buf, params); err != nil {
@@ -208,6 +208,7 @@ func genMulMont(mulmontType string, maxLimbs int) {
 	mulMontTemplateContent := loadTextFile(fmt.Sprintf("templates/mulmont_%s.go.template", mulmontType))
 	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(mulMontTemplateContent)))
 
+    // TODO grab MulMont64 from somewhere
 	for i := 2; i <= maxLimbs ; i++ {
 		params = TemplateParams{i, 64}
 		if err := mulMontTemplate.Execute(buf, params); err != nil {
