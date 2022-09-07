@@ -138,7 +138,7 @@ func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-func BenchmarkSubModGo(b *testing.B) {
+func BenchmarkSubModUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
@@ -163,7 +163,7 @@ func BenchmarkSubModAsm(b *testing.B) {
 }
 
 func benchmarkSetMod(b *testing.B, limbCount uint) {
-	modLimbs := MidModulus(limbCount)
+	modLimbs := SmolModulus(limbCount)
 	montCtx := NewField(DefaultPreset())
 
 	b.ResetTimer()
@@ -183,4 +183,21 @@ func BenchmarkSetMod(b *testing.B) {
 
 	bench(b, 1, MaxLimbsEVMMAX)
 
+}
+
+func BenchmarkAddModNonUnrolled(b *testing.B, limbCount uint) {
+}
+
+func BenchmarkSubModNonUnrolled(b *testing.B, limbCount uint) {
+}
+
+func BenchmarkMulMontGeneric(b *testing.B, limbCount uint) {
+
+}
+
+func BenchmarkMulMontNonUnrolled(b *testing.B, limbCount uint) {
+
+}
+
+func BenchmarkMulMontInnerLoopUnrolled(b *testing.B, limbCount uint) {
 }

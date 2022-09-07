@@ -96,6 +96,17 @@ func MaxModulus(limbCount uint) []uint64 {
 	return mod
 }
 
+func SmolModulus(limbCount uint) []uint64 {
+	mod := make([]uint64, limbCount, limbCount)
+
+	mod[0] = 11
+	for i := uint(1); i < limbCount; i++ {
+		mod[i] = math.MaxUint64
+	}
+
+	return mod
+}
+
 func MidModulus(limbCount uint) []uint64 {
 	mod := make([]uint64, limbCount, limbCount)
 

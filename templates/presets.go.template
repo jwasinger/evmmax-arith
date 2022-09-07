@@ -2,7 +2,6 @@ package mont_arith
 
 {{ $limbCount := .LimbCount}}
 {{ $limbBits := .LimbBits}}
-{{ $unrolledCutoff := 11}} // TODO move this config out of the preset template (into the generator?)
 {{ $limbCountPlusOne := add .LimbCount 1}}
 
 type ArithPreset struct {
@@ -41,11 +40,7 @@ func Asm384Preset() ArithPreset {
 			{{- if eq $i 6}}
 				MulMont384_asm,
 			{{- else }}
-                {{- if gte $i $unrolledCutoff }}
-                    MulMontNonInterleaved,
-                {{- else }}
-                    mulMont{{mul $i $limbBits}},
-                {{- end}}
+                MulMontNonUnrolled{{mul $i $limbBits}},
 			{{- end}}
 		{{- end}}
 	}
@@ -53,46 +48,27 @@ func Asm384Preset() ArithPreset {
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
 }
 
-func DefaultPreset() ArithPreset {
+func UnrolledPreset() ArithPreset {
+    // full unrolled for addmod/submod.  only first limb counts up to 32 for mulmont
+
 	addModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-			AddModNonUnrolled{{mul $i $limbBits}},
+			AddModUnrolled{{mul $i $limbBits}},
 		{{- end}}
 	}
 
 	subModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-			SubModNonUnrolled{{mul $i $limbBits}},
+			SubModUnrolled{{mul $i $limbBits}},
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-            {{- if gte $i $unrolledCutoff }}
-                MulMontNonInterleaved,
+            {{- if gte $i 32 }}
+                mulMontNonUnrolled{{mul $i $limbBits}},
             {{- else }}
-                mulMont{{mul $i $limbBits}},
-            {{- end}}
-		{{- end}}
-	}
-
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
-}
-
-func MulMontNonInterleavedPreset() ArithPreset {
-	addModImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-			AddModNonUnrolled{{mul $i $limbBits}},
-		{{- end}}
-	}
-
-	subModImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-			SubModNonUnrolled{{mul $i $limbBits}},
-		{{- end}}
-	}
-	mulMontImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-			MulMontNonInterleaved,
+                mulMontUnrolled{{mul $i $limbBits}},
+            {{- end }}
 		{{- end}}
 	}
 

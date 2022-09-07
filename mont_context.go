@@ -30,6 +30,12 @@ type Field struct {
 	MulMont arithFunc
 	AddMod  arithFunc
 	SubMod  arithFunc
+    MulMontCost uint64
+    AddModCost uint64
+    SubModCost uint64
+    SetModCost uint64
+
+    ElementSize uint64
 
 	preset ArithPreset
 }
@@ -96,6 +102,12 @@ func NewField(preset ArithPreset) *Field {
 		nil,
 		nil,
 
+        0,
+        0,
+        0,
+        0,
+        0,
+
 		preset,
 	}
 
@@ -105,6 +117,8 @@ func NewField(preset ArithPreset) *Field {
 func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
+
+const UnrolledCutoff = 11
 
 func (m *Field) SetMod(mod []uint64) error {
 	var limbCount uint = uint(len(mod))
@@ -147,6 +161,7 @@ func (m *Field) SetMod(mod []uint64) error {
 	m.Modulus = make([]uint64, limbCount)
 	copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
+    m.ElementSize = uint64(limbCount) * 4
 
 	m.MontParamInterleaved = modInv.Uint64()
     m.MontParamNonInterleaved = modInv
