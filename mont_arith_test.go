@@ -182,8 +182,7 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	resultBytes := make([]byte, limbCount*8)
 	// rInv := pow(-r, -1, mod)
 	rInv := big.NewInt(1)
-	rInv.Lsh(rInv, uint(limbCount)*8)
-	rInv.Neg(rInv)
+	rInv.Lsh(rInv, uint(limbCount)*64)
 	rInv.ModInverse(rInv, modInt)
 
 	expected := new(big.Int)

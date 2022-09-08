@@ -153,9 +153,7 @@ func SubMod(f *Field, z, x, y []uint64) {
 
 // NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
 func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
-    // length x == y assumed
-    fmt.Println("MulMontNonInterleaved")
-
+    // TODO check that x/y < modulus
     product := new(big.Int)
     x := LEBytesToInt(xBytes)
     y := LEBytesToInt(yBytes)
