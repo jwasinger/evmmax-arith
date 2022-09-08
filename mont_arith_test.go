@@ -19,7 +19,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 }
 
 func TestMulMontBLS12831(t *testing.T) {
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(NonUnrolledPreset())
 	modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
 
 	var limbCount uint = 6

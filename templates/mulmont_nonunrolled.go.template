@@ -3,7 +3,7 @@
 {{ $limbBits := .LimbBits}}
 {{ $limbCountPlusOne := add .LimbCount 1 }}
 
-func mulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -14,12 +14,12 @@ func mulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_byt
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
-    C, t[0] = bits.Mul64(x[j], y[0])
+    C, t[0] = bits.Mul64(x[0], y[0])
     {{- range $i := intRange 1 $limbCount}}
-        C, t[{{$i}}] = madd1(x[j], y[{{$i}}], C)
+        C, t[{{$i}}] = madd1(x[0], y[{{$i}}], C)
     {{- end}}
 
-    for j := 1; j < limbCount; j++ {
+    for j := 1; j < {{$limbCount}}; j++ {
         //  first inner loop (second iteration)
         C, t[0] = madd1(x[j], y[0], t[0])
         {{- range $i := intRange 1 $limbCount }}

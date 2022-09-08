@@ -36,7 +36,7 @@ func Asm384Preset() ArithPreset {
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
+		{{- range $i := intRange 2 $limbCountPlusOne}}
 			{{- if eq $i 6}}
 				MulMont384_asm,
 			{{- else }}
@@ -63,14 +63,62 @@ func UnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
+        MulMontNonInterleaved,
+		{{- range $i := intRange 2 $limbCountPlusOne}}
             {{- if gte $i 32 }}
-                mulMontNonUnrolled{{mul $i $limbBits}},
+                MulMontNonUnrolled{{mul $i $limbBits}},
             {{- else }}
-                mulMontUnrolled{{mul $i $limbBits}},
+                MulMontUnrolled{{mul $i $limbBits}},
             {{- end }}
 		{{- end}}
 	}
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+}
+
+func NonUnrolledPreset() ArithPreset {
+	addModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+        MulMontNonInterleaved,
+		{{- range $i := intRange 2 $limbCountPlusOne}}
+            MulMontNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+}
+
+func GenericMulMontPreset() ArithPreset {
+	addModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			AddModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+
+	subModImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+			SubModNonUnrolled{{mul $i $limbBits}},
+		{{- end}}
+	}
+	mulMontImpls := []arithFunc {
+		{{- range $i := intRange 1 $limbCountPlusOne}}
+            MulMontNonInterleaved,
+		{{- end}}
+	}
+
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+}
+
+func DefaultPreset() ArithPreset {
+    return UnrolledPreset()
 }

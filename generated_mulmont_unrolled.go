@@ -7,76 +7,7 @@ import (
 	"unsafe"
 )
 
-// madd0 hi = a*b + c (discards lo bits)
-func madd0(a, b, c uint64) uint64 {
-	var carry, lo uint64
-	hi, lo := bits.Mul64(a, b)
-	_, carry = bits.Add64(lo, c, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
-	return hi
-}
-
-// madd1 hi, lo = a*b + c
-func madd1(a, b, c uint64) (uint64, uint64) {
-	var carry uint64
-	hi, lo := bits.Mul64(a, b)
-	lo, carry = bits.Add64(lo, c, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
-	return hi, lo
-}
-
-// madd2 hi, lo = a*b + c + d
-func madd2(a, b, c, d uint64) (uint64, uint64) {
-	var carry uint64
-	hi, lo := bits.Mul64(a, b)
-	c, carry = bits.Add64(c, d, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
-	lo, carry = bits.Add64(lo, c, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
-	return hi, lo
-}
-
-func madd3(a, b, c, d, e uint64) (uint64, uint64) {
-	var carry uint64
-	var c_uint uint64
-	hi, lo := bits.Mul64(a, b)
-	c_uint, carry = bits.Add64(c, d, 0)
-	hi, _ = bits.Add64(hi, 0, carry)
-	lo, carry = bits.Add64(lo, c_uint, 0)
-	hi, _ = bits.Add64(hi, e, carry)
-	return hi, lo
-}
-
-/*
- * begin mulmont implementations
- */
-
-func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
-	var product [2]uint64
-	var c uint64
-	mod := f.Modulus
-	modinv := f.MontParamInterleaved
-
-	x := (*[1]uint64)(unsafe.Pointer(&xBytes[0]))[:]
-	y := (*[1]uint64)(unsafe.Pointer(&yBytes[0]))[:]
-	out := (*[1]uint64)(unsafe.Pointer(&outBytes[0]))[:]
-
-	if x[0] >= mod[0] || y[0] >= mod[0] {
-		return errors.New(fmt.Sprintf("x/y gte modulus"))
-	}
-
-	product[1], product[0] = bits.Mul64(x[0], y[0])
-	m := product[0] * modinv
-	c, _ = madd1(m, mod[0], product[0])
-	out[0] = c + product[1]
-
-	if out[0] > mod[0] {
-		out[0] = c - mod[0]
-	}
-	return nil
-}
-
-func mulMontUnrolled128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -138,7 +69,7 @@ func mulMontUnrolled128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[3]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -224,7 +155,7 @@ func mulMontUnrolled192(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[4]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -338,7 +269,7 @@ func mulMontUnrolled256(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[5]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -484,7 +415,7 @@ func mulMontUnrolled320(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[6]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -666,7 +597,7 @@ func mulMontUnrolled384(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[7]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -888,7 +819,7 @@ func mulMontUnrolled448(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[8]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -1154,7 +1085,7 @@ func mulMontUnrolled512(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[9]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -1468,7 +1399,7 @@ func mulMontUnrolled576(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[10]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -1834,7 +1765,7 @@ func mulMontUnrolled640(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[11]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -2256,7 +2187,7 @@ func mulMontUnrolled704(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[12]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -2738,7 +2669,7 @@ func mulMontUnrolled768(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled832(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled832(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[13]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[13]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[13]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -3284,7 +3215,7 @@ func mulMontUnrolled832(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled896(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled896(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[14]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[14]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[14]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -3898,7 +3829,7 @@ func mulMontUnrolled896(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled960(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled960(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[15]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[15]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[15]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -4584,7 +4515,7 @@ func mulMontUnrolled960(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1024(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1024(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[16]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[16]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[16]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -5346,7 +5277,7 @@ func mulMontUnrolled1024(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1088(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1088(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[17]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[17]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[17]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -6188,7 +6119,7 @@ func mulMontUnrolled1088(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1152(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1152(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[18]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[18]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[18]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -7114,7 +7045,7 @@ func mulMontUnrolled1152(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1216(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1216(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[19]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[19]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[19]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -8128,7 +8059,7 @@ func mulMontUnrolled1216(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1280(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1280(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[20]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[20]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[20]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -9234,7 +9165,7 @@ func mulMontUnrolled1280(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1344(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1344(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[21]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[21]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[21]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -10436,7 +10367,7 @@ func mulMontUnrolled1344(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1408(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1408(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[22]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[22]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[22]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -11738,7 +11669,7 @@ func mulMontUnrolled1408(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1472(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1472(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[23]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[23]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[23]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -13144,7 +13075,7 @@ func mulMontUnrolled1472(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1536(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1536(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[24]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[24]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[24]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -14658,7 +14589,7 @@ func mulMontUnrolled1536(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1600(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1600(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[25]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[25]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[25]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -16284,7 +16215,7 @@ func mulMontUnrolled1600(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1664(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1664(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[26]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[26]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[26]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -18026,7 +17957,7 @@ func mulMontUnrolled1664(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1728(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1728(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[27]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[27]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[27]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -19888,7 +19819,7 @@ func mulMontUnrolled1728(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1792(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1792(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[28]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[28]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[28]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -21874,7 +21805,7 @@ func mulMontUnrolled1792(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1856(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1856(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[29]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[29]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[29]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -23988,7 +23919,7 @@ func mulMontUnrolled1856(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1920(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1920(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[30]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[30]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[30]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -26234,7 +26165,7 @@ func mulMontUnrolled1920(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled1984(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled1984(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[31]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[31]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[31]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
@@ -28616,7 +28547,7 @@ func mulMontUnrolled1984(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	return nil
 }
 
-func mulMontUnrolled2048(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+func MulMontUnrolled2048(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[32]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[32]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[32]uint64)(unsafe.Pointer(&out_bytes[0]))[:]

@@ -42,10 +42,8 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-func BenchmarkMulMontGo(b *testing.B) {
-	preset := DefaultPreset()
-	maxLimbs := preset.MaxLimbCount()
-    _ = maxLimbs
+func BenchmarkMulMontGoUnrolled(b *testing.B) {
+	preset := UnrolledPreset()
 
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -142,7 +140,7 @@ func BenchmarkSubModUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSubMod(b, DefaultPreset(), uint(i))
+				benchmarkSubMod(b, UnrolledPreset(), uint(i))
 			})
 		}
 	}
@@ -185,19 +183,48 @@ func BenchmarkSetMod(b *testing.B) {
 
 }
 
-func BenchmarkAddModNonUnrolled(b *testing.B, limbCount uint) {
+func BenchmarkAddModNonUnrolled(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkAddMod(b, NonUnrolledPreset(), uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, MaxLimbsEVMMAX)
 }
 
-func BenchmarkSubModNonUnrolled(b *testing.B, limbCount uint) {
+func BenchmarkSubModNonUnrolled(b *testing.B) {
 }
 
-func BenchmarkMulMontGeneric(b *testing.B, limbCount uint) {
+func BenchmarkMulMontGeneric(b *testing.B) {
+	preset := GenericMulMontPreset()
 
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkMulMont(b, preset, i)
+			})
+		}
+	}
+
+	bench(b, 1, MaxLimbsEVMMAX)
 }
 
-func BenchmarkMulMontNonUnrolled(b *testing.B, limbCount uint) {
+func BenchmarkMulMontNonUnrolled(b *testing.B) {
+	preset := NonUnrolledPreset()
 
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkMulMont(b, preset, i)
+			})
+		}
+	}
+
+	bench(b, 1, 64)
 }
 
-func BenchmarkMulMontInnerLoopUnrolled(b *testing.B, limbCount uint) {
+func BenchmarkMulMontInnerLoopUnrolled(b *testing.B) {
 }
