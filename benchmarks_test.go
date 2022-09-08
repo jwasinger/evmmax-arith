@@ -42,8 +42,37 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-func BenchmarkMulMontGoUnrolled(b *testing.B) {
+func BenchmarkMulMontUnrolledGo(b *testing.B) {
 	preset := UnrolledPreset()
+
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkMulMont(b, preset, i)
+			})
+		}
+	}
+
+    // TODO 16 as a constant
+	bench(b, 1, 16)
+}
+
+func BenchmarkMulMontGenericGo(b *testing.B) {
+	preset := GenericMulMontPreset()
+
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkMulMont(b, preset, i)
+			})
+		}
+	}
+
+	bench(b, 1, MaxLimbsEVMMAX)
+}
+
+func BenchmarkMulMontNonUnrolledGo(b *testing.B) {
+	preset := NonUnrolledPreset()
 
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -91,11 +120,23 @@ func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-func BenchmarkAddModGo(b *testing.B) {
+func BenchmarkAddModUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
 			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, DefaultPreset(), i)
+				benchmarkAddMod(b, UnrolledPreset(), i)
+			})
+		}
+	}
+
+	bench(b, 1, MaxLimbsEVMMAX)
+}
+
+func BenchmarkAddModNonUnrolledGo(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkAddMod(b, NonUnrolledPreset(), i)
 			})
 		}
 	}
@@ -148,6 +189,18 @@ func BenchmarkSubModUnrolledGo(b *testing.B) {
 	bench(b, 1, MaxLimbsEVMMAX)
 }
 
+func BenchmarkSubModNonUnrolledGo(b *testing.B) {
+	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
+		for i := minLimbs; i <= maxLimbs; i++ {
+			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
+				benchmarkSubMod(b, NonUnrolledPreset(), uint(i))
+			})
+		}
+	}
+
+	bench(b, 1, MaxLimbsEVMMAX)
+}
+
 func BenchmarkSubModAsm(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs int) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -183,48 +236,3 @@ func BenchmarkSetMod(b *testing.B) {
 
 }
 
-func BenchmarkAddModNonUnrolled(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, NonUnrolledPreset(), uint(i))
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkSubModNonUnrolled(b *testing.B) {
-}
-
-func BenchmarkMulMontGeneric(b *testing.B) {
-	preset := GenericMulMontPreset()
-
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, i)
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkMulMontNonUnrolled(b *testing.B) {
-	preset := NonUnrolledPreset()
-
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, i)
-			})
-		}
-	}
-
-	bench(b, 1, 64)
-}
-
-func BenchmarkMulMontInnerLoopUnrolled(b *testing.B) {
-}

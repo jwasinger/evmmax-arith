@@ -829,5 +829,5 @@ func GenericMulMontPreset() ArithPreset {
 }
 
 func DefaultPreset() ArithPreset {
-	return UnrolledPreset()
+	return NonUnrolledPreset()
 }
