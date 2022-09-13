@@ -17,15 +17,11 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 		panic("error")
 	}
 
-	x := big.NewInt(1)
-	y := big.NewInt(1)
-	/*
-		x := LimbsToInt(mod)
-	    x = x.Sub(x, big.NewInt(1))
+	x := LimbsToInt(mod)
+	x = x.Sub(x, big.NewInt(100))
 
-		y := new(big.Int).SetBytes(LimbsToInt(mod).Bytes())
-	    y = y.Sub(y, big.NewInt(1))
-	*/
+	y := new(big.Int).SetBytes(LimbsToInt(mod).Bytes())
+	y = y.Sub(y, big.NewInt(100))
 
 	outLimbs := make([]uint64, montCtx.NumLimbs)
 	xLimbs := IntToLimbs(x, limbCount)
@@ -53,7 +49,7 @@ func BenchmarkMulMontUnrolledGo(b *testing.B) {
 		}
 	}
 
-    // TODO 16 as a constant
+	// TODO 16 as a constant
 	bench(b, 1, 16)
 }
 
@@ -235,4 +231,3 @@ func BenchmarkSetMod(b *testing.B) {
 	bench(b, 1, MaxLimbsEVMMAX)
 
 }
-
