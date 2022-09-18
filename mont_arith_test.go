@@ -8,6 +8,8 @@ import (
 	"testing"
 )
 
+const EVMMAXMaxLimbCount = 64
+
 func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 	resBytes := make([]byte, limbCount*8)
 	for i := 0; i < int(limbCount)*8; i++ {
@@ -154,11 +156,11 @@ func TestMulMontInputs(t *testing.T) {
 	inputs := testInputs()
 
 	for i := 0; i < len(inputs); i += 4 {
-		testMulMont(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3])
+		testMulMont(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3], DefaultPreset())
 	}
 }
 
-func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
+func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset ArithPreset) {
 	xInt, ok := new(big.Int).SetString(xStr, 10)
 	if !ok {
 		t.Fatalf("could not parse x")
@@ -190,7 +192,7 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected.Mul(expected, rInv)
 	expected.Mod(expected, modInt)
 
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(preset)
 	err = montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")
@@ -202,12 +204,73 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 
 	result := LEBytesToInt(resultBytes)
 	if result.Cmp(expected) != 0 {
-		fmt.Println(xLimbs)
-		fmt.Println(yLimbs)
-		fmt.Println(mod)
-		fmt.Println(montCtx.MontParamInterleaved)
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
+}
+
+func smallModulus(limbCount uint) *big.Int {
+    mod := big.NewInt(1)
+    mod.Lsh(mod, (limbCount - 1) * 64)
+    mod.Add(mod, big.NewInt(3))
+    return mod
+}
+
+func midModulus(limbCount uint) *big.Int {
+    mod := big.NewInt(1)
+    mod.Lsh(mod, limbCount * 64 - 32)
+    mod.Sub(mod, big.NewInt(1))
+    return mod
+}
+
+func maxModulus(limbCount uint) *big.Int {
+    mod := big.NewInt(1)
+    mod.Lsh(mod, limbCount * 64)
+    mod.Sub(mod, big.NewInt(1))
+    return mod
+}
+
+func smallestVal(mod *big.Int, limbCount uint) *big.Int {
+    val := big.NewInt(1)
+    val.Lsh(val, (limbCount - 1) * 64)
+    return val
+}
+
+func midVal(mod *big.Int, limbCount uint) *big.Int {
+    // TODO
+    return nil
+}
+
+func largestVal(mod *big.Int, limbCount uint) *big.Int {
+    val := new(big.Int)
+    val.Sub(mod, big.NewInt(1))
+    return val
+}
+
+func TestMulMont(t *testing.T) {
+    presets := []ArithPreset{ DefaultPreset(), NonUnrolledPreset(), GenericMulMontPreset()}
+    for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
+        preset := presets[presetIdx]
+        for limbCount := uint(2); limbCount < EVMMAXMaxLimbCount; limbCount++ {
+            fmt.Println(limbCount)
+            // test smallest mod
+            {
+                smallMod := smallModulus(limbCount)
+                // test mulmont(smallestVal, smallestVal)
+                smallVal := smallestVal(smallMod, limbCount)
+                testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+                // test mulmont(largestVal, largestVal)
+                largeVal := largestVal(smallMod, limbCount)
+                testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+            }
+
+           // test mid mod
+                // test mulmont(smallestVal, smallestVal)
+                // test mulmont(largestVal, largestVal)
+           // test largest mod
+                // test mulmont(smallestVal, smallestVal)
+                // test mulmont(largestVal, largestVal)
+        }
+    }
 }
 
 func TestMontgomeryConversion(t *testing.T) {
@@ -217,7 +280,7 @@ func TestMontgomeryConversion(t *testing.T) {
 
     _ = maxLimbCount
 
-	for limbCount := uint(2); limbCount < 3; limbCount++ {
+	for limbCount := uint(1); limbCount < 3; limbCount++ {
 		mod := MaxModulus(limbCount)
 		if err := montCtx.SetMod(mod); err != nil {
 			t.Fatal(err)

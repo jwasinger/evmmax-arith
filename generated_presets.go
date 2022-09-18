@@ -1,9 +1,11 @@
 package mont_arith
 
 type ArithPreset struct {
-	AddModImpls  []arithFunc
-	SubModImpls  []arithFunc
-	MulMontImpls []arithFunc
+	AddModImpls       []arithFunc
+	SubModImpls       []arithFunc
+	MulMontImpls      []arithFunc
+	name              string
+	mulMontCIOSCutoff uint
 }
 
 func (a *ArithPreset) MaxLimbCount() uint {
@@ -211,7 +213,7 @@ func Asm384Preset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", 65}
 }
 
 func UnrolledPreset() ArithPreset {
@@ -417,7 +419,7 @@ func UnrolledPreset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", 65}
 }
 
 func NonUnrolledPreset() ArithPreset {
@@ -621,7 +623,7 @@ func NonUnrolledPreset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", 65}
 }
 
 func GenericMulMontPreset() ArithPreset {
@@ -825,7 +827,7 @@ func GenericMulMontPreset() ArithPreset {
 		MulMontNonInterleaved,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 1}
 }
 
 func DefaultPreset() ArithPreset {

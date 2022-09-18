@@ -8,6 +8,8 @@ type ArithPreset struct {
 	AddModImpls []arithFunc
 	SubModImpls []arithFunc
 	MulMontImpls []arithFunc
+    name string
+    mulMontCIOSCutoff uint
 }
 
 func (a *ArithPreset) MaxLimbCount() uint {
@@ -45,7 +47,7 @@ func Asm384Preset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCountPlusOne}}}
 }
 
 func UnrolledPreset() ArithPreset {
@@ -73,7 +75,7 @@ func UnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCountPlusOne}}}
 }
 
 func NonUnrolledPreset() ArithPreset {
@@ -95,7 +97,7 @@ func NonUnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCountPlusOne}}}
 }
 
 func GenericMulMontPreset() ArithPreset {
@@ -116,7 +118,7 @@ func GenericMulMontPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 1}
 }
 
 func DefaultPreset() ArithPreset {

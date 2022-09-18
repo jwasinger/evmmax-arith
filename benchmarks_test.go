@@ -38,6 +38,7 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
+/*
 func BenchmarkMulMontUnrolledGo(b *testing.B) {
 	preset := UnrolledPreset()
 
@@ -49,9 +50,9 @@ func BenchmarkMulMontUnrolledGo(b *testing.B) {
 		}
 	}
 
-	// TODO 16 as a constant
 	bench(b, 1, 16)
 }
+*/
 
 func BenchmarkMulMontGenericGo(b *testing.B) {
 	preset := GenericMulMontPreset()
@@ -116,6 +117,7 @@ func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
+/*
 func BenchmarkAddModUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -127,6 +129,7 @@ func BenchmarkAddModUnrolledGo(b *testing.B) {
 
 	bench(b, 1, MaxLimbsEVMMAX)
 }
+*/
 
 func BenchmarkAddModNonUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
@@ -173,6 +176,7 @@ func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
+/*
 func BenchmarkSubModUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
 		for i := minLimbs; i <= maxLimbs; i++ {
@@ -184,6 +188,7 @@ func BenchmarkSubModUnrolledGo(b *testing.B) {
 
 	bench(b, 1, MaxLimbsEVMMAX)
 }
+*/
 
 func BenchmarkSubModNonUnrolledGo(b *testing.B) {
 	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
@@ -229,5 +234,4 @@ func BenchmarkSetMod(b *testing.B) {
 	}
 
 	bench(b, 1, MaxLimbsEVMMAX)
-
 }

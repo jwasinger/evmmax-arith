@@ -12,7 +12,7 @@ func AddModUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[1]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[1]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[1]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -42,7 +42,7 @@ func AddModUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -76,7 +76,7 @@ func AddModUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[3]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -114,7 +114,7 @@ func AddModUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[4]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -156,7 +156,7 @@ func AddModUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[5]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -202,7 +202,7 @@ func AddModUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[6]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -252,7 +252,7 @@ func AddModUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[7]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -306,7 +306,7 @@ func AddModUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[8]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -364,7 +364,7 @@ func AddModUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[9]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -426,7 +426,7 @@ func AddModUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[10]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -492,7 +492,7 @@ func AddModUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[11]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -562,7 +562,7 @@ func AddModUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[12]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -636,7 +636,7 @@ func AddModUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[13]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[13]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[13]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[13]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -714,7 +714,7 @@ func AddModUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[14]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[14]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[14]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[14]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -796,7 +796,7 @@ func AddModUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[15]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[15]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[15]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[15]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -882,7 +882,7 @@ func AddModUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[16]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[16]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[16]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[16]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -972,7 +972,7 @@ func AddModUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[17]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[17]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[17]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[17]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1066,7 +1066,7 @@ func AddModUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[18]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[18]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[18]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[18]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1164,7 +1164,7 @@ func AddModUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[19]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[19]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[19]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[19]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1266,7 +1266,7 @@ func AddModUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[20]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[20]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[20]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[20]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1372,7 +1372,7 @@ func AddModUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[21]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[21]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[21]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[21]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1482,7 +1482,7 @@ func AddModUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[22]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[22]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[22]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[22]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1596,7 +1596,7 @@ func AddModUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[23]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[23]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[23]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[23]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1714,7 +1714,7 @@ func AddModUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[24]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[24]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[24]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[24]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1836,7 +1836,7 @@ func AddModUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[25]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[25]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[25]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[25]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1962,7 +1962,7 @@ func AddModUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[26]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[26]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[26]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[26]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2092,7 +2092,7 @@ func AddModUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[27]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[27]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[27]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[27]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2226,7 +2226,7 @@ func AddModUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[28]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[28]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[28]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[28]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2364,7 +2364,7 @@ func AddModUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[29]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[29]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[29]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[29]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2506,7 +2506,7 @@ func AddModUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[30]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[30]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[30]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[30]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2652,7 +2652,7 @@ func AddModUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[31]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[31]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[31]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[31]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2802,7 +2802,7 @@ func AddModUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[32]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[32]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[32]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[32]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2956,7 +2956,7 @@ func AddModUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[33]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[33]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[33]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[33]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3114,7 +3114,7 @@ func AddModUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[34]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[34]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[34]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[34]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3276,7 +3276,7 @@ func AddModUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[35]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[35]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[35]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[35]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3442,7 +3442,7 @@ func AddModUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[36]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[36]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[36]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[36]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3612,7 +3612,7 @@ func AddModUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[37]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[37]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[37]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[37]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3786,7 +3786,7 @@ func AddModUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[38]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[38]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[38]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[38]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3964,7 +3964,7 @@ func AddModUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[39]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[39]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[39]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[39]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4146,7 +4146,7 @@ func AddModUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[40]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[40]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[40]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[40]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4332,7 +4332,7 @@ func AddModUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[41]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[41]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[41]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[41]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4522,7 +4522,7 @@ func AddModUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[42]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[42]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[42]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[42]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4716,7 +4716,7 @@ func AddModUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[43]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[43]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[43]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[43]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4914,7 +4914,7 @@ func AddModUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[44]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[44]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[44]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[44]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5116,7 +5116,7 @@ func AddModUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[45]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[45]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[45]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[45]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5322,7 +5322,7 @@ func AddModUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[46]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[46]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[46]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[46]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5532,7 +5532,7 @@ func AddModUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[47]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[47]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[47]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[47]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5746,7 +5746,7 @@ func AddModUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[48]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[48]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[48]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[48]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5964,7 +5964,7 @@ func AddModUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[49]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[49]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[49]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[49]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6186,7 +6186,7 @@ func AddModUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[50]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[50]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[50]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[50]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6412,7 +6412,7 @@ func AddModUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[51]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[51]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[51]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[51]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6642,7 +6642,7 @@ func AddModUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[52]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[52]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[52]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[52]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6876,7 +6876,7 @@ func AddModUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[53]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[53]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[53]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[53]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7114,7 +7114,7 @@ func AddModUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[54]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[54]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[54]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[54]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7356,7 +7356,7 @@ func AddModUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[55]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[55]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[55]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[55]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7602,7 +7602,7 @@ func AddModUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[56]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[56]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[56]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[56]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7852,7 +7852,7 @@ func AddModUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[57]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[57]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[57]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[57]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8106,7 +8106,7 @@ func AddModUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[58]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[58]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[58]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[58]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8364,7 +8364,7 @@ func AddModUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[59]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[59]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[59]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[59]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8626,7 +8626,7 @@ func AddModUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[60]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[60]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[60]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[60]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8892,7 +8892,7 @@ func AddModUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[61]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[61]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[61]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[61]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9162,7 +9162,7 @@ func AddModUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[62]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[62]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[62]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[62]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9436,7 +9436,7 @@ func AddModUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[63]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[63]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[63]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[63]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9714,7 +9714,7 @@ func AddModUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[64]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[64]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[64]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := f.Modulus
+	mod := (*[64]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)

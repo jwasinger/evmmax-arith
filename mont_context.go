@@ -65,10 +65,20 @@ func (m *Field) RInv() *big.Int {
 	return r
 }
 
+func (m *Field) ModInv() *big.Int {
+    rVal := m.RVal()
+    result := new(big.Int)
+    result.Set(m.ModulusNonInterleaved)
+    result.Neg(result)
+    result.ModInverse(result, rVal)
+    return result
+}
+
 func (m *Field) ToMont(val []uint64) []uint64 {
 	dst_val := new(big.Int)
 	src_val := LimbsToInt(val)
 	dst_val.Mul(src_val, m.RVal())
+    // recompute ModulusNonInterleaved as the set preset may not have set it in SetMod
 	dst_val.Mod(dst_val, m.ModulusNonInterleaved)
 
 	return IntToLimbs(dst_val, m.NumLimbs)
@@ -118,7 +128,7 @@ func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-const UnrolledCutoff = 11
+const karatsubaThreshold = 64
 
 func (m *Field) SetMod(mod []uint64) error {
 	var limbCount uint = uint(len(mod))
@@ -138,33 +148,43 @@ func (m *Field) SetMod(mod []uint64) error {
 	}
 
 	modInt := LimbsToInt(mod)
+    m.ModulusNonInterleaved = new(big.Int)
+    m.ModulusNonInterleaved.Set(modInt)
 	negModInt := new(big.Int)
 	negModInt.Neg(modInt)
-	m.ModulusNonInterleaved = modInt
 
-	modInv := new(big.Int)
-	smallBase, _ := new(big.Int).SetString("18446744073709551616", 10)
-	modInv.ModInverse(negModInt, smallBase)
+	rVal := big.NewInt(1)
+	rVal.Lsh(rVal, 64*limbCount)
 
-	rSquared := big.NewInt(1)
-	rSquared.Lsh(rSquared, 64*limbCount)
-	rSquared = rSquared.Mod(rSquared, modInt)
-	rSquared = rSquared.Mul(rSquared, rSquared)
+	rVal = rVal.Mod(rVal, modInt)
+    rSquared := new(big.Int)
+	rSquared = rSquared.Mul(rVal, rVal)
 	rSquared = rSquared.Mod(rSquared, modInt)
 
 	m.rSquared = IntToLimbs(rSquared, limbCount)
 
-    m.mask = big.NewInt(1)
-    m.mask.Lsh(m.mask, 64 * limbCount)
-    m.mask.Sub(m.mask, big.NewInt(1))
+    fmt.Println(limbCount)
+    // TODO place interleaved/non-interleaved mont parameters in their own unnamed structs
+    if limbCount <= m.preset.mulMontCIOSCutoff {
+        modInv := new(big.Int)
+        smallBase, _ := new(big.Int).SetString("18446744073709551616", 10)
+        modInv.ModInverse(negModInt, smallBase)
+
+        m.MontParamInterleaved = modInv.Uint64()
+    } else {
+        m.MontParamNonInterleaved = new(big.Int)
+        m.MontParamNonInterleaved.ModInverse(negModInt, rVal)
+
+        m.mask = big.NewInt(1)
+        m.mask.Lsh(m.mask, 64 * limbCount)
+        m.mask.Sub(m.mask, big.NewInt(1))
+    }
 
 	m.Modulus = make([]uint64, limbCount)
 	copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
     m.ElementSize = uint64(limbCount) * 4
 
-	m.MontParamInterleaved = modInv.Uint64()
-    m.MontParamNonInterleaved = modInv
 
 	m.MulMont = m.preset.MulMontImpls[limbCount-1]
 	m.AddMod = m.preset.AddModImpls[limbCount-1]

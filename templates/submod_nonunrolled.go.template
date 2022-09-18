@@ -23,9 +23,9 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
 
 	if c == 0 {
 		copy(z, tmp[:])
-    }/* else {
+    } else {
         panic("not worst case performance")
-    }*/
+    }
 
 	return nil
 }
