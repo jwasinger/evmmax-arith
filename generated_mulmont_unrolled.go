@@ -7,6 +7,48 @@ import (
 	"unsafe"
 )
 
+func MulMontUnrolled64(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
+	x := (*[1]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
+	y := (*[1]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
+	z := (*[1]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	mod := (*[1]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	var t [2]uint64
+	var D uint64
+	var m, C uint64
+
+	var gteC1, gteC2 uint64
+	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
+	_, gteC2 = bits.Sub64(mod[0], y[0], gteC2)
+
+	if gteC1 != 0 || gteC2 != 0 {
+		return errors.New(fmt.Sprintf("input gte modulus"))
+	}
+
+	// -----------------------------------
+	// First loop
+
+	C, t[0] = bits.Mul64(x[0], y[0])
+
+	t[1], D = bits.Add64(t[1], C, 0)
+	// m = t[0]n'[0] mod W
+	m = t[0] * ctx.MontParamInterleaved
+	// -----------------------------------
+	// Second loop
+	C = madd0(m, mod[0], t[0])
+	t[0], C = bits.Add64(t[1], C, 0)
+	t[1], _ = bits.Add64(0, D, C)
+	z[0], D = bits.Sub64(t[0], mod[0], 0)
+
+	if D != 0 && t[1] == 0 {
+		// reduction was not necessary
+		copy(z[:], t[:1])
+	} /* else {
+	    panic("not worst case performance")
+	}*/
+
+	return nil
+}
+
 func MulMontUnrolled128(ctx *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]

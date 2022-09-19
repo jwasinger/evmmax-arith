@@ -148,6 +148,7 @@ func Asm384Preset() ArithPreset {
 		SubModNonUnrolled4096,
 	}
 	mulMontImpls := []arithFunc{
+		MulMontNonUnrolled64,
 		MulMontNonUnrolled128,
 		MulMontNonUnrolled192,
 		MulMontNonUnrolled256,
@@ -353,7 +354,7 @@ func UnrolledPreset() ArithPreset {
 		SubModUnrolled4096,
 	}
 	mulMontImpls := []arithFunc{
-		MulMontNonInterleaved,
+		MulMontUnrolled64,
 		MulMontUnrolled128,
 		MulMontUnrolled192,
 		MulMontUnrolled256,
@@ -557,7 +558,7 @@ func NonUnrolledPreset() ArithPreset {
 		SubModNonUnrolled4096,
 	}
 	mulMontImpls := []arithFunc{
-		MulMontNonInterleaved,
+		MulMontNonUnrolled64,
 		MulMontNonUnrolled128,
 		MulMontNonUnrolled192,
 		MulMontNonUnrolled256,
@@ -827,7 +828,7 @@ func GenericMulMontPreset() ArithPreset {
 		MulMontNonInterleaved,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 1}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0}
 }
 
 func DefaultPreset() ArithPreset {

@@ -192,9 +192,11 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	expected.Mul(expected, rInv)
 	expected.Mod(expected, modInt)
 
+
 	montCtx := NewField(preset)
 	err = montCtx.SetMod(mod)
 	if err != nil {
+        fmt.Println(err)
 		panic("error")
 	}
 
@@ -204,11 +206,16 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 
 	result := LEBytesToInt(resultBytes)
 	if result.Cmp(expected) != 0 {
+        fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
 }
 
 func smallModulus(limbCount uint) *big.Int {
+    if limbCount == 1 {
+        return big.NewInt(3)
+    }
+
     mod := big.NewInt(1)
     mod.Lsh(mod, (limbCount - 1) * 64)
     mod.Add(mod, big.NewInt(3))
@@ -250,8 +257,7 @@ func TestMulMont(t *testing.T) {
     presets := []ArithPreset{ DefaultPreset(), NonUnrolledPreset(), GenericMulMontPreset()}
     for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
         preset := presets[presetIdx]
-        for limbCount := uint(2); limbCount < EVMMAXMaxLimbCount; limbCount++ {
-            fmt.Println(limbCount)
+        for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
             // test smallest mod
             {
                 smallMod := smallModulus(limbCount)
@@ -296,13 +302,12 @@ func TestMontgomeryConversion(t *testing.T) {
 		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
 
 		result := LEBytesToInt(xMont)
+        _ = result
         /*
 		if result.Cmp(big.NewInt(1)) != 0 {
 			t.Fatalf("bad result")
 		}
         */
-        fmt.Println()
-        fmt.Println(result.String())
 		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
 	}
 }
@@ -322,7 +327,7 @@ func TestMontgomeryConversion2(t *testing.T) {
 			t.Fatal(err)
 		}
 
-        fmt.Println(mod)
+        fmt.Printf("mod is %+x\n", mod)
 
         one := big.NewInt(1)
 
@@ -336,13 +341,12 @@ func TestMontgomeryConversion2(t *testing.T) {
 		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
 
 		result := LEBytesToInt(xMont)
+        _ = result
         /*
 		if result.Cmp(big.NewInt(1)) != 0 {
 			t.Fatalf("bad result")
 		}
         */
-        fmt.Println()
-        fmt.Println(result.String())
 		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
 	}
 }

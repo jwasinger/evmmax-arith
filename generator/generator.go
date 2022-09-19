@@ -208,8 +208,7 @@ func genMulMont(mulmontType string, maxLimbs int) {
 	mulMontTemplateContent := loadTextFile(fmt.Sprintf("templates/mulmont_%s.go.template", mulmontType))
 	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(mulMontTemplateContent)))
 
-    // TODO grab MulMont64 from somewhere
-	for i := 2; i <= maxLimbs ; i++ {
+	for i := 1; i <= maxLimbs ; i++ {
 		params = TemplateParams{i, 64}
 		if err := mulMontTemplate.Execute(buf, params); err != nil {
 			log.Fatal(err)

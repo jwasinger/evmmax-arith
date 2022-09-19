@@ -2,7 +2,6 @@ package mont_arith
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 )
 
@@ -137,13 +136,10 @@ func (m *Field) SetMod(mod []uint64) error {
 	}
 
 	if mod[0]%2 == 0 {
-		fmt.Println(mod)
-		fmt.Println("2")
 		return errors.New("modulus cannot be even")
 	}
 
 	if mod[limbCount-1] == 0 {
-		fmt.Printf("modErr = %x\n", mod)
 		return errors.New("modulus must occupy all limbs")
 	}
 
@@ -156,14 +152,12 @@ func (m *Field) SetMod(mod []uint64) error {
 	rVal := big.NewInt(1)
 	rVal.Lsh(rVal, 64*limbCount)
 
-	rVal = rVal.Mod(rVal, modInt)
     rSquared := new(big.Int)
 	rSquared = rSquared.Mul(rVal, rVal)
 	rSquared = rSquared.Mod(rSquared, modInt)
 
 	m.rSquared = IntToLimbs(rSquared, limbCount)
 
-    fmt.Println(limbCount)
     // TODO place interleaved/non-interleaved mont parameters in their own unnamed structs
     if limbCount <= m.preset.mulMontCIOSCutoff {
         modInv := new(big.Int)
@@ -174,7 +168,6 @@ func (m *Field) SetMod(mod []uint64) error {
     } else {
         m.MontParamNonInterleaved = new(big.Int)
         m.MontParamNonInterleaved.ModInverse(negModInt, rVal)
-
         m.mask = big.NewInt(1)
         m.mask.Lsh(m.mask, 64 * limbCount)
         m.mask.Sub(m.mask, big.NewInt(1))
@@ -184,7 +177,6 @@ func (m *Field) SetMod(mod []uint64) error {
 	copy(m.Modulus, mod[:])
 	m.NumLimbs = limbCount
     m.ElementSize = uint64(limbCount) * 4
-
 
 	m.MulMont = m.preset.MulMontImpls[limbCount-1]
 	m.AddMod = m.preset.AddModImpls[limbCount-1]

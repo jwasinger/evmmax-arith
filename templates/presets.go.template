@@ -38,7 +38,7 @@ func Asm384Preset() ArithPreset {
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
-		{{- range $i := intRange 2 $limbCountPlusOne}}
+		{{- range $i := intRange 1 $limbCountPlusOne}}
 			{{- if eq $i 6}}
 				MulMont384_asm,
 			{{- else }}
@@ -65,8 +65,7 @@ func UnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
-        MulMontNonInterleaved,
-		{{- range $i := intRange 2 $limbCountPlusOne}}
+		{{- range $i := intRange 1 $limbCountPlusOne}}
             {{- if gte $i 16 }}
                 MulMontNonUnrolled{{mul $i $limbBits}},
             {{- else }}
@@ -91,8 +90,7 @@ func NonUnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
-        MulMontNonInterleaved,
-		{{- range $i := intRange 2 $limbCountPlusOne}}
+		{{- range $i := intRange 1 $limbCountPlusOne}}
             MulMontNonUnrolled{{mul $i $limbBits}},
 		{{- end}}
 	}
@@ -118,7 +116,7 @@ func GenericMulMontPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 1}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0}
 }
 
 func DefaultPreset() ArithPreset {
