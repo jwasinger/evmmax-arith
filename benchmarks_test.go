@@ -8,7 +8,7 @@ import (
 
 var MaxLimbsEVMMAX uint = 64
 
-func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
+func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 	mod := GenTestModulus(limbCount)
 	montCtx := NewField(preset)
 
@@ -38,63 +38,7 @@ func benchmarkMulMont(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-/*
-func BenchmarkMulMontUnrolledGo(b *testing.B) {
-	preset := UnrolledPreset()
-
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, i)
-			})
-		}
-	}
-
-	bench(b, 1, 16)
-}
-*/
-
-func BenchmarkMulMontGenericGo(b *testing.B) {
-	preset := GenericMulMontPreset()
-
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, i)
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkMulMontNonUnrolledGo(b *testing.B) {
-	preset := NonUnrolledPreset()
-
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, preset, i)
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkMulMontAsm(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkMulMont(b, Asm384Preset(), i)
-			})
-		}
-	}
-
-	bench(b, 6, 6)
-}
-
-func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
+func benchmarkAddMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	modLimbs := MaxModulus(limbCount)
 	mod := LimbsToInt(modLimbs)
 	montCtx := NewField(preset)
@@ -117,45 +61,7 @@ func benchmarkAddMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-/*
-func BenchmarkAddModUnrolledGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, UnrolledPreset(), i)
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-*/
-
-func BenchmarkAddModNonUnrolledGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, NonUnrolledPreset(), i)
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkAddModAsm(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkAddMod(b, Asm384Preset(), uint(i))
-			})
-		}
-	}
-
-	bench(b, 6, 6)
-}
-
-func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
+func benchmarkSubMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	modLimbs := MaxModulus(limbCount)
 	montCtx := NewField(preset)
 
@@ -176,47 +82,9 @@ func benchmarkSubMod(b *testing.B, preset ArithPreset, limbCount uint) {
 	}
 }
 
-/*
-func BenchmarkSubModUnrolledGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSubMod(b, UnrolledPreset(), uint(i))
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-*/
-
-func BenchmarkSubModNonUnrolledGo(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSubMod(b, NonUnrolledPreset(), uint(i))
-			})
-		}
-	}
-
-	bench(b, 1, MaxLimbsEVMMAX)
-}
-
-func BenchmarkSubModAsm(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs int) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSubMod(b, Asm384Preset(), uint(i))
-			})
-		}
-	}
-
-	bench(b, 6, 6)
-}
-
-func benchmarkSetMod(b *testing.B, limbCount uint) {
+func benchmarkSetMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	modLimbs := SmolModulus(limbCount)
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(preset)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -224,14 +92,31 @@ func benchmarkSetMod(b *testing.B, limbCount uint) {
 	}
 }
 
-func BenchmarkSetMod(b *testing.B) {
-	bench := func(b *testing.B, minLimbs, maxLimbs uint) {
-		for i := minLimbs; i <= maxLimbs; i++ {
-			b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-				benchmarkSetMod(b, i)
+func benchmarkOp(b *testing.B, opName string, opFn func(*testing.B, uint, ArithPreset)) {
+	presets := AllPresets()
+
+	for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
+		preset := presets[presetIdx]
+		for i := uint(1); i <= MaxLimbsEVMMAX; i++ {
+			b.Run(fmt.Sprintf("%s/%s/%d-bit", opName, preset.name, i*64), func(b *testing.B) {
+				opFn(b, i, preset)
 			})
 		}
 	}
+}
 
-	bench(b, 1, MaxLimbsEVMMAX)
+func BenchmarkAddMod(b *testing.B) {
+	benchmarkOp(b, "addmod", benchmarkAddMod)
+}
+
+func BenchmarkSubMod(b *testing.B) {
+	benchmarkOp(b, "submod", benchmarkSubMod)
+}
+
+func BenchmarkMulMont(b *testing.B) {
+	benchmarkOp(b, "mulmont", benchmarkMulMont)
+}
+
+func BenchmarkSetMod(b *testing.B) {
+	benchmarkOp(b, "setmod", benchmarkSetMod)
 }

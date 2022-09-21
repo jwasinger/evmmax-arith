@@ -834,3 +834,11 @@ func GenericMulMontPreset() ArithPreset {
 func DefaultPreset() ArithPreset {
 	return NonUnrolledPreset()
 }
+
+func AllPresets() []ArithPreset {
+	return []ArithPreset{
+		GenericMulMontPreset(),
+		NonUnrolledPreset(),
+		UnrolledPreset(),
+	}
+}

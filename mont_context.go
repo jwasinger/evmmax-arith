@@ -137,14 +137,8 @@ func (m *Field) SetMod(mod []uint64) error {
 	}
 
 	modInt := LimbsToInt(mod)
-	m.ModulusNonInterleaved = new(big.Int)
-	m.ModulusNonInterleaved.Set(modInt)
-
-	rVal := big.NewInt(1)
-	rVal.Lsh(rVal, 64*limbCount)
-
-	rSquared := new(big.Int)
-	rSquared.SetBytes(rVal.Bytes())
+	rSquared := big.NewInt(1)
+	rSquared.Lsh(rSquared, 64*limbCount)
 	rSquared.Mod(rSquared, modInt)
 	rSquared.Mul(rSquared, rSquared)
 	rSquared.Mod(rSquared, modInt)
@@ -169,6 +163,9 @@ func (m *Field) SetMod(mod []uint64) error {
 
 		m.MontParamInterleaved = modInv.Uint64()
 	} else {
+		m.ModulusNonInterleaved = modInt
+		rVal := big.NewInt(1)
+		rVal.Lsh(rVal, 64*limbCount)
 		negModInt := new(big.Int)
 		negModInt.Neg(modInt)
 		m.MontParamNonInterleaved = new(big.Int)
