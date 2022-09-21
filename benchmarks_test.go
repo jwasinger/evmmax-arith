@@ -92,31 +92,40 @@ func benchmarkSetMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	}
 }
 
-func benchmarkOp(b *testing.B, opName string, opFn func(*testing.B, uint, ArithPreset)) {
-	presets := AllPresets()
+type opFn func(*testing.B, uint, ArithPreset)
 
-	for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
-		preset := presets[presetIdx]
-		for i := uint(1); i <= MaxLimbsEVMMAX; i++ {
-			b.Run(fmt.Sprintf("%s/%s/%d-bit", opName, preset.name, i*64), func(b *testing.B) {
-				opFn(b, i, preset)
-			})
-		}
-	}
+func benchmarkOp(b *testing.B, preset ArithPreset, opName string, limbCount uint, fn opFn) {
+    b.Run(fmt.Sprintf("%s/%s/%d-bit", preset.name, opName, limbCount*64), func(b *testing.B) {
+        fn(b, limbCount, preset)
+    })
 }
 
-func BenchmarkAddMod(b *testing.B) {
-	benchmarkOp(b, "addmod", benchmarkAddMod)
-}
+func BenchmarkOps(b *testing.B) {
+    ops := []string{"addmod","submod","mulmont"}
+    presets := AllPresets()
 
-func BenchmarkSubMod(b *testing.B) {
-	benchmarkOp(b, "submod", benchmarkSubMod)
-}
+    for opsIdx := 0; opsIdx < len(ops); opsIdx++ {
+        op := ops[opsIdx]
+        for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
+            preset := presets[presetIdx]
+            if preset.benchRanges[op].min == 0 {
+                continue
+            }
 
-func BenchmarkMulMont(b *testing.B) {
-	benchmarkOp(b, "mulmont", benchmarkMulMont)
-}
-
-func BenchmarkSetMod(b *testing.B) {
-	benchmarkOp(b, "setmod", benchmarkSetMod)
+            for limbCount := preset.benchRanges[op].min; limbCount <= preset.benchRanges[op].max; limbCount++ {
+                var fn opFn
+                switch op {
+                case "mulmont":
+                    fn = benchmarkMulMont
+                case "addmod":
+                    fn = benchmarkAddMod
+                case "submod":
+                    fn = benchmarkSubMod
+                }
+                b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
+                    fn(b, limbCount, preset)
+                })
+            }
+        }
+    }
 }

@@ -4,12 +4,27 @@ package mont_arith
 {{ $limbBits := .LimbBits}}
 {{ $limbCountPlusOne := add .LimbCount 1}}
 
+type benchRange struct {
+    min uint
+    max uint
+}
+
 type ArithPreset struct {
 	AddModImpls []arithFunc
 	SubModImpls []arithFunc
 	MulMontImpls []arithFunc
     name string
     mulMontCIOSCutoff uint
+
+    benchRanges map[string]benchRange
+}
+
+func makeBenchRanges(addModMin, addModMax, subModMin, subModMax, mulMontMin, mulMontMax uint) map[string]benchRange {
+    return map[string]benchRange{
+        "addmod": benchRange{addModMin, addModMax},
+        "submod": benchRange{subModMin, subModMax},
+        "mulmont": benchRange{mulMontMin, mulMontMax},
+    }
 }
 
 func (a *ArithPreset) MaxLimbCount() uint {
@@ -47,7 +62,11 @@ func Asm384Preset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCountPlusOne}}}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCountPlusOne}},
+                       makeBenchRanges(0, 0,
+                       0, 0,
+                       6, 6),
+                      }
 }
 
 func UnrolledPreset() ArithPreset {
@@ -74,7 +93,11 @@ func UnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCountPlusOne}}}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCountPlusOne}},
+                       makeBenchRanges(1, 16,
+                       1, 16,
+                       1, 14),
+    }
 }
 
 func NonUnrolledPreset() ArithPreset {
@@ -95,7 +118,12 @@ func NonUnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCountPlusOne}}}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCountPlusOne}},
+                       makeBenchRanges(
+                       1, {{$limbCount}},
+                       1, {{$limbCount}},
+                       1, {{$limbCount}}),
+        }
 }
 
 func GenericMulMontPreset() ArithPreset {
@@ -116,7 +144,12 @@ func GenericMulMontPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0,
+            makeBenchRanges(
+            0, 0, 
+            0, 0,
+            32, {{$limbCount}}),
+        }
 }
 
 func DefaultPreset() ArithPreset {

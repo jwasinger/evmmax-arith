@@ -1,11 +1,26 @@
 package mont_arith
 
+type benchRange struct {
+	min uint
+	max uint
+}
+
 type ArithPreset struct {
 	AddModImpls       []arithFunc
 	SubModImpls       []arithFunc
 	MulMontImpls      []arithFunc
 	name              string
 	mulMontCIOSCutoff uint
+
+	benchRanges map[string]benchRange
+}
+
+func makeBenchRanges(addModMin, addModMax, subModMin, subModMax, mulMontMin, mulMontMax uint) map[string]benchRange {
+	return map[string]benchRange{
+		"addmod":  {addModMin, addModMax},
+		"submod":  {subModMin, subModMax},
+		"mulmont": {mulMontMin, mulMontMax},
+	}
 }
 
 func (a *ArithPreset) MaxLimbCount() uint {
@@ -214,7 +229,11 @@ func Asm384Preset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", 65}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", 65,
+		makeBenchRanges(0, 0,
+			0, 0,
+			6, 6),
+	}
 }
 
 func UnrolledPreset() ArithPreset {
@@ -420,7 +439,11 @@ func UnrolledPreset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", 65}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", 65,
+		makeBenchRanges(1, 16,
+			1, 16,
+			1, 14),
+	}
 }
 
 func NonUnrolledPreset() ArithPreset {
@@ -624,7 +647,12 @@ func NonUnrolledPreset() ArithPreset {
 		MulMontNonUnrolled4096,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", 65}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", 65,
+		makeBenchRanges(
+			1, 64,
+			1, 64,
+			1, 64),
+	}
 }
 
 func GenericMulMontPreset() ArithPreset {
@@ -828,7 +856,12 @@ func GenericMulMontPreset() ArithPreset {
 		MulMontNonInterleaved,
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0}
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0,
+		makeBenchRanges(
+			0, 0,
+			0, 0,
+			32, 64),
+	}
 }
 
 func DefaultPreset() ArithPreset {
