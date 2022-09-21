@@ -230,8 +230,8 @@ func Asm384Preset() ArithPreset {
 	}
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", 65,
-		makeBenchRanges(0, 0,
-			0, 0,
+		makeBenchRanges(6, 6,
+			6, 6,
 			6, 6),
 	}
 }
@@ -873,5 +873,6 @@ func AllPresets() []ArithPreset {
 		GenericMulMontPreset(),
 		NonUnrolledPreset(),
 		UnrolledPreset(),
+		Asm384Preset(),
 	}
 }

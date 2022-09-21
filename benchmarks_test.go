@@ -94,12 +94,6 @@ func benchmarkSetMod(b *testing.B, limbCount uint, preset ArithPreset) {
 
 type opFn func(*testing.B, uint, ArithPreset)
 
-func benchmarkOp(b *testing.B, preset ArithPreset, opName string, limbCount uint, fn opFn) {
-    b.Run(fmt.Sprintf("%s/%s/%d-bit", preset.name, opName, limbCount*64), func(b *testing.B) {
-        fn(b, limbCount, preset)
-    })
-}
-
 func BenchmarkOps(b *testing.B) {
     ops := []string{"addmod","submod","mulmont"}
     presets := AllPresets()
