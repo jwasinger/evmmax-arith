@@ -192,11 +192,10 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	expected.Mul(expected, rInv)
 	expected.Mod(expected, modInt)
 
-
 	montCtx := NewField(preset)
 	err = montCtx.SetMod(mod)
 	if err != nil {
-        fmt.Println(err)
+		fmt.Println(err)
 		panic("error")
 	}
 
@@ -206,147 +205,106 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 
 	result := LEBytesToInt(resultBytes)
 	if result.Cmp(expected) != 0 {
-        fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
+		fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
 }
 
 func smallModulus(limbCount uint) *big.Int {
-    if limbCount == 1 {
-        return big.NewInt(3)
-    }
+	if limbCount == 1 {
+		return big.NewInt(3)
+	}
 
-    mod := big.NewInt(1)
-    mod.Lsh(mod, (limbCount - 1) * 64)
-    mod.Add(mod, big.NewInt(3))
-    return mod
+	mod := big.NewInt(1)
+	mod.Lsh(mod, (limbCount-1)*64)
+	mod.Add(mod, big.NewInt(3))
+	return mod
 }
 
 func midModulus(limbCount uint) *big.Int {
-    mod := big.NewInt(1)
-    mod.Lsh(mod, limbCount * 64 - 32)
-    mod.Sub(mod, big.NewInt(1))
-    return mod
+	mod := big.NewInt(1)
+	mod.Lsh(mod, limbCount*64-32)
+	mod.Sub(mod, big.NewInt(1))
+	return mod
 }
 
 func maxModulus(limbCount uint) *big.Int {
-    mod := big.NewInt(1)
-    mod.Lsh(mod, limbCount * 64)
-    mod.Sub(mod, big.NewInt(1))
-    return mod
+	mod := big.NewInt(1)
+	mod.Lsh(mod, limbCount*64)
+	mod.Sub(mod, big.NewInt(1))
+	return mod
 }
 
 func smallestVal(mod *big.Int, limbCount uint) *big.Int {
-    val := big.NewInt(1)
-    val.Lsh(val, (limbCount - 1) * 64)
-    return val
+	val := big.NewInt(1)
+	val.Lsh(val, (limbCount-1)*64)
+	return val
 }
 
 func midVal(mod *big.Int, limbCount uint) *big.Int {
-    // TODO
-    return nil
+	// TODO
+	return nil
 }
 
 func largestVal(mod *big.Int, limbCount uint) *big.Int {
-    val := new(big.Int)
-    val.Sub(mod, big.NewInt(1))
-    return val
+	val := new(big.Int)
+	val.Sub(mod, big.NewInt(1))
+	return val
 }
 
 func TestMulMont(t *testing.T) {
-    presets := []ArithPreset{ DefaultPreset(), NonUnrolledPreset(), GenericMulMontPreset()}
-    for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
-        preset := presets[presetIdx]
-        for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
-            // test smallest mod
-            {
-                smallMod := smallModulus(limbCount)
-                // test mulmont(smallestVal, smallestVal)
-                smallVal := smallestVal(smallMod, limbCount)
-                testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
-                // test mulmont(largestVal, largestVal)
-                largeVal := largestVal(smallMod, limbCount)
-                testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
-            }
+	presets := []ArithPreset{DefaultPreset(), NonUnrolledPreset(), GenericMulMontPreset()}
+	for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
+		preset := presets[presetIdx]
+		for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
+			// test smallest mod
+			{
+				smallMod := smallModulus(limbCount)
+				// test mulmont(smallestVal, smallestVal)
+				smallVal := smallestVal(smallMod, limbCount)
+				testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+				// test mulmont(largestVal, largestVal)
+				largeVal := largestVal(smallMod, limbCount)
+				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+			}
 
-           // test mid mod
-                // test mulmont(smallestVal, smallestVal)
-                // test mulmont(largestVal, largestVal)
-           // test largest mod
-                // test mulmont(smallestVal, smallestVal)
-                // test mulmont(largestVal, largestVal)
-        }
-    }
+			// test mid mod
+			// test mulmont(smallestVal, smallestVal)
+			// test mulmont(largestVal, largestVal)
+			// test largest mod
+			// test mulmont(smallestVal, smallestVal)
+			// test mulmont(largestVal, largestVal)
+		}
+	}
 }
 
 func TestMontgomeryConversion(t *testing.T) {
 	preset := DefaultPreset()
 	montCtx := NewField(preset)
-	maxLimbCount := preset.MaxLimbCount()
 
-    _ = maxLimbCount
-
-	for limbCount := uint(1); limbCount < 3; limbCount++ {
+	for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
 		mod := MaxModulus(limbCount)
 		if err := montCtx.SetMod(mod); err != nil {
 			t.Fatal(err)
 		}
 
-		one := new(big.Int)
-        one.Sub(LimbsToInt(mod), big.NewInt(3))
+		one := make([]uint64, limbCount)
+		one[0] = 1
+		oneMont := make([]byte, limbCount*8)
+		montCtx.MulMont(montCtx, oneMont, LimbsToLEBytes(one), LimbsToLEBytes(montCtx.RSquared()))
 
-		xNorm := IntToLimbs(one, limbCount)
+		val := new(big.Int)
+		val.Sub(LimbsToInt(mod), big.NewInt(3))
+
+		xNorm := IntToLimbs(val, limbCount)
 		xMont := make([]byte, limbCount*8)
 
 		montCtx.MulMont(montCtx, xMont, LimbsToLEBytes(xNorm), LimbsToLEBytes(montCtx.RSquared()))
-		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
+		montCtx.MulMont(montCtx, xMont, xMont, oneMont)
 
 		result := LEBytesToInt(xMont)
-        _ = result
-        /*
-		if result.Cmp(big.NewInt(1)) != 0 {
+		if result.Cmp(val) != 0 {
 			t.Fatalf("bad result")
 		}
-        */
-		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
-	}
-}
-
-func TestMontgomeryConversion2(t *testing.T) {
-	preset := DefaultPreset()
-	montCtx := NewField(preset)
-	maxLimbCount := preset.MaxLimbCount()
-
-    _ = maxLimbCount
-
-	for limbCount := uint(4); limbCount < 5; limbCount++ {
-        modint := new(big.Int)
-        modint.SetString("26959946667150639794667015087019630673637144422540572481103610249215", 10)
-        mod := IntToLimbs(modint, limbCount)
-		if err := montCtx.SetMod(mod); err != nil {
-			t.Fatal(err)
-		}
-
-        fmt.Printf("mod is %+x\n", mod)
-
-        one := big.NewInt(1)
-
-        xInt := new(big.Int)
-        xInt.Sub(modint, big.NewInt(3))
-
-		xNorm := IntToLimbs(xInt, limbCount)
-		xMont := make([]byte, limbCount*8)
-
-		montCtx.MulMont(montCtx, xMont, LimbsToLEBytes(xNorm), LimbsToLEBytes(montCtx.RSquared()))
-		montCtx.MulMont(montCtx, xMont, xMont, LimbsToLEBytes(IntToLimbs(one, limbCount)))
-
-		result := LEBytesToInt(xMont)
-        _ = result
-        /*
-		if result.Cmp(big.NewInt(1)) != 0 {
-			t.Fatalf("bad result")
-		}
-        */
-		// convert 1 to montgomery and then back using RSquared and mulmont instead of ToMont ToNorm helpers
 	}
 }
