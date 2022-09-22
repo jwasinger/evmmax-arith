@@ -1,5 +1,6 @@
 import sys, math
 import re
+import statistics
 
 def insert_bench(benches_map, bench_preset, bench_op, bench_limbs, time):
     if not bench_op in benches_map:
@@ -7,9 +8,9 @@ def insert_bench(benches_map, bench_preset, bench_op, bench_limbs, time):
     if not bench_preset in benches_map[bench_op]:
         benches_map[bench_op][bench_preset] = {}
     if not bench_limbs in benches_map[bench_op][bench_preset]:
-        benches_map[bench_op][bench_preset][bench_limbs] = []
+        benches_map[bench_op][bench_preset][bench_limbs] = {'data':[]}
 
-    benches_map[bench_op][bench_preset][bench_limbs].append(time)
+    benches_map[bench_op][bench_preset][bench_limbs]['data'].append(time)
 
 #input_lines = sys.stdin.readlines()
 input_lines = []
@@ -38,4 +39,10 @@ for line in input_lines[4:-2]:
 
     insert_bench(benches_map, bench_preset, bench_op, bench_limbs, time)
 
-import pdb; pdb.set_trace()
+for bench_op in benches_map.keys():
+    for bench_preset in benches_map[bench_op].keys():
+        for bench_limbs in benches_map[bench_op][bench_preset].keys():
+            item = benches_map[bench_op][bench_preset][bench_limbs]
+            item['stddev'] = statistics.stdev(item['data'])
+            item['mean'] = statistics.mean(item['data'])
+            print("{},{},{},{},{}".format(bench_preset, bench_op, bench_limbs, item['mean'], item['stddev']))
