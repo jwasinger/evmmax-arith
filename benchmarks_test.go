@@ -116,9 +116,11 @@ func BenchmarkOps(b *testing.B) {
                 case "submod":
                     fn = benchmarkSubMod
                 }
-                b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
-                    fn(b, limbCount, preset)
-                })
+                for i := 0; i < 10; i++ {
+                    b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
+                        fn(b, limbCount, preset)
+                    })
+                }
             }
         }
     }
