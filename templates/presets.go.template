@@ -19,11 +19,12 @@ type ArithPreset struct {
     benchRanges map[string]benchRange
 }
 
-func makeBenchRanges(addModMin, addModMax, subModMin, subModMax, mulMontMin, mulMontMax uint) map[string]benchRange {
+func makeBenchRanges(addModMin, addModMax, subModMin, subModMax, mulMontMin, mulMontMax, setModMin, setModMax uint) map[string]benchRange {
     return map[string]benchRange{
         "addmod": benchRange{addModMin, addModMax},
         "submod": benchRange{subModMin, subModMax},
         "mulmont": benchRange{mulMontMin, mulMontMax},
+        "setmod": benchRange{setModMin, setModMax},
     }
 }
 
@@ -65,7 +66,8 @@ func Asm384Preset() ArithPreset {
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCountPlusOne}},
                        makeBenchRanges(6, 6,
                        6, 6,
-                       6, 6),
+                       6, 6,
+                       0, 0),
                       }
 }
 
@@ -96,7 +98,8 @@ func UnrolledPreset() ArithPreset {
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCountPlusOne}},
                        makeBenchRanges(1, 16,
                        1, 16,
-                       1, 14),
+                       1, 14,
+                       0, 0),
     }
 }
 
@@ -120,6 +123,7 @@ func NonUnrolledPreset() ArithPreset {
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCountPlusOne}},
                        makeBenchRanges(
+                       1, {{$limbCount}},
                        1, {{$limbCount}},
                        1, {{$limbCount}},
                        1, {{$limbCount}}),
@@ -148,6 +152,7 @@ func GenericMulMontPreset() ArithPreset {
             makeBenchRanges(
             0, 0, 
             0, 0,
+            32, {{$limbCount}},
             32, {{$limbCount}}),
         }
 }

@@ -95,33 +95,35 @@ func benchmarkSetMod(b *testing.B, limbCount uint, preset ArithPreset) {
 type opFn func(*testing.B, uint, ArithPreset)
 
 func BenchmarkOps(b *testing.B) {
-    ops := []string{"addmod","submod","mulmont"}
-    presets := AllPresets()
+	ops := []string{"addmod", "submod", "mulmont", "setmod"}
+	presets := AllPresets()
 
-    for opsIdx := 0; opsIdx < len(ops); opsIdx++ {
-        op := ops[opsIdx]
-        for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
-            preset := presets[presetIdx]
-            if preset.benchRanges[op].min == 0 {
-                continue
-            }
+	for opsIdx := 0; opsIdx < len(ops); opsIdx++ {
+		op := ops[opsIdx]
+		for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
+			preset := presets[presetIdx]
+			if preset.benchRanges[op].min == 0 {
+				continue
+			}
 
-            for limbCount := preset.benchRanges[op].min; limbCount <= preset.benchRanges[op].max; limbCount++ {
-                var fn opFn
-                switch op {
-                case "mulmont":
-                    fn = benchmarkMulMont
-                case "addmod":
-                    fn = benchmarkAddMod
-                case "submod":
-                    fn = benchmarkSubMod
-                }
-                for i := 0; i < 10; i++ {
-                    b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
-                        fn(b, limbCount, preset)
-                    })
-                }
-            }
-        }
-    }
+			for limbCount := preset.benchRanges[op].min; limbCount <= preset.benchRanges[op].max; limbCount++ {
+				var fn opFn
+				switch op {
+				case "mulmont":
+					fn = benchmarkMulMont
+				case "addmod":
+					fn = benchmarkAddMod
+				case "submod":
+					fn = benchmarkSubMod
+				case "setmod":
+					fn = benchmarkSetMod
+				}
+				for i := 0; i < 10; i++ {
+					b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
+						fn(b, limbCount, preset)
+					})
+				}
+			}
+		}
+	}
 }
