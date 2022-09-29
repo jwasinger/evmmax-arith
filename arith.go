@@ -6,6 +6,7 @@ import (
     "errors"
     "unsafe"
     "fmt"
+    "encoding/binary"
 )
 
 // madd0 hi = a*b + c (discards lo bits)
@@ -77,11 +78,9 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
     return nil
 }
 
-// XXX implement the below methods using these types (conversions might make it awkward/slower)
-
 type arithFunc func(f *Field, out, x, y []byte) error
 
-// TODO is it faster to compute y-m,x-m and return false if there is borrow-out?
+// TODO: compute y-m,x-m and compute GTE from that (like the template version)
 func GTE(x, y []uint64) bool {
     for i := len(x) - 1; i > 0; i-- {
         if x[i] < y[i] {
@@ -109,13 +108,43 @@ func Eq(n, other []uint64) bool {
     return true
 }
 
-func AddMod(f *Field, z, x, y []uint64) {
+func leBytesToLimbs(b []byte) []uint64 {
+    if len(b) % 8 != 0 {
+        panic("length of b must be divisible by 8")
+    }
+
+    result := make([]uint64, len(b) / 8)
+    for i := 0; i < len(result); i++ {
+        result[i] = binary.LittleEndian.Uint64(b[i * 8:(i + 1) * 8])
+        /*
+        result[i] = uint64(b[i * 8] & 255) +
+                    uint64((b[i * 8 + 1] >> 8) & 255) +
+                    uint64((b[i * 8 + 2] >> 16) & 255) +
+                    uint64((b[i * 8 + 3] >> 24) & 255) +
+                    uint64((b[i * 8 + 4] >> 32) & 255) +
+                    uint64((b[i * 8 + 5] >> 40) & 255) +
+                    uint64((b[i * 8 + 6] >> 48) & 255) +
+                    uint64((b[i * 8 + 7] >> 56) & 255)
+        */
+    }
+
+    return result
+}
+
+func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
     var c uint64 = 0
     var c1 uint64 = 0
 
     mod := f.Modulus
     limbCount := len(mod)
     tmp := make([]uint64, len(mod))
+    x := leBytesToLimbs(xBytes)
+    y := leBytesToLimbs(yBytes)
+    z := make([]uint64, len(mod))
+
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New("x/y was gte modulus")
+    }
 
     for i := 0; i < limbCount; i++ {
         tmp[i], c = bits.Add64(x[i], y[i], c)
@@ -129,13 +158,27 @@ func AddMod(f *Field, z, x, y []uint64) {
     if c == 0 && c1 != 0 {
         copy(z, tmp[:])
     }
+
+    for i := 0; i < limbCount; i++ {
+        binary.LittleEndian.PutUint64(zBytes[i*8:(i+1)*8], z[i])
+    }
+    return nil
 }
 
-func SubMod(f *Field, z, x, y []uint64) {
-    var c, c1 uint64
+func SubModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
+    var c uint64 = 0
+    var c1 uint64 = 0
+
     mod := f.Modulus
-    tmp := make([]uint64, len(mod))
     limbCount := len(mod)
+    tmp := make([]uint64, len(mod))
+    x := leBytesToLimbs(xBytes)
+    y := leBytesToLimbs(yBytes)
+    z := make([]uint64, len(mod))
+
+    if GTE(x, mod) || GTE(y, mod) {
+        return errors.New("x/y was gte modulus")
+    }
 
     for i := 0; i < limbCount; i++ {
         tmp[i], c = bits.Sub64(x[i], y[i], c)
@@ -149,10 +192,16 @@ func SubMod(f *Field, z, x, y []uint64) {
     if c == 0 {
         copy(z, tmp[:])
     }
+
+    for i := 0; i < limbCount; i++ {
+        binary.LittleEndian.PutUint64(zBytes[i*8:(i+1)*8], z[i])
+    }
+    return nil
 }
 
 func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
     product := new(big.Int)
+    t := new(big.Int)
     x := LEBytesToInt(xBytes)
     y := LEBytesToInt(yBytes)
 
@@ -161,18 +210,17 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
     }
 
     // T <- x * y
-    // TODO !!!!!!!
-
-    // m <- ((T mod R)N`) mod R
     product.Mul(x, y)
-    x.And(product, m.mask)
-    x.Mul(x, m.MontParamNonInterleaved)
-    x.And(x, m.mask)
+
+    // m <- ((T mod R)N`) mod R (using the same variable for t and m)
+    t.And(product, m.mask)
+    t.Mul(t, m.MontParamNonInterleaved)
+    t.And(t, m.mask)
 
     // t <- (T + mN) / R
-    x.Mul(x, m.ModulusNonInterleaved)
-    x.Add(x, product)
-    x.Rsh(x, m.NumLimbs*64)
+    t.Mul(t, m.ModulusNonInterleaved)
+    t.Add(t, product)
+    t.Rsh(t, m.NumLimbs*64)
 
     if x.Cmp(m.ModulusNonInterleaved) >= 0 {
         x.Sub(x, m.ModulusNonInterleaved)

@@ -180,6 +180,8 @@ func (m *Field) SetMod(mod []uint64) error {
     var genericMulMontCutoff uint = 64
     if limbCount >= genericMulMontCutoff {
         m.MulMont = MulMontNonInterleaved
+        m.AddMod = AddModGeneric
+        m.SubMod = SubModGeneric
     } else {
         m.MulMont = m.preset.MulMontImpls[limbCount-1]
 

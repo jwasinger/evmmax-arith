@@ -107,7 +107,12 @@ func BenchmarkOps(b *testing.B) {
 			}
 
 			for limbCount := uint(64); limbCount <= 10000; limbCount++ {
+                /*
                 if limbCount > 64 && limbCount % 140 != 0 {
+                    continue
+                }
+                */
+                if limbCount < 50 {
                     continue
                 }
                 // TODO even greater distance between counts to bench if limb count is higher than 1400
@@ -123,7 +128,7 @@ func BenchmarkOps(b *testing.B) {
 				case "setmod":
 					fn = benchmarkSetMod
 				}
-				for i := 0; i < 10; i++ {
+				for i := 0; i < 1; i++ {
 					b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
 						fn(b, limbCount, preset)
 					})
