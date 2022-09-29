@@ -32,14 +32,32 @@ func TestMulMontBLS12831(t *testing.T) {
 	r := rand.New(s)
 
 	x := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
-	montX := montCtx.ToMont(x)
-	if !Eq(montCtx.ToNorm(montX), x) {
+	montX, err := montCtx.ToMont(x)
+    if err != nil {
+        panic(err)
+    }
+
+    normX, err := montCtx.ToNorm(montX)
+    if err != nil {
+        panic(err)
+    }
+
+	if !Eq(normX, x) {
 		panic("mont form should have correct normal form")
 	}
 
 	y := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
-	montY := montCtx.ToMont(y)
-	if !Eq(montCtx.ToNorm(montY), y) {
+	montY, err := montCtx.ToMont(y)
+    if err != nil {
+        panic(err)
+    }
+
+    normY, err := montCtx.ToNorm(montY)
+    if err != nil {
+        panic(err)
+    }
+
+	if !Eq(normY, y) {
 		panic("mont form should have correct normal form")
 	}
 

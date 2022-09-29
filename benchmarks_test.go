@@ -106,13 +106,13 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := uint(64); limbCount <= 10000; limbCount++ {
+			for limbCount := uint(62); limbCount <= 10000; limbCount++ {
                 /*
                 if limbCount > 64 && limbCount % 140 != 0 {
                     continue
                 }
                 */
-                if limbCount < 50 {
+                if limbCount < 30 {
                     continue
                 }
                 // TODO even greater distance between counts to bench if limb count is higher than 1400

@@ -150,8 +150,8 @@ func GenericMulMontPreset() ArithPreset {
 
 	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "generic", 0,
             makeBenchRanges(
-            0, 0, 
-            0, 0,
+            1, 1000, 
+            1, 1000,
             64, 1000,
             64, 1000),
         }

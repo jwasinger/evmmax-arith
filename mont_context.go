@@ -3,6 +3,7 @@ package mont_arith
 import (
 	"errors"
 	"math/big"
+    "encoding/binary"
 )
 
 const limbSize = 8
@@ -66,23 +67,48 @@ func (m *Field) ModInv() *big.Int {
 	return result
 }
 
-func (m *Field) ToMont(val []uint64) []uint64 {
-	dst_val := new(big.Int)
-	src_val := LimbsToInt(val)
-	dst_val.Mul(src_val, m.RVal())
-	// recompute ModulusNonInterleaved as the set preset may not have set it in SetMod
-	dst_val.Mod(dst_val, m.ModulusNonInterleaved)
+func uint64_array_to_le_bytes(val []uint64) []byte {
+	res := make([]byte, len(val) * 8)
+	for i := 0; i < len(val); i++ {
+        binary.LittleEndian.PutUint64(res[i*8:(i+1)*8], val[i])
+	}
 
-	return IntToLimbs(dst_val, m.NumLimbs)
+	return res
 }
 
-func (m *Field) ToNorm(val []uint64) []uint64 {
-	dst_val := new(big.Int)
-	src_val := LimbsToInt(val)
-	dst_val.Mul(src_val, m.RInv())
-	dst_val.Mod(dst_val, m.ModulusNonInterleaved)
+func le_bytes_to_uint64_array(val []byte) []uint64 {
+    res := make([]uint64, len(val) / 8)
+	for i := 0; i < len(val) / 8; i++ {
+        res[i] = binary.LittleEndian.Uint64(val[i*8:(i+1)*8])
+    }
+    return res
+}
 
-	return IntToLimbs(dst_val, m.NumLimbs)
+// TODO this should not do allocation/copying.  should be just as fast as mulmont
+func (m *Field) ToMont(val []uint64) ([]uint64, error) {
+    // TODO ensure val is less than modulus
+    out_bytes := make([]byte, m.NumLimbs * 8)
+	input_bytes := uint64_array_to_le_bytes(val)
+	r_squared_bytes := uint64_array_to_le_bytes(m.RSquared())
+
+	if err := m.MulMont(m, out_bytes, input_bytes, r_squared_bytes); err != nil {
+		return nil, err
+	}
+    return le_bytes_to_uint64_array(out_bytes), nil
+}
+
+func (m *Field) ToNorm(val []uint64) ([]uint64, error) {
+    // TODO ensure val is less than the modulus?
+    out_bytes := make([]byte, m.NumLimbs * 8)
+	input_bytes := uint64_array_to_le_bytes(val)
+    one := make([]byte, len(val))
+    one[0] = 1
+
+	if err := m.MulMont(m, out_bytes, input_bytes, one); err != nil {
+		return nil, err
+	}
+
+    return le_bytes_to_uint64_array(out_bytes), nil
 }
 
 func NewField(preset ArithPreset) *Field {

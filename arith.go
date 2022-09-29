@@ -5,6 +5,7 @@ import (
     "math/big"
     "errors"
     "unsafe"
+    "reflect"
     "fmt"
     "encoding/binary"
 )
@@ -116,19 +117,20 @@ func leBytesToLimbs(b []byte) []uint64 {
     result := make([]uint64, len(b) / 8)
     for i := 0; i < len(result); i++ {
         result[i] = binary.LittleEndian.Uint64(b[i * 8:(i + 1) * 8])
-        /*
-        result[i] = uint64(b[i * 8] & 255) +
-                    uint64((b[i * 8 + 1] >> 8) & 255) +
-                    uint64((b[i * 8 + 2] >> 16) & 255) +
-                    uint64((b[i * 8 + 3] >> 24) & 255) +
-                    uint64((b[i * 8 + 4] >> 32) & 255) +
-                    uint64((b[i * 8 + 5] >> 40) & 255) +
-                    uint64((b[i * 8 + 6] >> 48) & 255) +
-                    uint64((b[i * 8 + 7] >> 56) & 255)
-        */
     }
 
     return result
+}
+
+// https://groups.google.com/g/golang-nuts/c/aPjvemV4F0U?pli=1
+// touint64 assumes len(x)%8 == 0
+func toUint64(x []byte) []uint64 {
+    xx := make([]uint64, 0, 0)
+    hdrp := (*reflect.SliceHeader)(unsafe.Pointer(&xx))
+    hdrp.Data = (*reflect.SliceHeader)(unsafe.Pointer(&x)).Data
+    hdrp.Len = len(x) / 8
+    hdrp.Cap = len(x) / 8
+    return xx
 }
 
 func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
@@ -138,9 +140,9 @@ func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
     mod := f.Modulus
     limbCount := len(mod)
     tmp := make([]uint64, len(mod))
-    x := leBytesToLimbs(xBytes)
-    y := leBytesToLimbs(yBytes)
-    z := make([]uint64, len(mod))
+    x := toUint64(xBytes)
+    y := toUint64(yBytes)
+    z := toUint64(zBytes)
 
     if GTE(x, mod) || GTE(y, mod) {
         return errors.New("x/y was gte modulus")
@@ -159,9 +161,6 @@ func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
         copy(z, tmp[:])
     }
 
-    for i := 0; i < limbCount; i++ {
-        binary.LittleEndian.PutUint64(zBytes[i*8:(i+1)*8], z[i])
-    }
     return nil
 }
 
@@ -172,9 +171,9 @@ func SubModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
     mod := f.Modulus
     limbCount := len(mod)
     tmp := make([]uint64, len(mod))
-    x := leBytesToLimbs(xBytes)
-    y := leBytesToLimbs(yBytes)
-    z := make([]uint64, len(mod))
+    x := toUint64(xBytes)
+    y := toUint64(yBytes)
+    z := toUint64(zBytes)
 
     if GTE(x, mod) || GTE(y, mod) {
         return errors.New("x/y was gte modulus")
