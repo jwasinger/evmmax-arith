@@ -151,9 +151,7 @@ func SubMod(f *Field, z, x, y []uint64) {
     }
 }
 
-// NOTE: this assumes that x and y are in Montgomery form and can produce unexpected results when they are not
 func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
-    // TODO check that x/y < modulus
     product := new(big.Int)
     x := LEBytesToInt(xBytes)
     y := LEBytesToInt(yBytes)
@@ -162,7 +160,10 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
         return errors.New("x/y >= modulus")
     }
 
-    // m <- ((x*y mod R)N`) mod R
+    // T <- x * y
+    // TODO !!!!!!!
+
+    // m <- ((T mod R)N`) mod R
     product.Mul(x, y)
     x.And(product, m.mask)
     x.Mul(x, m.MontParamNonInterleaved)

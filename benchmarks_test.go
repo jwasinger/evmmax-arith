@@ -106,7 +106,12 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := preset.benchRanges[op].min; limbCount <= preset.benchRanges[op].max; limbCount++ {
+			for limbCount := uint(64); limbCount <= 10000; limbCount++ {
+                if limbCount > 64 && limbCount % 140 != 0 {
+                    continue
+                }
+                // TODO even greater distance between counts to bench if limb count is higher than 1400
+
 				var fn opFn
 				switch op {
 				case "mulmont":

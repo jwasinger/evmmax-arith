@@ -864,8 +864,8 @@ func GenericMulMontPreset() ArithPreset {
 		makeBenchRanges(
 			0, 0,
 			0, 0,
-			32, 64,
-			32, 64),
+			64, 1000,
+			64, 1000),
 	}
 }
 

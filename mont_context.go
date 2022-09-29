@@ -124,9 +124,6 @@ const karatsubaThreshold = 64
 
 func (m *Field) SetMod(mod []uint64) error {
 	var limbCount uint = uint(len(mod))
-	if limbCount > m.preset.MaxLimbCount() {
-		return errors.New("modulus limb count greater than max")
-	}
 
 	if mod[0]%2 == 0 {
 		return errors.New("modulus cannot be even")
@@ -180,9 +177,16 @@ func (m *Field) SetMod(mod []uint64) error {
 	m.NumLimbs = limbCount
 	m.ElementSize = uint64(limbCount) * 4
 
-	m.MulMont = m.preset.MulMontImpls[limbCount-1]
-	m.AddMod = m.preset.AddModImpls[limbCount-1]
-	m.SubMod = m.preset.SubModImpls[limbCount-1]
+    var genericMulMontCutoff uint = 64
+    if limbCount >= genericMulMontCutoff {
+        m.MulMont = MulMontNonInterleaved
+    } else {
+        m.MulMont = m.preset.MulMontImpls[limbCount-1]
+
+        // TODO fix
+        m.AddMod = m.preset.AddModImpls[limbCount-1]
+        m.SubMod = m.preset.SubModImpls[limbCount-1]
+    }
 
 	return nil
 }
