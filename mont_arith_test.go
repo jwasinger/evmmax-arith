@@ -289,6 +289,7 @@ func TestMulMont(t *testing.T) {
 				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
 			}
 
+            // TODO ...
 			// test mid mod
 			// test mulmont(smallestVal, smallestVal)
 			// test mulmont(largestVal, largestVal)
