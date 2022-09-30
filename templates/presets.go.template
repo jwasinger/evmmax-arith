@@ -63,7 +63,7 @@ func Asm384Preset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCountPlusOne}},
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "asm384", {{$limbCount}},
                        makeBenchRanges(6, 6,
                        6, 6,
                        6, 6,
@@ -95,7 +95,7 @@ func UnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCountPlusOne}},
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCount}},
                        makeBenchRanges(1, 16,
                        1, 16,
                        1, 14,
@@ -121,7 +121,7 @@ func NonUnrolledPreset() ArithPreset {
 		{{- end}}
 	}
 
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCountPlusOne}},
+	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "non-unrolled", {{$limbCount}},
                        makeBenchRanges(
                        1, {{$limbCount}},
                        1, {{$limbCount}},

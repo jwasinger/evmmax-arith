@@ -208,6 +208,8 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
         return errors.New("x/y >= modulus")
     }
 
+    // TODO: replace .And(mask) with bit-shifts
+
     // T <- x * y
     product.Mul(x, y)
 
@@ -225,6 +227,6 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
         x.Sub(x, m.ModulusNonInterleaved)
     }
 
-    copy(zBytes, LimbsToLEBytes(IntToLimbs(x, m.NumLimbs)))
+    copy(zBytes, LimbsToLEBytes(IntToLimbs(t, m.NumLimbs)))
     return nil
 }

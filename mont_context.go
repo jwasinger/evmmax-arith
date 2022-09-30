@@ -174,7 +174,7 @@ func (m *Field) SetMod(mod []uint64) error {
 	m.rSquared = IntToLimbs(rSquared, limbCount)
 
 	// TODO place interleaved/non-interleaved mont parameters in their own unnamed structs
-	if limbCount <= m.preset.mulMontCIOSCutoff {
+	if limbCount < m.preset.mulMontCIOSCutoff {
 		// want to compute r_val - (mod & (r_val - 1))
 		littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
