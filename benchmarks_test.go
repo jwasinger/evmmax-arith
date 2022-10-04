@@ -106,16 +106,26 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := uint(62); limbCount <= 10000; limbCount++ {
-                /*
-                if limbCount > 64 && limbCount % 140 != 0 {
-                    continue
+			for limbCount := uint(1); limbCount <= 10000; {
+                cluster := true
+                var dist uint
+                // bench every 3 if it's under 100
+                if limbCount < 64 {
+                    dist = 1
+                } else if limbCount < 100 {
+                    dist = 3
+                    cluster = false
+                } else if limbCount < 1000 {
+                    dist = 30
+                } else if limbCount < 10000 {
+                    dist = 300
+                } else if limbCount < 100000 {
+                    dist = 3000
                 }
-                */
-                if limbCount < 30 {
-                    continue
-                }
-                // TODO even greater distance between counts to bench if limb count is higher than 1400
+                // with cluster samples:
+                // bench every 30 if it's under 1000
+                // bench every 300 if it's under 10000
+                // bench every 3000 if it's under 100000
 
 				var fn opFn
 				switch op {
@@ -128,11 +138,14 @@ func BenchmarkOps(b *testing.B) {
 				case "setmod":
 					fn = benchmarkSetMod
 				}
-				for i := 0; i < 1; i++ {
+                _ = cluster // TODO?
+                const samplesPerBench = 1 
+				for i := 0; i < samplesPerBench; i++ {
 					b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
 						fn(b, limbCount, preset)
 					})
 				}
+                limbCount += dist
 			}
 		}
 	}

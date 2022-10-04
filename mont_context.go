@@ -146,8 +146,6 @@ func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-const karatsubaThreshold = 64
-
 func (m *Field) SetMod(mod []uint64) error {
 	var limbCount uint = uint(len(mod))
 
@@ -173,8 +171,6 @@ func (m *Field) SetMod(mod []uint64) error {
 
 	m.rSquared = IntToLimbs(rSquared, limbCount)
 
-	// TODO place interleaved/non-interleaved mont parameters in their own unnamed structs
-	if limbCount < m.preset.mulMontCIOSCutoff {
 		// want to compute r_val - (mod & (r_val - 1))
 		littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
@@ -185,18 +181,17 @@ func (m *Field) SetMod(mod []uint64) error {
 		modInv.ModInverse(negModInt, littleRVal)
 
 		m.MontParamInterleaved = modInv.Uint64()
-	} else {
+
 		m.ModulusNonInterleaved = modInt
 		rVal := big.NewInt(1)
 		rVal.Lsh(rVal, 64*limbCount)
-		negModInt := new(big.Int)
+		negModInt = new(big.Int)
 		negModInt.Neg(modInt)
 		m.MontParamNonInterleaved = new(big.Int)
 		m.MontParamNonInterleaved.ModInverse(negModInt, rVal)
 		m.mask = big.NewInt(1)
 		m.mask.Lsh(m.mask, 64*limbCount)
 		m.mask.Sub(m.mask, big.NewInt(1))
-	}
 
 	m.Modulus = make([]uint64, limbCount)
 	copy(m.Modulus, mod[:])
