@@ -1,22 +1,21 @@
-# mont-arith 
+# evmmax-arith
 
-Library for Modular Addition, Subtraction and Montgomery Multiplication.  Supports values between 1 and 16384 bits.
-
-Implementation of the arithmetic up to 704 bits is adapted slightly from [Goff](https://github.com/consensys/goff).  Widths above 704 bits do generic/non-interleaved Montgomery multiplication using Go's built-in big.Int.  This is a stop-gap until more performant implementations are created.
+Library for performing modular addition, subtraction and Montgomery multiplication
 
 ## Usage
 
-Generate Go code for the arithmetic:
+Build the code generator and generate the arithmetic code:
 ```
-make
-```
-
-Unit tests:
-```
-make test
+(cd generator && go build)
+make build
 ```
 
-Benchmarks:
+Run benchmarks:
 ```
-make benchmark
+go test -bench=.
+```
+
+Run tests:
+```
+go test -run=.
 ```
