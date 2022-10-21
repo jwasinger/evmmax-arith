@@ -106,21 +106,21 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := uint(1); limbCount <= 10000; {
+			for limbCount := uint(1); limbCount <= 100000; {
                 cluster := true
                 var dist uint
                 // bench every 3 if it's under 100
                 if limbCount < 64 {
                     dist = 1
                 } else if limbCount < 100 {
-                    dist = 3
+                    dist = 5
                     cluster = false
                 } else if limbCount < 1000 {
-                    dist = 30
+                    dist = 50
                 } else if limbCount < 10000 {
-                    dist = 300
+                    dist = 500
                 } else if limbCount < 100000 {
-                    dist = 3000
+                    dist = 5000
                 }
                 // with cluster samples:
                 // bench every 30 if it's under 1000
@@ -139,7 +139,7 @@ func BenchmarkOps(b *testing.B) {
 					fn = benchmarkSetMod
 				}
                 _ = cluster // TODO?
-                const samplesPerBench = 1 
+                const samplesPerBench = 10
 				for i := 0; i < samplesPerBench; i++ {
 					b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
 						fn(b, limbCount, preset)
