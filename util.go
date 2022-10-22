@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math/big"
     "math"
+    "fmt"
 )
 
 /*
@@ -53,7 +54,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 		pad := make([]byte, pad_len, pad_len)
 		val_bytes = append(pad, val_bytes...)
 	} else if len(val_bytes) > 8*int(num_limbs) {
-		panic("val too big to fit in specified number of limbs")
+		panic(fmt.Sprintf("val too big to fit in specified number of limbs (%d): %s", num_limbs, val.String()))
 	}
 
 	result := make([]uint64, len(val_bytes)/8, len(val_bytes)/8)
