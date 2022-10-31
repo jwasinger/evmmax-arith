@@ -33,14 +33,14 @@ func TestMulMontBLS12831(t *testing.T) {
 
 	x := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
 	montX, err := montCtx.ToMont(x)
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    normX, err := montCtx.ToNorm(montX)
-    if err != nil {
-        panic(err)
-    }
+	normX, err := montCtx.ToNorm(montX)
+	if err != nil {
+		panic(err)
+	}
 
 	if !Eq(normX, x) {
 		panic("mont form should have correct normal form")
@@ -48,14 +48,14 @@ func TestMulMontBLS12831(t *testing.T) {
 
 	y := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
 	montY, err := montCtx.ToMont(y)
-    if err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
-    normY, err := montCtx.ToNorm(montY)
-    if err != nil {
-        panic(err)
-    }
+	normY, err := montCtx.ToNorm(montY)
+	if err != nil {
+		panic(err)
+	}
 
 	if !Eq(normY, y) {
 		panic("mont form should have correct normal form")
@@ -118,13 +118,28 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
+
+	// test overlap
+	xBytes := LimbsToLEBytes(xLimbs)
+	expected = new(big.Int)
+	expected.Add(xInt, xInt)
+	expected.Mod(expected, modInt)
+
+	if err = montCtx.AddMod(montCtx, xBytes, xBytes, xBytes); err != nil {
+		t.Fatal(err)
+	}
+
+	result = LEBytesToInt(xBytes)
+	if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	}
 }
 
 func TestSubModInputs(t *testing.T) {
 	inputs := testInputs()
 
 	for i := 0; i < len(inputs); i += 4 {
-		testAddMod(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3])
+		testSubMod(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3])
 	}
 }
 
@@ -165,6 +180,21 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	}
 
 	result := LEBytesToInt(resultBytes)
+	if result.Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	}
+
+	// test overlap (not useful inputs in practice)
+	xBytes := LimbsToLEBytes(xLimbs)
+	expected = new(big.Int)
+	expected.Sub(xInt, xInt)
+	expected.Mod(expected, modInt)
+
+	if err = montCtx.SubMod(montCtx, xBytes, xBytes, xBytes); err != nil {
+		t.Fatal(err)
+	}
+
+	result = LEBytesToInt(xBytes)
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
@@ -224,6 +254,22 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	result := LEBytesToInt(resultBytes)
 	if result.Cmp(expected) != 0 {
 		fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
+		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	}
+
+	// test overlapping offsets - all the same
+	xBytes := LimbsToLEBytes(xLimbs)
+	expected = new(big.Int)
+	expected.Mul(xInt, xInt)
+	expected.Mul(expected, rInv)
+	expected.Mod(expected, modInt)
+
+	if err = montCtx.MulMont(montCtx, xBytes, xBytes, xBytes); err != nil {
+		t.Fatal(err)
+	}
+
+	result = LEBytesToInt(xBytes)
+	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
 }
@@ -286,7 +332,7 @@ func TestMulMont(t *testing.T) {
 				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
 			}
 
-            // TODO ...
+			// TODO ...
 			// test mid mod
 			// test mulmont(smallestVal, smallestVal)
 			// test mulmont(largestVal, largestVal)
