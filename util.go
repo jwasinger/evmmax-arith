@@ -2,8 +2,9 @@ package mont_arith
 
 import (
 	"encoding/binary"
+	"fmt"
+	"math"
 	"math/big"
-    "math"
 )
 
 /*
@@ -53,7 +54,7 @@ func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 		pad := make([]byte, pad_len, pad_len)
 		val_bytes = append(pad, val_bytes...)
 	} else if len(val_bytes) > 8*int(num_limbs) {
-		panic("val too big to fit in specified number of limbs")
+		panic(fmt.Sprintf("val too big to fit in specified number of limbs (%d): %s", num_limbs, val.String()))
 	}
 
 	result := make([]uint64, len(val_bytes)/8, len(val_bytes)/8)
@@ -115,21 +116,21 @@ func MidModulus(limbCount uint) []uint64 {
 		mod[i] = math.MaxUint64
 	}
 
-    mod[limbCount - 1] >>= 16
+	mod[limbCount-1] >>= 16
 
 	return mod
 }
 
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
 func GenTestModulus(limbCount uint) []uint64 {
-    /*
-	mod_int := big.NewInt(1)
-	mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))
-	mod_int.Sub(mod_int, big.NewInt(1))
+	/*
+		mod_int := big.NewInt(1)
+		mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))
+		mod_int.Sub(mod_int, big.NewInt(1))
 
-	return IntToLimbs(mod_int, limbCount)
-    */
-    return MaxModulus(limbCount)
+		return IntToLimbs(mod_int, limbCount)
+	*/
+	return MaxModulus(limbCount)
 }
 
 func LimbsEq(x, y []uint64) bool {
