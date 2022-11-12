@@ -71,6 +71,9 @@ var funcs = template.FuncMap{
 	"mul": func(val, v2 int) int {
 		return val * v2
 	},
+    "mulp1": func(val, v2 int) int {
+        return (val + 1 ) * v2
+    },
 	// returns "[x]uint64 {0, 0, 0, ......, 0}"
 	"makeZeroedLimbs": func(numLimbs int) string {
 		result := fmt.Sprintf("[%d]uint64 {", numLimbs)
@@ -234,7 +237,7 @@ func main() {
 	var maxLimbs int = 64
 	// fully unrolled mulmont gets huge fast. cap the amount we generate.
 	genPresets(maxLimbs)
-	genMulMont("unrolled", 16)
+	//genMulMont("unrolled", 16)
 	genMulMont("nonunrolled", maxLimbs)
 	genAddMod("unrolled", maxLimbs)
 	genAddMod("nonunrolled", maxLimbs)

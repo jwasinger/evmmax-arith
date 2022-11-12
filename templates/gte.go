@@ -11,6 +11,15 @@ var gteC1, gteC2 uint64
     _, gteC2 = bits.Sub64({{$.z}}[{{$i}}], {{$.y}}[{{$i}}], gteC2)
 {{- end}}
 
+/*
+fmt.Println()
+fmt.Println()
+fmt.Println("foo")
+fmt.Println({{$.x}})
+fmt.Println({{$.y}})
+fmt.Println({{$.z}})
+*/
+
 if gteC1 != 0 || gteC2 != 0 {
     return errors.New(fmt.Sprintf("input gte modulus"))
 }

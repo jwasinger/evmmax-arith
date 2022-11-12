@@ -3,10 +3,18 @@
 {{ $limbBits := .LimbBits}}
 {{ $limbCountPlusOne := add .LimbCount 1 }}
 
-func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes, y_bytes []byte) (error) {
+    var x, y [{{$limbCount}}]uint64
+    {{- range $i := intRange 1 $limbCount}}
+        x[{{$i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+    {{- end}}
+
+    /*
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+    */
+	//z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
 	var t [{{add $limbCount 1}}]uint64
 	var D uint64
@@ -52,17 +60,22 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_byt
 		t[{{$limbCount}}], _ = bits.Add64(0, D, C)
     }
 
+    var tmp_val uint64
     {{- range $i := intRange 0 $limbCount}}
         {{-  if eq $i 0 }}
-            z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
+            tmp_val, D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
+            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], tmp_val)
         {{-  else  }}
-            z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
+            tmp_val, D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
+            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], tmp_val)
         {{- end}}
     {{- end}}
 
     if D != 0 && t[{{$limbCount}}] == 0 {
         // reduction was not necessary
-        copy(z[:], t[:{{$limbCount}}])
+        {{- range $i := intRange 1 $limbCount}}
+            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], t[{{$i}}])
+        {{- end}}
     }/* else {
         panic("not worst case performance")
     }*/

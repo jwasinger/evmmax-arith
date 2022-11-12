@@ -17,6 +17,15 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
 	_, gteC2 = bits.Sub64(mod[0], y[0], gteC2)
 
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
+
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
@@ -52,6 +61,15 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC1 = bits.Sub64(mod[1], x[1], gteC1)
 	_, gteC2 = bits.Sub64(mod[0], y[0], gteC2)
 	_, gteC2 = bits.Sub64(mod[1], y[1], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -90,6 +108,15 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[0], y[0], gteC2)
 	_, gteC2 = bits.Sub64(mod[1], y[1], gteC2)
 	_, gteC2 = bits.Sub64(mod[2], y[2], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -130,6 +157,15 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[1], y[1], gteC2)
 	_, gteC2 = bits.Sub64(mod[2], y[2], gteC2)
 	_, gteC2 = bits.Sub64(mod[3], y[3], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -172,6 +208,15 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[2], y[2], gteC2)
 	_, gteC2 = bits.Sub64(mod[3], y[3], gteC2)
 	_, gteC2 = bits.Sub64(mod[4], y[4], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -216,6 +261,15 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[3], y[3], gteC2)
 	_, gteC2 = bits.Sub64(mod[4], y[4], gteC2)
 	_, gteC2 = bits.Sub64(mod[5], y[5], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -262,6 +316,15 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[4], y[4], gteC2)
 	_, gteC2 = bits.Sub64(mod[5], y[5], gteC2)
 	_, gteC2 = bits.Sub64(mod[6], y[6], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -310,6 +373,15 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[5], y[5], gteC2)
 	_, gteC2 = bits.Sub64(mod[6], y[6], gteC2)
 	_, gteC2 = bits.Sub64(mod[7], y[7], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -360,6 +432,15 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[6], y[6], gteC2)
 	_, gteC2 = bits.Sub64(mod[7], y[7], gteC2)
 	_, gteC2 = bits.Sub64(mod[8], y[8], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -412,6 +493,15 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[7], y[7], gteC2)
 	_, gteC2 = bits.Sub64(mod[8], y[8], gteC2)
 	_, gteC2 = bits.Sub64(mod[9], y[9], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -466,6 +556,15 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[8], y[8], gteC2)
 	_, gteC2 = bits.Sub64(mod[9], y[9], gteC2)
 	_, gteC2 = bits.Sub64(mod[10], y[10], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -522,6 +621,15 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[9], y[9], gteC2)
 	_, gteC2 = bits.Sub64(mod[10], y[10], gteC2)
 	_, gteC2 = bits.Sub64(mod[11], y[11], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -580,6 +688,15 @@ func SubModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[10], y[10], gteC2)
 	_, gteC2 = bits.Sub64(mod[11], y[11], gteC2)
 	_, gteC2 = bits.Sub64(mod[12], y[12], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -640,6 +757,15 @@ func SubModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[11], y[11], gteC2)
 	_, gteC2 = bits.Sub64(mod[12], y[12], gteC2)
 	_, gteC2 = bits.Sub64(mod[13], y[13], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -702,6 +828,15 @@ func SubModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[12], y[12], gteC2)
 	_, gteC2 = bits.Sub64(mod[13], y[13], gteC2)
 	_, gteC2 = bits.Sub64(mod[14], y[14], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -766,6 +901,15 @@ func SubModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[13], y[13], gteC2)
 	_, gteC2 = bits.Sub64(mod[14], y[14], gteC2)
 	_, gteC2 = bits.Sub64(mod[15], y[15], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -832,6 +976,15 @@ func SubModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[14], y[14], gteC2)
 	_, gteC2 = bits.Sub64(mod[15], y[15], gteC2)
 	_, gteC2 = bits.Sub64(mod[16], y[16], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -900,6 +1053,15 @@ func SubModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[15], y[15], gteC2)
 	_, gteC2 = bits.Sub64(mod[16], y[16], gteC2)
 	_, gteC2 = bits.Sub64(mod[17], y[17], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -970,6 +1132,15 @@ func SubModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[16], y[16], gteC2)
 	_, gteC2 = bits.Sub64(mod[17], y[17], gteC2)
 	_, gteC2 = bits.Sub64(mod[18], y[18], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1042,6 +1213,15 @@ func SubModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[17], y[17], gteC2)
 	_, gteC2 = bits.Sub64(mod[18], y[18], gteC2)
 	_, gteC2 = bits.Sub64(mod[19], y[19], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1116,6 +1296,15 @@ func SubModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[18], y[18], gteC2)
 	_, gteC2 = bits.Sub64(mod[19], y[19], gteC2)
 	_, gteC2 = bits.Sub64(mod[20], y[20], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1192,6 +1381,15 @@ func SubModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[19], y[19], gteC2)
 	_, gteC2 = bits.Sub64(mod[20], y[20], gteC2)
 	_, gteC2 = bits.Sub64(mod[21], y[21], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1270,6 +1468,15 @@ func SubModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[20], y[20], gteC2)
 	_, gteC2 = bits.Sub64(mod[21], y[21], gteC2)
 	_, gteC2 = bits.Sub64(mod[22], y[22], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1350,6 +1557,15 @@ func SubModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[21], y[21], gteC2)
 	_, gteC2 = bits.Sub64(mod[22], y[22], gteC2)
 	_, gteC2 = bits.Sub64(mod[23], y[23], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1432,6 +1648,15 @@ func SubModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[22], y[22], gteC2)
 	_, gteC2 = bits.Sub64(mod[23], y[23], gteC2)
 	_, gteC2 = bits.Sub64(mod[24], y[24], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1516,6 +1741,15 @@ func SubModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[23], y[23], gteC2)
 	_, gteC2 = bits.Sub64(mod[24], y[24], gteC2)
 	_, gteC2 = bits.Sub64(mod[25], y[25], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1602,6 +1836,15 @@ func SubModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[24], y[24], gteC2)
 	_, gteC2 = bits.Sub64(mod[25], y[25], gteC2)
 	_, gteC2 = bits.Sub64(mod[26], y[26], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1690,6 +1933,15 @@ func SubModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[25], y[25], gteC2)
 	_, gteC2 = bits.Sub64(mod[26], y[26], gteC2)
 	_, gteC2 = bits.Sub64(mod[27], y[27], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1780,6 +2032,15 @@ func SubModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[26], y[26], gteC2)
 	_, gteC2 = bits.Sub64(mod[27], y[27], gteC2)
 	_, gteC2 = bits.Sub64(mod[28], y[28], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1872,6 +2133,15 @@ func SubModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[27], y[27], gteC2)
 	_, gteC2 = bits.Sub64(mod[28], y[28], gteC2)
 	_, gteC2 = bits.Sub64(mod[29], y[29], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -1966,6 +2236,15 @@ func SubModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[28], y[28], gteC2)
 	_, gteC2 = bits.Sub64(mod[29], y[29], gteC2)
 	_, gteC2 = bits.Sub64(mod[30], y[30], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2062,6 +2341,15 @@ func SubModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[29], y[29], gteC2)
 	_, gteC2 = bits.Sub64(mod[30], y[30], gteC2)
 	_, gteC2 = bits.Sub64(mod[31], y[31], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2160,6 +2448,15 @@ func SubModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[30], y[30], gteC2)
 	_, gteC2 = bits.Sub64(mod[31], y[31], gteC2)
 	_, gteC2 = bits.Sub64(mod[32], y[32], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2260,6 +2557,15 @@ func SubModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[31], y[31], gteC2)
 	_, gteC2 = bits.Sub64(mod[32], y[32], gteC2)
 	_, gteC2 = bits.Sub64(mod[33], y[33], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2362,6 +2668,15 @@ func SubModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[32], y[32], gteC2)
 	_, gteC2 = bits.Sub64(mod[33], y[33], gteC2)
 	_, gteC2 = bits.Sub64(mod[34], y[34], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2466,6 +2781,15 @@ func SubModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[33], y[33], gteC2)
 	_, gteC2 = bits.Sub64(mod[34], y[34], gteC2)
 	_, gteC2 = bits.Sub64(mod[35], y[35], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2572,6 +2896,15 @@ func SubModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[34], y[34], gteC2)
 	_, gteC2 = bits.Sub64(mod[35], y[35], gteC2)
 	_, gteC2 = bits.Sub64(mod[36], y[36], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2680,6 +3013,15 @@ func SubModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[35], y[35], gteC2)
 	_, gteC2 = bits.Sub64(mod[36], y[36], gteC2)
 	_, gteC2 = bits.Sub64(mod[37], y[37], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2790,6 +3132,15 @@ func SubModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[36], y[36], gteC2)
 	_, gteC2 = bits.Sub64(mod[37], y[37], gteC2)
 	_, gteC2 = bits.Sub64(mod[38], y[38], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -2902,6 +3253,15 @@ func SubModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[37], y[37], gteC2)
 	_, gteC2 = bits.Sub64(mod[38], y[38], gteC2)
 	_, gteC2 = bits.Sub64(mod[39], y[39], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3016,6 +3376,15 @@ func SubModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[38], y[38], gteC2)
 	_, gteC2 = bits.Sub64(mod[39], y[39], gteC2)
 	_, gteC2 = bits.Sub64(mod[40], y[40], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3132,6 +3501,15 @@ func SubModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[39], y[39], gteC2)
 	_, gteC2 = bits.Sub64(mod[40], y[40], gteC2)
 	_, gteC2 = bits.Sub64(mod[41], y[41], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3250,6 +3628,15 @@ func SubModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[40], y[40], gteC2)
 	_, gteC2 = bits.Sub64(mod[41], y[41], gteC2)
 	_, gteC2 = bits.Sub64(mod[42], y[42], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3370,6 +3757,15 @@ func SubModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[41], y[41], gteC2)
 	_, gteC2 = bits.Sub64(mod[42], y[42], gteC2)
 	_, gteC2 = bits.Sub64(mod[43], y[43], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3492,6 +3888,15 @@ func SubModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[42], y[42], gteC2)
 	_, gteC2 = bits.Sub64(mod[43], y[43], gteC2)
 	_, gteC2 = bits.Sub64(mod[44], y[44], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3616,6 +4021,15 @@ func SubModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[43], y[43], gteC2)
 	_, gteC2 = bits.Sub64(mod[44], y[44], gteC2)
 	_, gteC2 = bits.Sub64(mod[45], y[45], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3742,6 +4156,15 @@ func SubModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[44], y[44], gteC2)
 	_, gteC2 = bits.Sub64(mod[45], y[45], gteC2)
 	_, gteC2 = bits.Sub64(mod[46], y[46], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -3870,6 +4293,15 @@ func SubModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[45], y[45], gteC2)
 	_, gteC2 = bits.Sub64(mod[46], y[46], gteC2)
 	_, gteC2 = bits.Sub64(mod[47], y[47], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4000,6 +4432,15 @@ func SubModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[46], y[46], gteC2)
 	_, gteC2 = bits.Sub64(mod[47], y[47], gteC2)
 	_, gteC2 = bits.Sub64(mod[48], y[48], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4132,6 +4573,15 @@ func SubModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[47], y[47], gteC2)
 	_, gteC2 = bits.Sub64(mod[48], y[48], gteC2)
 	_, gteC2 = bits.Sub64(mod[49], y[49], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4266,6 +4716,15 @@ func SubModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[48], y[48], gteC2)
 	_, gteC2 = bits.Sub64(mod[49], y[49], gteC2)
 	_, gteC2 = bits.Sub64(mod[50], y[50], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4402,6 +4861,15 @@ func SubModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[49], y[49], gteC2)
 	_, gteC2 = bits.Sub64(mod[50], y[50], gteC2)
 	_, gteC2 = bits.Sub64(mod[51], y[51], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4540,6 +5008,15 @@ func SubModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[50], y[50], gteC2)
 	_, gteC2 = bits.Sub64(mod[51], y[51], gteC2)
 	_, gteC2 = bits.Sub64(mod[52], y[52], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4680,6 +5157,15 @@ func SubModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[51], y[51], gteC2)
 	_, gteC2 = bits.Sub64(mod[52], y[52], gteC2)
 	_, gteC2 = bits.Sub64(mod[53], y[53], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4822,6 +5308,15 @@ func SubModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[52], y[52], gteC2)
 	_, gteC2 = bits.Sub64(mod[53], y[53], gteC2)
 	_, gteC2 = bits.Sub64(mod[54], y[54], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -4966,6 +5461,15 @@ func SubModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[53], y[53], gteC2)
 	_, gteC2 = bits.Sub64(mod[54], y[54], gteC2)
 	_, gteC2 = bits.Sub64(mod[55], y[55], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5112,6 +5616,15 @@ func SubModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[54], y[54], gteC2)
 	_, gteC2 = bits.Sub64(mod[55], y[55], gteC2)
 	_, gteC2 = bits.Sub64(mod[56], y[56], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5260,6 +5773,15 @@ func SubModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[55], y[55], gteC2)
 	_, gteC2 = bits.Sub64(mod[56], y[56], gteC2)
 	_, gteC2 = bits.Sub64(mod[57], y[57], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5410,6 +5932,15 @@ func SubModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[56], y[56], gteC2)
 	_, gteC2 = bits.Sub64(mod[57], y[57], gteC2)
 	_, gteC2 = bits.Sub64(mod[58], y[58], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5562,6 +6093,15 @@ func SubModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[57], y[57], gteC2)
 	_, gteC2 = bits.Sub64(mod[58], y[58], gteC2)
 	_, gteC2 = bits.Sub64(mod[59], y[59], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5716,6 +6256,15 @@ func SubModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[58], y[58], gteC2)
 	_, gteC2 = bits.Sub64(mod[59], y[59], gteC2)
 	_, gteC2 = bits.Sub64(mod[60], y[60], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -5872,6 +6421,15 @@ func SubModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[59], y[59], gteC2)
 	_, gteC2 = bits.Sub64(mod[60], y[60], gteC2)
 	_, gteC2 = bits.Sub64(mod[61], y[61], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -6030,6 +6588,15 @@ func SubModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[60], y[60], gteC2)
 	_, gteC2 = bits.Sub64(mod[61], y[61], gteC2)
 	_, gteC2 = bits.Sub64(mod[62], y[62], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))
@@ -6190,6 +6757,15 @@ func SubModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	_, gteC2 = bits.Sub64(mod[61], y[61], gteC2)
 	_, gteC2 = bits.Sub64(mod[62], y[62], gteC2)
 	_, gteC2 = bits.Sub64(mod[63], y[63], gteC2)
+
+	/*
+	   fmt.Println()
+	   fmt.Println()
+	   fmt.Println("foo")
+	   fmt.Println(x)
+	   fmt.Println(y)
+	   fmt.Println(mod)
+	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
 		return errors.New(fmt.Sprintf("input gte modulus"))

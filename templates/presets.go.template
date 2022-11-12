@@ -87,11 +87,7 @@ func UnrolledPreset() ArithPreset {
 	}
 	mulMontImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-            {{- if gte $i 16 }}
-                MulMontNonUnrolled{{mul $i $limbBits}},
-            {{- else }}
-                MulMontUnrolled{{mul $i $limbBits}},
-            {{- end }}
+            MulMontNonUnrolled{{mul $i $limbBits}},
 		{{- end}}
 	}
 

@@ -3,6 +3,12 @@
 {{ $limbBits := .LimbBits}}
 
 func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
+    var x, y [{{$limbCount}}]uint64
+    {{- range $i := intRange 1 $limbCount}}
+        x[{{$i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+    {{- end}}
+
 	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
 	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]

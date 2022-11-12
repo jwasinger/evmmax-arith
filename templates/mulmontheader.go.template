@@ -6,6 +6,7 @@ package mont_arith
 
 import (
 	"math/bits"
+    "encoding/binary"
     "unsafe"
     "errors"
     "fmt"
