@@ -52,6 +52,16 @@ var funcs = template.FuncMap{
 		}
 		return result
 	},
+	"revRange": func(start, end int) []int {
+        if end < start {
+            panic("end cannot be less than start")
+        }
+		result := []int{}
+		for i := end; i >= start; i-- {
+			result = append(result, i)
+		}
+		return result
+	},
 	"add": func(val, v2 int) int {
 		return val + v2
 	},
