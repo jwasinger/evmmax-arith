@@ -1,6 +1,7 @@
 package mont_arith
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/bits"
@@ -8,9 +9,10 @@ import (
 )
 
 func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[1]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[1]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[1]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [1]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+
 	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -30,7 +32,8 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [1]uint64{0}
 
 	for i := 0; i < 1; i++ {
@@ -41,19 +44,27 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[0]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
 	return nil
 }
 
 func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[2]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[2]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[2]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [2]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+
 	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -75,7 +86,8 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [2]uint64{0, 0}
 
 	for i := 0; i < 2; i++ {
@@ -86,19 +98,30 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[1]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
 	return nil
 }
 
 func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[3]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[3]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[3]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [3]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+
 	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -122,7 +145,8 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [3]uint64{0, 0, 0}
 
 	for i := 0; i < 3; i++ {
@@ -133,19 +157,33 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[2]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
 	return nil
 }
 
 func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[4]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[4]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[4]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [4]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+
 	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -171,7 +209,8 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [4]uint64{0, 0, 0, 0}
 
 	for i := 0; i < 4; i++ {
@@ -182,19 +221,36 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[3]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
 	return nil
 }
 
 func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[5]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[5]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[5]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [5]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+
 	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -222,7 +278,8 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [5]uint64{0, 0, 0, 0, 0}
 
 	for i := 0; i < 5; i++ {
@@ -233,19 +290,39 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[4]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
 	return nil
 }
 
 func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[6]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[6]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[6]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [6]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+
 	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -275,7 +352,8 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [6]uint64{0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 6; i++ {
@@ -286,19 +364,42 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[5]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
 	return nil
 }
 
 func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[7]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[7]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[7]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [7]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+
 	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -330,7 +431,8 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [7]uint64{0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 7; i++ {
@@ -341,19 +443,45 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[6]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
 	return nil
 }
 
 func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[8]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[8]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[8]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [8]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+
 	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -387,7 +515,8 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [8]uint64{0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 8; i++ {
@@ -398,19 +527,48 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[7]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
 	return nil
 }
 
 func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[9]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[9]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[9]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [9]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+
 	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -446,7 +604,8 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [9]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 9; i++ {
@@ -457,19 +616,51 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[8]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
 	return nil
 }
 
 func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[10]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[10]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[10]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [10]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+
 	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -507,7 +698,8 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [10]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 10; i++ {
@@ -518,19 +710,54 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[9]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
 	return nil
 }
 
 func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[11]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[11]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[11]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [11]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+
 	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -570,7 +797,8 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [11]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 11; i++ {
@@ -581,19 +809,57 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[10]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
 	return nil
 }
 
 func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[12]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[12]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[12]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [12]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+
 	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -635,7 +901,8 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [12]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 12; i++ {
@@ -646,19 +913,60 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[11]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
 	return nil
 }
 
 func SubModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[13]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[13]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[13]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [13]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+
 	mod := (*[13]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -702,7 +1010,8 @@ func SubModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [13]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 13; i++ {
@@ -713,19 +1022,63 @@ func SubModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[12]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
 	return nil
 }
 
 func SubModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[14]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[14]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[14]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [14]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+
 	mod := (*[14]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -771,7 +1124,8 @@ func SubModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [14]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 14; i++ {
@@ -782,19 +1136,66 @@ func SubModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[13]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
 	return nil
 }
 
 func SubModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[15]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[15]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[15]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [15]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+
 	mod := (*[15]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -842,7 +1243,8 @@ func SubModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [15]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 15; i++ {
@@ -853,19 +1255,69 @@ func SubModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[14]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
 	return nil
 }
 
 func SubModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[16]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[16]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[16]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [16]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+
 	mod := (*[16]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -915,7 +1367,8 @@ func SubModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [16]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 16; i++ {
@@ -926,19 +1379,72 @@ func SubModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[15]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
 	return nil
 }
 
 func SubModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[17]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[17]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[17]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [17]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+
 	mod := (*[17]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -990,7 +1496,8 @@ func SubModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [17]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 17; i++ {
@@ -1001,19 +1508,75 @@ func SubModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[16]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
 	return nil
 }
 
 func SubModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[18]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[18]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[18]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [18]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+
 	mod := (*[18]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1067,7 +1630,8 @@ func SubModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [18]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 18; i++ {
@@ -1078,19 +1642,78 @@ func SubModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[17]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
 	return nil
 }
 
 func SubModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[19]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[19]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[19]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [19]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+
 	mod := (*[19]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1146,7 +1769,8 @@ func SubModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [19]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 19; i++ {
@@ -1157,19 +1781,81 @@ func SubModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[18]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
 	return nil
 }
 
 func SubModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[20]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[20]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[20]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [20]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+
 	mod := (*[20]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1227,7 +1913,8 @@ func SubModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [20]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 20; i++ {
@@ -1238,19 +1925,84 @@ func SubModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[19]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
 	return nil
 }
 
 func SubModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[21]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[21]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[21]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [21]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+
 	mod := (*[21]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1310,7 +2062,8 @@ func SubModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [21]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 21; i++ {
@@ -1321,19 +2074,87 @@ func SubModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[20]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
 	return nil
 }
 
 func SubModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[22]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[22]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[22]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [22]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+
 	mod := (*[22]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1395,7 +2216,8 @@ func SubModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [22]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 22; i++ {
@@ -1406,19 +2228,90 @@ func SubModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[21]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
 	return nil
 }
 
 func SubModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[23]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[23]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[23]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [23]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+
 	mod := (*[23]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1482,7 +2375,8 @@ func SubModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [23]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 23; i++ {
@@ -1493,19 +2387,93 @@ func SubModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[22]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
 	return nil
 }
 
 func SubModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[24]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[24]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[24]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [24]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+
 	mod := (*[24]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1571,7 +2539,8 @@ func SubModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [24]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 24; i++ {
@@ -1582,19 +2551,96 @@ func SubModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[23]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
 	return nil
 }
 
 func SubModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[25]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[25]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[25]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [25]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+
 	mod := (*[25]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1662,7 +2708,8 @@ func SubModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [25]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 25; i++ {
@@ -1673,19 +2720,99 @@ func SubModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[24]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
 	return nil
 }
 
 func SubModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[26]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[26]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[26]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [26]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+
 	mod := (*[26]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1755,7 +2882,8 @@ func SubModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [26]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 26; i++ {
@@ -1766,19 +2894,102 @@ func SubModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[25]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
 	return nil
 }
 
 func SubModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[27]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[27]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[27]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [27]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+
 	mod := (*[27]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1850,7 +3061,8 @@ func SubModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [27]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 27; i++ {
@@ -1861,19 +3073,105 @@ func SubModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[26]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
 	return nil
 }
 
 func SubModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[28]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[28]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[28]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [28]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+
 	mod := (*[28]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -1947,7 +3245,8 @@ func SubModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [28]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 28; i++ {
@@ -1958,19 +3257,108 @@ func SubModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[27]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
 	return nil
 }
 
 func SubModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[29]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[29]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[29]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [29]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+
 	mod := (*[29]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2046,7 +3434,8 @@ func SubModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [29]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 29; i++ {
@@ -2057,19 +3446,111 @@ func SubModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[28]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
 	return nil
 }
 
 func SubModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[30]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[30]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[30]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [30]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+
 	mod := (*[30]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2147,7 +3628,8 @@ func SubModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [30]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 30; i++ {
@@ -2158,19 +3640,114 @@ func SubModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[29]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
 	return nil
 }
 
 func SubModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[31]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[31]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[31]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [31]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+
 	mod := (*[31]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2250,7 +3827,8 @@ func SubModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [31]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 31; i++ {
@@ -2261,19 +3839,117 @@ func SubModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[30]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
 	return nil
 }
 
 func SubModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[32]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[32]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[32]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [32]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+
 	mod := (*[32]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2355,7 +4031,8 @@ func SubModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [32]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 32; i++ {
@@ -2366,19 +4043,120 @@ func SubModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[31]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
 	return nil
 }
 
 func SubModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[33]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[33]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[33]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [33]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+
 	mod := (*[33]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2462,7 +4240,8 @@ func SubModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [33]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 33; i++ {
@@ -2473,19 +4252,123 @@ func SubModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[32]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
 	return nil
 }
 
 func SubModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[34]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[34]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[34]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [34]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+
 	mod := (*[34]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2571,7 +4454,8 @@ func SubModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [34]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 34; i++ {
@@ -2582,19 +4466,126 @@ func SubModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[33]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
 	return nil
 }
 
 func SubModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[35]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[35]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[35]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [35]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+
 	mod := (*[35]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2682,7 +4673,8 @@ func SubModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [35]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 35; i++ {
@@ -2693,19 +4685,129 @@ func SubModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[34]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
 	return nil
 }
 
 func SubModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[36]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[36]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[36]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [36]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+
 	mod := (*[36]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2795,7 +4897,8 @@ func SubModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [36]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 36; i++ {
@@ -2806,19 +4909,132 @@ func SubModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[35]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
 	return nil
 }
 
 func SubModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[37]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[37]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[37]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [37]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+
 	mod := (*[37]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -2910,7 +5126,8 @@ func SubModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [37]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 37; i++ {
@@ -2921,19 +5138,135 @@ func SubModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[36]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
 	return nil
 }
 
 func SubModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[38]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[38]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[38]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [38]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+
 	mod := (*[38]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3027,7 +5360,8 @@ func SubModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [38]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 38; i++ {
@@ -3038,19 +5372,138 @@ func SubModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[37]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
 	return nil
 }
 
 func SubModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[39]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[39]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[39]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [39]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+
 	mod := (*[39]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3146,7 +5599,8 @@ func SubModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [39]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 39; i++ {
@@ -3157,19 +5611,141 @@ func SubModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[38]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
 	return nil
 }
 
 func SubModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[40]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[40]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[40]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [40]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+
 	mod := (*[40]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3267,7 +5843,8 @@ func SubModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [40]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 40; i++ {
@@ -3278,19 +5855,144 @@ func SubModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[39]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
 	return nil
 }
 
 func SubModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[41]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[41]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[41]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [41]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+
 	mod := (*[41]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3390,7 +6092,8 @@ func SubModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [41]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 41; i++ {
@@ -3401,19 +6104,147 @@ func SubModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[40]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
 	return nil
 }
 
 func SubModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[42]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[42]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[42]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [42]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+
 	mod := (*[42]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3515,7 +6346,8 @@ func SubModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [42]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 42; i++ {
@@ -3526,19 +6358,150 @@ func SubModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[41]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
 	return nil
 }
 
 func SubModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[43]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[43]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[43]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [43]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+
 	mod := (*[43]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3642,7 +6605,8 @@ func SubModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [43]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 43; i++ {
@@ -3653,19 +6617,153 @@ func SubModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[42]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
 	return nil
 }
 
 func SubModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[44]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[44]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[44]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [44]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+
 	mod := (*[44]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3771,7 +6869,8 @@ func SubModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [44]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 44; i++ {
@@ -3782,19 +6881,156 @@ func SubModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[43]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
 	return nil
 }
 
 func SubModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[45]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[45]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[45]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [45]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+
 	mod := (*[45]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -3902,7 +7138,8 @@ func SubModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [45]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 45; i++ {
@@ -3913,19 +7150,159 @@ func SubModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[44]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
 	return nil
 }
 
 func SubModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[46]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[46]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[46]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [46]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+
 	mod := (*[46]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4035,7 +7412,8 @@ func SubModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [46]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 46; i++ {
@@ -4046,19 +7424,162 @@ func SubModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[45]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
 	return nil
 }
 
 func SubModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[47]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[47]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[47]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [47]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+
 	mod := (*[47]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4170,7 +7691,8 @@ func SubModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [47]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 47; i++ {
@@ -4181,19 +7703,165 @@ func SubModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[46]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
 	return nil
 }
 
 func SubModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[48]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[48]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[48]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [48]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+
 	mod := (*[48]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4307,7 +7975,8 @@ func SubModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [48]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 48; i++ {
@@ -4318,19 +7987,168 @@ func SubModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[47]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
 	return nil
 }
 
 func SubModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[49]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[49]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[49]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [49]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+
 	mod := (*[49]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4446,7 +8264,8 @@ func SubModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [49]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 49; i++ {
@@ -4457,19 +8276,171 @@ func SubModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[48]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
 	return nil
 }
 
 func SubModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[50]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[50]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[50]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [50]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+
 	mod := (*[50]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4587,7 +8558,8 @@ func SubModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [50]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 50; i++ {
@@ -4598,19 +8570,174 @@ func SubModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[49]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
 	return nil
 }
 
 func SubModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[51]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[51]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[51]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [51]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+
 	mod := (*[51]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4730,7 +8857,8 @@ func SubModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [51]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 51; i++ {
@@ -4741,19 +8869,177 @@ func SubModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[50]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
 	return nil
 }
 
 func SubModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[52]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[52]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[52]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [52]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+
 	mod := (*[52]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -4875,7 +9161,8 @@ func SubModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [52]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 52; i++ {
@@ -4886,19 +9173,180 @@ func SubModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[51]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
 	return nil
 }
 
 func SubModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[53]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[53]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[53]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [53]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+
 	mod := (*[53]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5022,7 +9470,8 @@ func SubModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [53]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 53; i++ {
@@ -5033,19 +9482,183 @@ func SubModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[52]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
 	return nil
 }
 
 func SubModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[54]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[54]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[54]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [54]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+
 	mod := (*[54]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5171,7 +9784,8 @@ func SubModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [54]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 54; i++ {
@@ -5182,19 +9796,186 @@ func SubModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[53]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
 	return nil
 }
 
 func SubModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[55]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[55]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[55]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [55]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+
 	mod := (*[55]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5322,7 +10103,8 @@ func SubModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [55]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 55; i++ {
@@ -5333,19 +10115,189 @@ func SubModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[54]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
 	return nil
 }
 
 func SubModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[56]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[56]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[56]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [56]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+
 	mod := (*[56]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5475,7 +10427,8 @@ func SubModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [56]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 56; i++ {
@@ -5486,19 +10439,192 @@ func SubModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[55]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
 	return nil
 }
 
 func SubModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[57]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[57]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[57]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [57]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+
 	mod := (*[57]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5630,7 +10756,8 @@ func SubModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [57]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 57; i++ {
@@ -5641,19 +10768,195 @@ func SubModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[56]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
 	return nil
 }
 
 func SubModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[58]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[58]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[58]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [58]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+
 	mod := (*[58]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5787,7 +11090,8 @@ func SubModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [58]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 58; i++ {
@@ -5798,19 +11102,198 @@ func SubModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[57]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
 	return nil
 }
 
 func SubModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[59]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[59]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[59]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [59]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+
 	mod := (*[59]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -5946,7 +11429,8 @@ func SubModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [59]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 59; i++ {
@@ -5957,19 +11441,201 @@ func SubModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[58]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
 	return nil
 }
 
 func SubModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[60]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[60]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[60]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [60]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+	x[59] = binary.LittleEndian.Uint64(x_bytes[472:480])
+	y[59] = binary.LittleEndian.Uint64(y_bytes[472:480])
+
 	mod := (*[60]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -6107,7 +11773,8 @@ func SubModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [60]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 60; i++ {
@@ -6118,19 +11785,204 @@ func SubModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[59]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
+	binary.BigEndian.PutUint64(out_bytes[472:480], src[59])
 	return nil
 }
 
 func SubModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[61]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[61]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[61]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [61]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+	x[59] = binary.LittleEndian.Uint64(x_bytes[472:480])
+	y[59] = binary.LittleEndian.Uint64(y_bytes[472:480])
+	x[60] = binary.LittleEndian.Uint64(x_bytes[480:488])
+	y[60] = binary.LittleEndian.Uint64(y_bytes[480:488])
+
 	mod := (*[61]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -6270,7 +12122,8 @@ func SubModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [61]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 61; i++ {
@@ -6281,19 +12134,207 @@ func SubModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[60]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
+	binary.BigEndian.PutUint64(out_bytes[472:480], src[59])
+	binary.BigEndian.PutUint64(out_bytes[480:488], src[60])
 	return nil
 }
 
 func SubModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[62]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[62]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[62]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [62]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+	x[59] = binary.LittleEndian.Uint64(x_bytes[472:480])
+	y[59] = binary.LittleEndian.Uint64(y_bytes[472:480])
+	x[60] = binary.LittleEndian.Uint64(x_bytes[480:488])
+	y[60] = binary.LittleEndian.Uint64(y_bytes[480:488])
+	x[61] = binary.LittleEndian.Uint64(x_bytes[488:496])
+	y[61] = binary.LittleEndian.Uint64(y_bytes[488:496])
+
 	mod := (*[62]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -6435,7 +12476,8 @@ func SubModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [62]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 62; i++ {
@@ -6446,19 +12488,210 @@ func SubModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[61]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
+	binary.BigEndian.PutUint64(out_bytes[472:480], src[59])
+	binary.BigEndian.PutUint64(out_bytes[480:488], src[60])
+	binary.BigEndian.PutUint64(out_bytes[488:496], src[61])
 	return nil
 }
 
 func SubModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[63]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[63]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[63]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [63]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+	x[59] = binary.LittleEndian.Uint64(x_bytes[472:480])
+	y[59] = binary.LittleEndian.Uint64(y_bytes[472:480])
+	x[60] = binary.LittleEndian.Uint64(x_bytes[480:488])
+	y[60] = binary.LittleEndian.Uint64(y_bytes[480:488])
+	x[61] = binary.LittleEndian.Uint64(x_bytes[488:496])
+	y[61] = binary.LittleEndian.Uint64(y_bytes[488:496])
+	x[62] = binary.LittleEndian.Uint64(x_bytes[496:504])
+	y[62] = binary.LittleEndian.Uint64(y_bytes[496:504])
+
 	mod := (*[63]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -6602,7 +12835,8 @@ func SubModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [63]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 63; i++ {
@@ -6613,19 +12847,213 @@ func SubModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[62]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
+	binary.BigEndian.PutUint64(out_bytes[472:480], src[59])
+	binary.BigEndian.PutUint64(out_bytes[480:488], src[60])
+	binary.BigEndian.PutUint64(out_bytes[488:496], src[61])
+	binary.BigEndian.PutUint64(out_bytes[496:504], src[62])
 	return nil
 }
 
 func SubModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
-	x := (*[64]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[64]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[64]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+	var x, y, z [64]uint64
+	x[0] = binary.LittleEndian.Uint64(x_bytes[0:8])
+	y[0] = binary.LittleEndian.Uint64(y_bytes[0:8])
+	x[1] = binary.LittleEndian.Uint64(x_bytes[8:16])
+	y[1] = binary.LittleEndian.Uint64(y_bytes[8:16])
+	x[2] = binary.LittleEndian.Uint64(x_bytes[16:24])
+	y[2] = binary.LittleEndian.Uint64(y_bytes[16:24])
+	x[3] = binary.LittleEndian.Uint64(x_bytes[24:32])
+	y[3] = binary.LittleEndian.Uint64(y_bytes[24:32])
+	x[4] = binary.LittleEndian.Uint64(x_bytes[32:40])
+	y[4] = binary.LittleEndian.Uint64(y_bytes[32:40])
+	x[5] = binary.LittleEndian.Uint64(x_bytes[40:48])
+	y[5] = binary.LittleEndian.Uint64(y_bytes[40:48])
+	x[6] = binary.LittleEndian.Uint64(x_bytes[48:56])
+	y[6] = binary.LittleEndian.Uint64(y_bytes[48:56])
+	x[7] = binary.LittleEndian.Uint64(x_bytes[56:64])
+	y[7] = binary.LittleEndian.Uint64(y_bytes[56:64])
+	x[8] = binary.LittleEndian.Uint64(x_bytes[64:72])
+	y[8] = binary.LittleEndian.Uint64(y_bytes[64:72])
+	x[9] = binary.LittleEndian.Uint64(x_bytes[72:80])
+	y[9] = binary.LittleEndian.Uint64(y_bytes[72:80])
+	x[10] = binary.LittleEndian.Uint64(x_bytes[80:88])
+	y[10] = binary.LittleEndian.Uint64(y_bytes[80:88])
+	x[11] = binary.LittleEndian.Uint64(x_bytes[88:96])
+	y[11] = binary.LittleEndian.Uint64(y_bytes[88:96])
+	x[12] = binary.LittleEndian.Uint64(x_bytes[96:104])
+	y[12] = binary.LittleEndian.Uint64(y_bytes[96:104])
+	x[13] = binary.LittleEndian.Uint64(x_bytes[104:112])
+	y[13] = binary.LittleEndian.Uint64(y_bytes[104:112])
+	x[14] = binary.LittleEndian.Uint64(x_bytes[112:120])
+	y[14] = binary.LittleEndian.Uint64(y_bytes[112:120])
+	x[15] = binary.LittleEndian.Uint64(x_bytes[120:128])
+	y[15] = binary.LittleEndian.Uint64(y_bytes[120:128])
+	x[16] = binary.LittleEndian.Uint64(x_bytes[128:136])
+	y[16] = binary.LittleEndian.Uint64(y_bytes[128:136])
+	x[17] = binary.LittleEndian.Uint64(x_bytes[136:144])
+	y[17] = binary.LittleEndian.Uint64(y_bytes[136:144])
+	x[18] = binary.LittleEndian.Uint64(x_bytes[144:152])
+	y[18] = binary.LittleEndian.Uint64(y_bytes[144:152])
+	x[19] = binary.LittleEndian.Uint64(x_bytes[152:160])
+	y[19] = binary.LittleEndian.Uint64(y_bytes[152:160])
+	x[20] = binary.LittleEndian.Uint64(x_bytes[160:168])
+	y[20] = binary.LittleEndian.Uint64(y_bytes[160:168])
+	x[21] = binary.LittleEndian.Uint64(x_bytes[168:176])
+	y[21] = binary.LittleEndian.Uint64(y_bytes[168:176])
+	x[22] = binary.LittleEndian.Uint64(x_bytes[176:184])
+	y[22] = binary.LittleEndian.Uint64(y_bytes[176:184])
+	x[23] = binary.LittleEndian.Uint64(x_bytes[184:192])
+	y[23] = binary.LittleEndian.Uint64(y_bytes[184:192])
+	x[24] = binary.LittleEndian.Uint64(x_bytes[192:200])
+	y[24] = binary.LittleEndian.Uint64(y_bytes[192:200])
+	x[25] = binary.LittleEndian.Uint64(x_bytes[200:208])
+	y[25] = binary.LittleEndian.Uint64(y_bytes[200:208])
+	x[26] = binary.LittleEndian.Uint64(x_bytes[208:216])
+	y[26] = binary.LittleEndian.Uint64(y_bytes[208:216])
+	x[27] = binary.LittleEndian.Uint64(x_bytes[216:224])
+	y[27] = binary.LittleEndian.Uint64(y_bytes[216:224])
+	x[28] = binary.LittleEndian.Uint64(x_bytes[224:232])
+	y[28] = binary.LittleEndian.Uint64(y_bytes[224:232])
+	x[29] = binary.LittleEndian.Uint64(x_bytes[232:240])
+	y[29] = binary.LittleEndian.Uint64(y_bytes[232:240])
+	x[30] = binary.LittleEndian.Uint64(x_bytes[240:248])
+	y[30] = binary.LittleEndian.Uint64(y_bytes[240:248])
+	x[31] = binary.LittleEndian.Uint64(x_bytes[248:256])
+	y[31] = binary.LittleEndian.Uint64(y_bytes[248:256])
+	x[32] = binary.LittleEndian.Uint64(x_bytes[256:264])
+	y[32] = binary.LittleEndian.Uint64(y_bytes[256:264])
+	x[33] = binary.LittleEndian.Uint64(x_bytes[264:272])
+	y[33] = binary.LittleEndian.Uint64(y_bytes[264:272])
+	x[34] = binary.LittleEndian.Uint64(x_bytes[272:280])
+	y[34] = binary.LittleEndian.Uint64(y_bytes[272:280])
+	x[35] = binary.LittleEndian.Uint64(x_bytes[280:288])
+	y[35] = binary.LittleEndian.Uint64(y_bytes[280:288])
+	x[36] = binary.LittleEndian.Uint64(x_bytes[288:296])
+	y[36] = binary.LittleEndian.Uint64(y_bytes[288:296])
+	x[37] = binary.LittleEndian.Uint64(x_bytes[296:304])
+	y[37] = binary.LittleEndian.Uint64(y_bytes[296:304])
+	x[38] = binary.LittleEndian.Uint64(x_bytes[304:312])
+	y[38] = binary.LittleEndian.Uint64(y_bytes[304:312])
+	x[39] = binary.LittleEndian.Uint64(x_bytes[312:320])
+	y[39] = binary.LittleEndian.Uint64(y_bytes[312:320])
+	x[40] = binary.LittleEndian.Uint64(x_bytes[320:328])
+	y[40] = binary.LittleEndian.Uint64(y_bytes[320:328])
+	x[41] = binary.LittleEndian.Uint64(x_bytes[328:336])
+	y[41] = binary.LittleEndian.Uint64(y_bytes[328:336])
+	x[42] = binary.LittleEndian.Uint64(x_bytes[336:344])
+	y[42] = binary.LittleEndian.Uint64(y_bytes[336:344])
+	x[43] = binary.LittleEndian.Uint64(x_bytes[344:352])
+	y[43] = binary.LittleEndian.Uint64(y_bytes[344:352])
+	x[44] = binary.LittleEndian.Uint64(x_bytes[352:360])
+	y[44] = binary.LittleEndian.Uint64(y_bytes[352:360])
+	x[45] = binary.LittleEndian.Uint64(x_bytes[360:368])
+	y[45] = binary.LittleEndian.Uint64(y_bytes[360:368])
+	x[46] = binary.LittleEndian.Uint64(x_bytes[368:376])
+	y[46] = binary.LittleEndian.Uint64(y_bytes[368:376])
+	x[47] = binary.LittleEndian.Uint64(x_bytes[376:384])
+	y[47] = binary.LittleEndian.Uint64(y_bytes[376:384])
+	x[48] = binary.LittleEndian.Uint64(x_bytes[384:392])
+	y[48] = binary.LittleEndian.Uint64(y_bytes[384:392])
+	x[49] = binary.LittleEndian.Uint64(x_bytes[392:400])
+	y[49] = binary.LittleEndian.Uint64(y_bytes[392:400])
+	x[50] = binary.LittleEndian.Uint64(x_bytes[400:408])
+	y[50] = binary.LittleEndian.Uint64(y_bytes[400:408])
+	x[51] = binary.LittleEndian.Uint64(x_bytes[408:416])
+	y[51] = binary.LittleEndian.Uint64(y_bytes[408:416])
+	x[52] = binary.LittleEndian.Uint64(x_bytes[416:424])
+	y[52] = binary.LittleEndian.Uint64(y_bytes[416:424])
+	x[53] = binary.LittleEndian.Uint64(x_bytes[424:432])
+	y[53] = binary.LittleEndian.Uint64(y_bytes[424:432])
+	x[54] = binary.LittleEndian.Uint64(x_bytes[432:440])
+	y[54] = binary.LittleEndian.Uint64(y_bytes[432:440])
+	x[55] = binary.LittleEndian.Uint64(x_bytes[440:448])
+	y[55] = binary.LittleEndian.Uint64(y_bytes[440:448])
+	x[56] = binary.LittleEndian.Uint64(x_bytes[448:456])
+	y[56] = binary.LittleEndian.Uint64(y_bytes[448:456])
+	x[57] = binary.LittleEndian.Uint64(x_bytes[456:464])
+	y[57] = binary.LittleEndian.Uint64(y_bytes[456:464])
+	x[58] = binary.LittleEndian.Uint64(x_bytes[464:472])
+	y[58] = binary.LittleEndian.Uint64(y_bytes[464:472])
+	x[59] = binary.LittleEndian.Uint64(x_bytes[472:480])
+	y[59] = binary.LittleEndian.Uint64(y_bytes[472:480])
+	x[60] = binary.LittleEndian.Uint64(x_bytes[480:488])
+	y[60] = binary.LittleEndian.Uint64(y_bytes[480:488])
+	x[61] = binary.LittleEndian.Uint64(x_bytes[488:496])
+	y[61] = binary.LittleEndian.Uint64(y_bytes[488:496])
+	x[62] = binary.LittleEndian.Uint64(x_bytes[496:504])
+	y[62] = binary.LittleEndian.Uint64(y_bytes[496:504])
+	x[63] = binary.LittleEndian.Uint64(x_bytes[504:512])
+	y[63] = binary.LittleEndian.Uint64(y_bytes[504:512])
+
 	mod := (*[64]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
 	var gteC1, gteC2 uint64
@@ -6771,7 +13199,8 @@ func SubModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		return errors.New(fmt.Sprintf("input gte modulus"))
 	}
 
-	var c, c1 uint64
+	var c uint64 = 0
+	var c1 uint64 = 0
 	tmp := [64]uint64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 
 	for i := 0; i < 64; i++ {
@@ -6782,11 +13211,79 @@ func SubModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 		z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
 	}
 
+	var src []uint64
+	// final sub was unnecessary
 	if c == 0 {
-		copy(z, tmp[:])
-	} /*else {
-	    panic("not worst case performance")
-	}*/
+		src = tmp[:]
+	} else {
+		src = z[:]
+	}
 
+	_ = src[63]
+	// TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+	binary.BigEndian.PutUint64(out_bytes[0:8], src[0])
+	binary.BigEndian.PutUint64(out_bytes[8:16], src[1])
+	binary.BigEndian.PutUint64(out_bytes[16:24], src[2])
+	binary.BigEndian.PutUint64(out_bytes[24:32], src[3])
+	binary.BigEndian.PutUint64(out_bytes[32:40], src[4])
+	binary.BigEndian.PutUint64(out_bytes[40:48], src[5])
+	binary.BigEndian.PutUint64(out_bytes[48:56], src[6])
+	binary.BigEndian.PutUint64(out_bytes[56:64], src[7])
+	binary.BigEndian.PutUint64(out_bytes[64:72], src[8])
+	binary.BigEndian.PutUint64(out_bytes[72:80], src[9])
+	binary.BigEndian.PutUint64(out_bytes[80:88], src[10])
+	binary.BigEndian.PutUint64(out_bytes[88:96], src[11])
+	binary.BigEndian.PutUint64(out_bytes[96:104], src[12])
+	binary.BigEndian.PutUint64(out_bytes[104:112], src[13])
+	binary.BigEndian.PutUint64(out_bytes[112:120], src[14])
+	binary.BigEndian.PutUint64(out_bytes[120:128], src[15])
+	binary.BigEndian.PutUint64(out_bytes[128:136], src[16])
+	binary.BigEndian.PutUint64(out_bytes[136:144], src[17])
+	binary.BigEndian.PutUint64(out_bytes[144:152], src[18])
+	binary.BigEndian.PutUint64(out_bytes[152:160], src[19])
+	binary.BigEndian.PutUint64(out_bytes[160:168], src[20])
+	binary.BigEndian.PutUint64(out_bytes[168:176], src[21])
+	binary.BigEndian.PutUint64(out_bytes[176:184], src[22])
+	binary.BigEndian.PutUint64(out_bytes[184:192], src[23])
+	binary.BigEndian.PutUint64(out_bytes[192:200], src[24])
+	binary.BigEndian.PutUint64(out_bytes[200:208], src[25])
+	binary.BigEndian.PutUint64(out_bytes[208:216], src[26])
+	binary.BigEndian.PutUint64(out_bytes[216:224], src[27])
+	binary.BigEndian.PutUint64(out_bytes[224:232], src[28])
+	binary.BigEndian.PutUint64(out_bytes[232:240], src[29])
+	binary.BigEndian.PutUint64(out_bytes[240:248], src[30])
+	binary.BigEndian.PutUint64(out_bytes[248:256], src[31])
+	binary.BigEndian.PutUint64(out_bytes[256:264], src[32])
+	binary.BigEndian.PutUint64(out_bytes[264:272], src[33])
+	binary.BigEndian.PutUint64(out_bytes[272:280], src[34])
+	binary.BigEndian.PutUint64(out_bytes[280:288], src[35])
+	binary.BigEndian.PutUint64(out_bytes[288:296], src[36])
+	binary.BigEndian.PutUint64(out_bytes[296:304], src[37])
+	binary.BigEndian.PutUint64(out_bytes[304:312], src[38])
+	binary.BigEndian.PutUint64(out_bytes[312:320], src[39])
+	binary.BigEndian.PutUint64(out_bytes[320:328], src[40])
+	binary.BigEndian.PutUint64(out_bytes[328:336], src[41])
+	binary.BigEndian.PutUint64(out_bytes[336:344], src[42])
+	binary.BigEndian.PutUint64(out_bytes[344:352], src[43])
+	binary.BigEndian.PutUint64(out_bytes[352:360], src[44])
+	binary.BigEndian.PutUint64(out_bytes[360:368], src[45])
+	binary.BigEndian.PutUint64(out_bytes[368:376], src[46])
+	binary.BigEndian.PutUint64(out_bytes[376:384], src[47])
+	binary.BigEndian.PutUint64(out_bytes[384:392], src[48])
+	binary.BigEndian.PutUint64(out_bytes[392:400], src[49])
+	binary.BigEndian.PutUint64(out_bytes[400:408], src[50])
+	binary.BigEndian.PutUint64(out_bytes[408:416], src[51])
+	binary.BigEndian.PutUint64(out_bytes[416:424], src[52])
+	binary.BigEndian.PutUint64(out_bytes[424:432], src[53])
+	binary.BigEndian.PutUint64(out_bytes[432:440], src[54])
+	binary.BigEndian.PutUint64(out_bytes[440:448], src[55])
+	binary.BigEndian.PutUint64(out_bytes[448:456], src[56])
+	binary.BigEndian.PutUint64(out_bytes[456:464], src[57])
+	binary.BigEndian.PutUint64(out_bytes[464:472], src[58])
+	binary.BigEndian.PutUint64(out_bytes[472:480], src[59])
+	binary.BigEndian.PutUint64(out_bytes[480:488], src[60])
+	binary.BigEndian.PutUint64(out_bytes[488:496], src[61])
+	binary.BigEndian.PutUint64(out_bytes[496:504], src[62])
+	binary.BigEndian.PutUint64(out_bytes[504:512], src[63])
 	return nil
 }

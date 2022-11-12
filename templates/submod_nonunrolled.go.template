@@ -3,14 +3,18 @@
 {{ $limbBits := .LimbBits}}
 
 func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
-	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
+    var x, y, z [{{$limbCount}}]uint64
+    {{- range $i := intRange 0 $limbCount}}
+        x[{{$i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+    {{- end}}
+
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
-	var c, c1 uint64
+    var c uint64 = 0
+    var c1 uint64 = 0
 	tmp := {{ makeZeroedLimbs $limbCount}}
 
     for i := 0; i < {{$limbCount}}; i++ {
@@ -21,11 +25,19 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
         z[i], c1 = bits.Add64(tmp[i], mod[i], c1)
     }
 
-	if c == 0 {
-		copy(z, tmp[:])
-    }/*else {
-        panic("not worst case performance")
-    }*/
+    var src []uint64
+    // final sub was unnecessary
+    if c == 0 {
+        src = tmp[:]
+    } else {
+        src = z[:]
+    }
 
-	return nil
+    // pre-hint to compiler: TODO check asm to make sure this actually does something.
+    _ = src[{{sub $limbCount 1}}]
+
+    {{- range $i := intRange 0 $limbCount}}
+        binary.BigEndian.PutUint64(out_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{$i}}])
+    {{- end}}
+    return nil
 }

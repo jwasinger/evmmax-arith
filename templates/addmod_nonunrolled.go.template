@@ -3,15 +3,12 @@
 {{ $limbBits := .LimbBits}}
 
 func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
-    var x, y [{{$limbCount}}]uint64
-    {{- range $i := intRange 1 $limbCount}}
+    var x, y, z [{{$limbCount}}]uint64
+    {{- range $i := intRange 0 $limbCount}}
         x[{{$i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
         y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
     {{- end}}
 
-	x := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&x_bytes[0]))[:]
-	y := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&y_bytes[0]))[:]
-	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
@@ -28,11 +25,17 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
         z[i], c1 = bits.Sub64(tmp[i], mod[i], c1)
     }
 
+    var src []uint64
     // final sub was unnecessary
     if c == 0 && c1 != 0 {
-        copy(z, tmp[:])
-    }/* else {
-        panic("not worst case performance")
-    }*/
+        src = tmp[:]
+    } else {
+        src = z[:]
+    }
+
+    // TODO check if pre-hint to compiler about src size makes a difference here in the generated assembly
+    {{- range $i := intRange 0 $limbCount}}
+        binary.BigEndian.PutUint64(out_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{$i}}])
+    {{- end}}
     return nil
 }

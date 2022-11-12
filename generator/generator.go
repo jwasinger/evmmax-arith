@@ -234,13 +234,10 @@ func genPresets(maxLimbs int) {
 }
 
 func main() {
-	var maxLimbs int = 64
-	// fully unrolled mulmont gets huge fast. cap the amount we generate.
+    // TODO document this (it's the point where we have definitively switched over to the generic algo):
+    maxLimbs := 64
 	genPresets(maxLimbs)
-	//genMulMont("unrolled", 16)
 	genMulMont("nonunrolled", maxLimbs)
-	genAddMod("unrolled", maxLimbs)
 	genAddMod("nonunrolled", maxLimbs)
-	genSubMod("unrolled", maxLimbs)
 	genSubMod("nonunrolled", maxLimbs)
 }

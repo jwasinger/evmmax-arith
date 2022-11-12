@@ -71,34 +71,6 @@ func Asm384Preset() ArithPreset {
                       }
 }
 
-func UnrolledPreset() ArithPreset {
-    // full unrolled for addmod/submod.  only first limb counts up to 32 for mulmont
-
-	addModImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-			AddModUnrolled{{mul $i $limbBits}},
-		{{- end}}
-	}
-
-	subModImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-			SubModUnrolled{{mul $i $limbBits}},
-		{{- end}}
-	}
-	mulMontImpls := []arithFunc {
-		{{- range $i := intRange 1 $limbCountPlusOne}}
-            MulMontNonUnrolled{{mul $i $limbBits}},
-		{{- end}}
-	}
-
-	return ArithPreset{addModImpls, subModImpls, mulMontImpls, "unrolled", {{$limbCount}},
-                       makeBenchRanges(1, 16,
-                       1, 16,
-                       1, 14,
-                       0, 0),
-    }
-}
-
 func NonUnrolledPreset() ArithPreset {
 	addModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
@@ -161,7 +133,6 @@ func AllPresets() []ArithPreset {
     return []ArithPreset{
         GenericMulMontPreset(),
         NonUnrolledPreset(),
-        UnrolledPreset(),
         Asm384Preset(),
     }
 }
