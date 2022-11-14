@@ -221,9 +221,6 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 
 	limbCount, err := strconv.Atoi(limbCountStr)
 
-	mod := IntToLimbs(modInt, uint(limbCount))
-	xLimbs := IntToLimbs(xInt, uint(limbCount))
-	yLimbs := IntToLimbs(yInt, uint(limbCount))
 	resultBytes := make([]byte, limbCount*8)
 	// rInv := pow(-r, -1, mod)
 	rInv := big.NewInt(1)
@@ -236,36 +233,34 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	expected.Mod(expected, modInt)
 
 	montCtx := NewField(preset)
-	err = montCtx.SetMod(mod)
+	err = montCtx.SetMod(PadBytes8(modInt.Bytes()))
 	if err != nil {
 		fmt.Println(err)
 		panic("error")
 	}
 
-	if err = montCtx.MulMont(montCtx, resultBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
+	if err = montCtx.MulMont(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
 		t.Fatal(err)
 	}
 
-	result := LEBytesToInt(resultBytes)
-	if result.Cmp(expected) != 0 {
+	if new(big.Int).SetBytes(resultBytes).Cmp(expected) != 0 {
 		fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
-		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
 	}
 
 	// test overlapping offsets - all the same
-	xBytes := LimbsToLEBytes(xLimbs)
 	expected = new(big.Int)
 	expected.Mul(xInt, xInt)
 	expected.Mul(expected, rInv)
 	expected.Mod(expected, modInt)
+    xBytes := PadBytes8(xInt.Bytes())
 
 	if err = montCtx.MulMont(montCtx, xBytes, xBytes, xBytes); err != nil {
 		t.Fatal(err)
 	}
 
-	result = LEBytesToInt(xBytes)
-	if result.Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	if new(big.Int).SetBytes(xBytes).Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
 	}
 }
 
@@ -344,26 +339,26 @@ func TestMontgomeryConversion(t *testing.T) {
 
 	for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
 		mod := MaxModulus(limbCount)
+        modInt := new(big.Int).SetBytes(mod)
 		if err := montCtx.SetMod(mod); err != nil {
 			t.Fatal(err)
 		}
 
-		one := make([]uint64, limbCount)
+		one := make([]byte, limbCount * 8)
 		one[0] = 1
-		oneMont := make([]byte, limbCount*8)
-		montCtx.MulMont(montCtx, oneMont, LimbsToLEBytes(one), LimbsToLEBytes(montCtx.RSquared()))
+		oneMont := make([]byte, limbCount * 8)
+		montCtx.MulMont(montCtx, oneMont, one, montCtx.RSquared())
 
 		val := new(big.Int)
-		val.Sub(LimbsToInt(mod), big.NewInt(3))
+		val.Sub(modInt, big.NewInt(3))
 
-		xNorm := IntToLimbs(val, limbCount)
+		xNorm := PadBytes8(val.Bytes())
 		xMont := make([]byte, limbCount*8)
 
-		montCtx.MulMont(montCtx, xMont, LimbsToLEBytes(xNorm), LimbsToLEBytes(montCtx.RSquared()))
+		montCtx.MulMont(montCtx, xMont, xNorm, montCtx.RSquared())
 		montCtx.MulMont(montCtx, xMont, xMont, oneMont)
 
-		result := LEBytesToInt(xMont)
-		if result.Cmp(val) != 0 {
+		if new(big.Int).SetBytes(xMont).Cmp(val) != 0 {
 			t.Fatalf("bad result")
 		}
 	}

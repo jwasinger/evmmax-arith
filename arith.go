@@ -3,7 +3,6 @@ package mont_arith
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"math/big"
 	"math/bits"
 	"reflect"
