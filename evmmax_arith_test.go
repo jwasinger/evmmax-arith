@@ -10,9 +10,10 @@ import (
 
 const EVMMAXMaxLimbCount = 128
 
-func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
-	resBytes := make([]byte, limbCount*8)
-	for i := 0; i < int(limbCount)*8; i++ {
+func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
+    modulusLen := len(modulus.Bytes())
+	resBytes := make([]byte, modulusLen)
+	for i := 0; i < modulusLen; i++ {
 		resBytes[i] = byte(r.Int())
 	}
 
@@ -23,15 +24,15 @@ func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 func TestMulMontBLS12831(t *testing.T) {
 	montCtx := NewField(NonUnrolledPreset())
 	modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
+    mod := PadBytes8(modInt.Bytes())
 
 	var limbCount uint = 6
-	mod := IntToLimbs(modInt, limbCount)
 	montCtx.SetMod(mod)
 
 	s := rand.NewSource(42)
 	r := rand.New(s)
 
-	x := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
+    x := PadBytes8(randBigInt(r, modInt).Bytes())
 	montX, err := montCtx.ToMont(x)
 	if err != nil {
 		panic(err)
@@ -42,11 +43,11 @@ func TestMulMontBLS12831(t *testing.T) {
 		panic(err)
 	}
 
-	if !Eq(normX, x) {
+    if (new(big.Int)).SetBytes(normX).Cmp(new(big.Int).SetBytes(x)) != 0 {
 		panic("mont form should have correct normal form")
 	}
 
-	y := IntToLimbs(randBigInt(r, LimbsToInt(montCtx.Modulus), limbCount), limbCount)
+    y := PadBytes8(randBigInt(r, modInt).Bytes())
 	montY, err := montCtx.ToMont(y)
 	if err != nil {
 		panic(err)
@@ -57,12 +58,12 @@ func TestMulMontBLS12831(t *testing.T) {
 		panic(err)
 	}
 
-	if !Eq(normY, y) {
+    if (new(big.Int)).SetBytes(normY).Cmp((new(big.Int)).SetBytes(y)) != 0 {
 		panic("mont form should have correct normal form")
 	}
 
-	out := make([]uint64, limbCount)
-	montCtx.MulMont(montCtx, LimbsToLEBytes(out), LimbsToLEBytes(x), LimbsToLEBytes(y))
+	outBytes := make([]byte, limbCount * 8)
+	montCtx.MulMont(montCtx, outBytes, x, y)
 	// TODO assert that the result is correct
 }
 
@@ -94,15 +95,13 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 		t.Fatalf("could not parse mod")
 	}
 
+    fmt.Printf("addmod\nx=%s\ny=%s\nmod=%s\n\n", xInt.String(), yInt.String(), modInt.String())
 	limbCount, err := strconv.Atoi(limbCountStr)
 
-	mod := IntToLimbs(modInt, uint(limbCount))
-	xLimbs := IntToLimbs(xInt, uint(limbCount))
-	yLimbs := IntToLimbs(yInt, uint(limbCount))
 	resultBytes := make([]byte, limbCount*8)
 
 	montCtx := NewField(DefaultPreset())
-	err = montCtx.SetMod(mod)
+	err = montCtx.SetMod(modInt.Bytes())
 	if err != nil {
 		panic("error")
 	}
@@ -110,15 +109,16 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected := new(big.Int)
 	expected.Add(xInt, yInt).Mod(expected, modInt)
 
-	if err = montCtx.AddMod(montCtx, resultBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
+	if err = montCtx.AddMod(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
 		t.Fatal(err)
 	}
 
-	result := LEBytesToInt(resultBytes)
+    result := new(big.Int).SetBytes(resultBytes)
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
 
+    /*
 	// test overlap
 	xBytes := LimbsToLEBytes(xLimbs)
 	expected = new(big.Int)
@@ -133,6 +133,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
+    */
 }
 
 func TestSubModInputs(t *testing.T) {
@@ -161,13 +162,10 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 
 	limbCount, err := strconv.Atoi(limbCountStr)
 
-	mod := IntToLimbs(modInt, uint(limbCount))
-	xLimbs := IntToLimbs(xInt, uint(limbCount))
-	yLimbs := IntToLimbs(yInt, uint(limbCount))
 	resultBytes := make([]byte, limbCount*8)
 
 	montCtx := NewField(DefaultPreset())
-	err = montCtx.SetMod(mod)
+	err = montCtx.SetMod(modInt.Bytes())
 	if err != nil {
 		panic("error")
 	}
@@ -175,28 +173,25 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected := new(big.Int)
 	expected.Sub(xInt, yInt).Mod(expected, modInt)
 
-	if err = montCtx.SubMod(montCtx, resultBytes, LimbsToLEBytes(xLimbs), LimbsToLEBytes(yLimbs)); err != nil {
+	if err = montCtx.SubMod(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
 		t.Fatal(err)
 	}
 
-	result := LEBytesToInt(resultBytes)
-	if result.Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	if new(big.Int).SetBytes(resultBytes).Cmp(expected) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
 	}
 
 	// test overlap (not useful inputs in practice)
-	xBytes := LimbsToLEBytes(xLimbs)
 	expected = new(big.Int)
 	expected.Sub(xInt, xInt)
 	expected.Mod(expected, modInt)
-
+    xBytes := PadBytes8(xInt.Bytes())
 	if err = montCtx.SubMod(montCtx, xBytes, xBytes, xBytes); err != nil {
 		t.Fatal(err)
 	}
 
-	result = LEBytesToInt(xBytes)
-	if result.Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+	if expected.Cmp(new(big.Int).SetBytes(xBytes)) != 0 {
+		t.Fatalf("result (%x) != expected (%x)\n", xBytes, expected)
 	}
 }
 

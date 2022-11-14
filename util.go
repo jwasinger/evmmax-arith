@@ -44,7 +44,27 @@ func LimbsToLEBytes(val []uint64) []byte {
 	return result
 }
 
-// convert big.Int (big-endian) to little-endian limbs
+// pad big-endian bytes to the nearest 8-bytes
+func PadBytes8(val []byte) []byte {
+    pad_len := len(val) % 8
+    if pad_len != 0 {
+        padding := make([]byte, pad_len)
+        return append(padding, val...)
+    } else {
+        return val
+    }
+}
+
+func BytesToLimbs(val []byte) []uint64 {
+    val = PadBytes8(val)
+    res := make([]uint64, len(val) / 8)
+    for i := 0; i < len(val) / 8; i++ {
+        res[i] = binary.BigEndian.Uint64(val[i * 8:(i + 1) * 8])
+    }
+    return res
+}
+
+// convert big.Int (big-endian) to big-endian limbs
 func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 	val_bytes := val.Bytes()
 
@@ -59,14 +79,8 @@ func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 
 	result := make([]uint64, len(val_bytes)/8, len(val_bytes)/8)
 
-	// place byteswapped (little-endian) val into result
 	for i := 0; i < len(result); i++ {
-		startIdx := (len(result) - (i + 1)) * 8
-		endIdx := (len(result) - i) * 8
-
-		// TODO: this assumes that the system is little-endian.  is that okay?
-		// on a LE system, this swaps big-endian to little-endian
-		result[i] = binary.BigEndian.Uint64(val_bytes[startIdx:endIdx])
+		result[i] = binary.BigEndian.Uint64(val_bytes[i * 8:(i + 1) * 8])
 	}
 
 	return result
@@ -76,33 +90,29 @@ func IntToLimbs(val *big.Int, num_limbs uint) []uint64 {
 func LimbsToInt(limbs []uint64) *big.Int {
 	limbs_bytes := make([]byte, 8*len(limbs), 8*len(limbs))
 	for i := 0; i < len(limbs); i++ {
-		startIdx := (len(limbs) - (i + 1)) * 8
-		endIdx := (len(limbs) - i) * 8
-
-		binary.BigEndian.PutUint64(limbs_bytes[startIdx:endIdx], limbs[i])
+		binary.BigEndian.PutUint64(limbs_bytes[i * 8:(i + 1) * 8], limbs[i])
 	}
 
 	return new(big.Int).SetBytes(limbs_bytes)
 }
 
 // **NOTE** naming confusing.  actually the second-largest modulus (largest would have modinv as 1)
-func MaxModulus(limbCount uint) []uint64 {
-	mod := make([]uint64, limbCount, limbCount)
+func MaxModulus(limbCount uint) []byte {
+	mod := make([]byte, limbCount * 8, limbCount * 8)
 
-	mod[0] = math.MaxUint64
-	for i := uint(1); i < limbCount; i++ {
-		mod[i] = math.MaxUint64
+	for i := 0; i < int(limbCount) * 8; i++ {
+		mod[i] = 255
 	}
 
 	return mod
 }
 
-func SmolModulus(limbCount uint) []uint64 {
-	mod := make([]uint64, limbCount, limbCount)
+func SmolModulus(limbCount uint) []byte {
+	mod := make([]byte, limbCount * 8, limbCount * 8)
 
-	mod[0] = 11
-	for i := uint(1); i < limbCount; i++ {
-		mod[i] = math.MaxUint64
+	mod[7] = 11
+	for i := uint(8); i < limbCount * 8; i++ {
+		mod[i] = 255
 	}
 
 	return mod
@@ -122,7 +132,7 @@ func MidModulus(limbCount uint) []uint64 {
 }
 
 // utility for unit testing.  returns  (1 << (((limbCount - 1) * limbBits) + limbBits / 2)) - 1
-func GenTestModulus(limbCount uint) []uint64 {
+func GenTestModulus(limbCount uint) []byte {
 	/*
 		mod_int := big.NewInt(1)
 		mod_int.Lsh(mod_int, (((limbCount - 1) * 64) + 32))

@@ -54,6 +54,7 @@ func madd3(a, b, c, d, e uint64) (uint64, uint64) {
  * begin mulmont implementations
  */
 
+/*
 func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 	var product [2]uint64
 	var c uint64
@@ -78,6 +79,7 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 	}
 	return nil
 }
+*/
 
 type arithFunc func(f *Field, out, x, y []byte) error
 
@@ -137,7 +139,7 @@ func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
 	var c uint64 = 0
 	var c1 uint64 = 0
 
-	mod := f.Modulus
+	mod := toUint64(f.Modulus)
 	limbCount := len(mod)
 	tmp := make([]uint64, len(mod))
 	x := toUint64(xBytes)
@@ -168,7 +170,7 @@ func SubModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
 	var c uint64 = 0
 	var c1 uint64 = 0
 
-	mod := f.Modulus
+	mod := toUint64(f.Modulus)
 	limbCount := len(mod)
 	tmp := make([]uint64, len(mod))
 	x := toUint64(xBytes)
@@ -201,8 +203,8 @@ func SubModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
 func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
 	product := new(big.Int)
 	t := new(big.Int)
-	x := LEBytesToInt(xBytes)
-	y := LEBytesToInt(yBytes)
+    x := new(big.Int).SetBytes(xBytes)
+    y := new(big.Int).SetBytes(yBytes)
 
 	if x.Cmp(m.ModulusNonInterleaved) > 0 || y.Cmp(m.ModulusNonInterleaved) > 0 {
 		return errors.New("x/y >= modulus")

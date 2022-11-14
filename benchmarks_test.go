@@ -17,19 +17,15 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 		panic("error")
 	}
 
-	x := LimbsToInt(mod)
+	x := new(big.Int).SetBytes(mod)
 	x = x.Sub(x, big.NewInt(100))
 
-	y := new(big.Int).SetBytes(LimbsToInt(mod).Bytes())
+	y := new(big.Int).SetBytes(mod)
 	y = y.Sub(y, big.NewInt(100))
 
-	outLimbs := make([]uint64, montCtx.NumLimbs)
-	xLimbs := IntToLimbs(x, limbCount)
-	yLimbs := IntToLimbs(y, limbCount)
-
-	outBytes := LimbsToLEBytes(outLimbs)
-	xBytes := LimbsToLEBytes(xLimbs)
-	yBytes := LimbsToLEBytes(yLimbs)
+    outBytes := make([]byte, limbCount * 8)
+	xBytes := PadBytes8(x.Bytes())
+	yBytes := PadBytes8(y.Bytes())
 
 	b.ResetTimer()
 
@@ -39,21 +35,21 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 }
 
 func benchmarkAddMod(b *testing.B, limbCount uint, preset ArithPreset) {
-	modLimbs := MaxModulus(limbCount)
-	mod := LimbsToInt(modLimbs)
+	// worst-case performance: unecessary final subtraction
+    // TODO verify this again
+	mod := MaxModulus(limbCount)
 	montCtx := NewField(preset)
 
-	// worst-case performance: unecessary final subtraction
-	err := montCtx.SetMod(modLimbs)
+	err := montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")
 	}
-	x := new(big.Int).SetBytes(mod.Bytes())
+	x := new(big.Int).SetBytes(mod)
 	x = x.Sub(x, big.NewInt(2))
 	y := big.NewInt(1)
 	outBytes := make([]byte, limbCount*8)
-	xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
-	yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
+	xBytes := PadBytes8(x.Bytes())
+	yBytes := PadBytes8(y.Bytes())
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

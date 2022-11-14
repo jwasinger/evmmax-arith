@@ -11,7 +11,7 @@ const limbSize = 8
 // TODO rename to Context
 type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
-	Modulus               []uint64
+	Modulus               []byte
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
 
 	MontParamInterleaved    uint64
@@ -22,7 +22,7 @@ type Field struct {
 	r    *big.Int
 	rInv *big.Int
 
-	rSquared []uint64
+	rSquared []byte
 
 	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
 	mask *big.Int
@@ -40,8 +40,8 @@ type Field struct {
 	preset ArithPreset
 }
 
-func (m *Field) RSquared() []uint64 {
-	rSquared := make([]uint64, m.NumLimbs)
+func (m *Field) RSquared() []byte {
+	rSquared := make([]byte, m.NumLimbs * 8)
 	copy(rSquared, m.rSquared)
 	return rSquared
 }
@@ -67,48 +67,29 @@ func (m *Field) ModInv() *big.Int {
 	return result
 }
 
-func uint64_array_to_le_bytes(val []uint64) []byte {
-	res := make([]byte, len(val)*8)
-	for i := 0; i < len(val); i++ {
-		binary.LittleEndian.PutUint64(res[i*8:(i+1)*8], val[i])
-	}
-
-	return res
-}
-
-func le_bytes_to_uint64_array(val []byte) []uint64 {
-	res := make([]uint64, len(val)/8)
-	for i := 0; i < len(val)/8; i++ {
-		res[i] = binary.LittleEndian.Uint64(val[i*8 : (i+1)*8])
-	}
-	return res
-}
-
 // TODO this should not do allocation/copying.  should be just as fast as mulmont
-func (m *Field) ToMont(val []uint64) ([]uint64, error) {
+func (m *Field) ToMont(val []byte) ([]byte, error) {
 	// TODO ensure val is less than modulus
 	out_bytes := make([]byte, m.NumLimbs*8)
-	input_bytes := uint64_array_to_le_bytes(val)
-	r_squared_bytes := uint64_array_to_le_bytes(m.RSquared())
+	r_squared_bytes := m.RSquared()
 
-	if err := m.MulMont(m, out_bytes, input_bytes, r_squared_bytes); err != nil {
+	if err := m.MulMont(m, out_bytes, val, r_squared_bytes); err != nil {
 		return nil, err
 	}
-	return le_bytes_to_uint64_array(out_bytes), nil
+	return out_bytes, nil
 }
 
-func (m *Field) ToNorm(val []uint64) ([]uint64, error) {
+func (m *Field) ToNorm(val []byte) ([]byte, error) {
 	// TODO ensure val is less than the modulus?
 	out_bytes := make([]byte, m.NumLimbs*8)
-	input_bytes := uint64_array_to_le_bytes(val)
 	one := make([]byte, len(val))
 	one[0] = 1
 
-	if err := m.MulMont(m, out_bytes, input_bytes, one); err != nil {
+	if err := m.MulMont(m, out_bytes, val, one); err != nil {
 		return nil, err
 	}
 
-	return le_bytes_to_uint64_array(out_bytes), nil
+	return out_bytes, nil
 }
 
 func NewField(preset ArithPreset) *Field {
@@ -146,18 +127,19 @@ func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-func (m *Field) SetMod(mod []uint64) error {
+// compute montgomery parameters given big-endian modulus bytes
+func (m *Field) SetMod(mod []byte) error {
 	var limbCount uint = uint(len(mod))
 
-	if mod[0]%2 == 0 {
+    if mod[len(mod) - 1] % 2 == 0 {
 		return errors.New("modulus cannot be even")
 	}
 
-	if mod[limbCount-1] == 0 {
-		return errors.New("modulus must occupy all limbs")
-	}
+    mod = PadBytes8(mod)
 
-	modInt := LimbsToInt(mod)
+    // TODO pad mod
+
+	modInt := new(big.Int).SetBytes(mod)
 	rSquared := big.NewInt(1)
 	rSquared.Lsh(rSquared, 64*limbCount)
 	rSquared.Mod(rSquared, modInt)
@@ -169,13 +151,15 @@ func (m *Field) SetMod(mod []uint64) error {
 		rSquared = rSquared.Mod(rSquared, modInt)
 	*/
 
-	m.rSquared = IntToLimbs(rSquared, limbCount)
+	m.rSquared = rSquared.Bytes()
 
 	// want to compute r_val - (mod & (r_val - 1))
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
+    mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 9: len(mod) - 1])
+
 	negModInt := new(big.Int)
-	negModInt.SetUint64(mod[0])
+	negModInt.SetUint64(mod_uint64)
 	negModInt.Sub(littleRVal, negModInt)
 	modInv := new(big.Int)
 	modInv.ModInverse(negModInt, littleRVal)
@@ -193,13 +177,12 @@ func (m *Field) SetMod(mod []uint64) error {
 	m.mask.Lsh(m.mask, 64*limbCount)
 	m.mask.Sub(m.mask, big.NewInt(1))
 
-	m.Modulus = make([]uint64, limbCount)
-	copy(m.Modulus, mod[:])
-	m.NumLimbs = limbCount
-	m.ElementSize = uint64(limbCount) * 8
+    m.Modulus = mod
+	m.NumLimbs = uint(len(m.Modulus))
+	m.ElementSize = uint64(m.NumLimbs) * 8
 
 	var genericMulMontCutoff uint = 64
-	if limbCount >= genericMulMontCutoff {
+	if m.NumLimbs >= genericMulMontCutoff {
 		m.MulMont = MulMontNonInterleaved
 		m.AddMod = AddModGeneric
 		m.SubMod = SubModGeneric
