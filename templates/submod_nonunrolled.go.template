@@ -9,7 +9,8 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
         y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
     {{- end}}
 
-	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+    _ = mod[{{$lastLimb}}]
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 

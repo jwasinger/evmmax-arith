@@ -109,7 +109,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected := new(big.Int)
 	expected.Add(xInt, yInt).Mod(expected, modInt)
 
-	if err = montCtx.AddMod(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
+	if err = montCtx.AddMod(montCtx, resultBytes, PadBytes(xInt.Bytes(), montCtx.ElementSize), PadBytes(yInt.Bytes(), montCtx.ElementSize)); err != nil {
 		t.Fatal(err)
 	}
 

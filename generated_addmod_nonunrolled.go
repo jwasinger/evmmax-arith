@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/bits"
-	"unsafe"
 )
 
 func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
@@ -13,7 +12,9 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[0:8])
 	y[0] = binary.BigEndian.Uint64(y_bytes[0:8])
 
-	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[0]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -66,7 +67,9 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[8:16])
 	y[0] = binary.BigEndian.Uint64(y_bytes[8:16])
 
-	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[1]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -124,7 +127,9 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[16:24])
 	y[0] = binary.BigEndian.Uint64(y_bytes[16:24])
 
-	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[2]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -187,7 +192,9 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[24:32])
 	y[0] = binary.BigEndian.Uint64(y_bytes[24:32])
 
-	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[3]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -255,7 +262,9 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[32:40])
 	y[0] = binary.BigEndian.Uint64(y_bytes[32:40])
 
-	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[4]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -328,7 +337,9 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[40:48])
 	y[0] = binary.BigEndian.Uint64(y_bytes[40:48])
 
-	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[5]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -406,7 +417,9 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[48:56])
 	y[0] = binary.BigEndian.Uint64(y_bytes[48:56])
 
-	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[6]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -489,7 +502,9 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[56:64])
 	y[0] = binary.BigEndian.Uint64(y_bytes[56:64])
 
-	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[7]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -577,7 +592,9 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[64:72])
 	y[0] = binary.BigEndian.Uint64(y_bytes[64:72])
 
-	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[8]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -670,7 +687,9 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[72:80])
 	y[0] = binary.BigEndian.Uint64(y_bytes[72:80])
 
-	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[9]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -768,7 +787,9 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[80:88])
 	y[0] = binary.BigEndian.Uint64(y_bytes[80:88])
 
-	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[10]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -871,7 +892,9 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[88:96])
 	y[0] = binary.BigEndian.Uint64(y_bytes[88:96])
 
-	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[11]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -979,7 +1002,9 @@ func AddModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[96:104])
 	y[0] = binary.BigEndian.Uint64(y_bytes[96:104])
 
-	mod := (*[13]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[12]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1092,7 +1117,9 @@ func AddModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[104:112])
 	y[0] = binary.BigEndian.Uint64(y_bytes[104:112])
 
-	mod := (*[14]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[13]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1210,7 +1237,9 @@ func AddModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[112:120])
 	y[0] = binary.BigEndian.Uint64(y_bytes[112:120])
 
-	mod := (*[15]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[14]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1333,7 +1362,9 @@ func AddModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[120:128])
 	y[0] = binary.BigEndian.Uint64(y_bytes[120:128])
 
-	mod := (*[16]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[15]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1461,7 +1492,9 @@ func AddModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[128:136])
 	y[0] = binary.BigEndian.Uint64(y_bytes[128:136])
 
-	mod := (*[17]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[16]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1594,7 +1627,9 @@ func AddModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[136:144])
 	y[0] = binary.BigEndian.Uint64(y_bytes[136:144])
 
-	mod := (*[18]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[17]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1732,7 +1767,9 @@ func AddModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[144:152])
 	y[0] = binary.BigEndian.Uint64(y_bytes[144:152])
 
-	mod := (*[19]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[18]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1875,7 +1912,9 @@ func AddModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[152:160])
 	y[0] = binary.BigEndian.Uint64(y_bytes[152:160])
 
-	mod := (*[20]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[19]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2023,7 +2062,9 @@ func AddModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[160:168])
 	y[0] = binary.BigEndian.Uint64(y_bytes[160:168])
 
-	mod := (*[21]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[20]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2176,7 +2217,9 @@ func AddModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[168:176])
 	y[0] = binary.BigEndian.Uint64(y_bytes[168:176])
 
-	mod := (*[22]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[21]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2334,7 +2377,9 @@ func AddModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[176:184])
 	y[0] = binary.BigEndian.Uint64(y_bytes[176:184])
 
-	mod := (*[23]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[22]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2497,7 +2542,9 @@ func AddModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[184:192])
 	y[0] = binary.BigEndian.Uint64(y_bytes[184:192])
 
-	mod := (*[24]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[23]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2665,7 +2712,9 @@ func AddModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[192:200])
 	y[0] = binary.BigEndian.Uint64(y_bytes[192:200])
 
-	mod := (*[25]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[24]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2838,7 +2887,9 @@ func AddModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[200:208])
 	y[0] = binary.BigEndian.Uint64(y_bytes[200:208])
 
-	mod := (*[26]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[25]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3016,7 +3067,9 @@ func AddModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[208:216])
 	y[0] = binary.BigEndian.Uint64(y_bytes[208:216])
 
-	mod := (*[27]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[26]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3199,7 +3252,9 @@ func AddModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[216:224])
 	y[0] = binary.BigEndian.Uint64(y_bytes[216:224])
 
-	mod := (*[28]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[27]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3387,7 +3442,9 @@ func AddModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[224:232])
 	y[0] = binary.BigEndian.Uint64(y_bytes[224:232])
 
-	mod := (*[29]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[28]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3580,7 +3637,9 @@ func AddModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[232:240])
 	y[0] = binary.BigEndian.Uint64(y_bytes[232:240])
 
-	mod := (*[30]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[29]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3778,7 +3837,9 @@ func AddModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[240:248])
 	y[0] = binary.BigEndian.Uint64(y_bytes[240:248])
 
-	mod := (*[31]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[30]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3981,7 +4042,9 @@ func AddModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[248:256])
 	y[0] = binary.BigEndian.Uint64(y_bytes[248:256])
 
-	mod := (*[32]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[31]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4189,7 +4252,9 @@ func AddModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[256:264])
 	y[0] = binary.BigEndian.Uint64(y_bytes[256:264])
 
-	mod := (*[33]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[32]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4402,7 +4467,9 @@ func AddModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[264:272])
 	y[0] = binary.BigEndian.Uint64(y_bytes[264:272])
 
-	mod := (*[34]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[33]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4620,7 +4687,9 @@ func AddModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[272:280])
 	y[0] = binary.BigEndian.Uint64(y_bytes[272:280])
 
-	mod := (*[35]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[34]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4843,7 +4912,9 @@ func AddModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[280:288])
 	y[0] = binary.BigEndian.Uint64(y_bytes[280:288])
 
-	mod := (*[36]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[35]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5071,7 +5142,9 @@ func AddModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[288:296])
 	y[0] = binary.BigEndian.Uint64(y_bytes[288:296])
 
-	mod := (*[37]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[36]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5304,7 +5377,9 @@ func AddModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[296:304])
 	y[0] = binary.BigEndian.Uint64(y_bytes[296:304])
 
-	mod := (*[38]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[37]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5542,7 +5617,9 @@ func AddModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[304:312])
 	y[0] = binary.BigEndian.Uint64(y_bytes[304:312])
 
-	mod := (*[39]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[38]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5785,7 +5862,9 @@ func AddModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[312:320])
 	y[0] = binary.BigEndian.Uint64(y_bytes[312:320])
 
-	mod := (*[40]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[39]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6033,7 +6112,9 @@ func AddModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[320:328])
 	y[0] = binary.BigEndian.Uint64(y_bytes[320:328])
 
-	mod := (*[41]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[40]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6286,7 +6367,9 @@ func AddModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[328:336])
 	y[0] = binary.BigEndian.Uint64(y_bytes[328:336])
 
-	mod := (*[42]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[41]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6544,7 +6627,9 @@ func AddModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[336:344])
 	y[0] = binary.BigEndian.Uint64(y_bytes[336:344])
 
-	mod := (*[43]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[42]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6807,7 +6892,9 @@ func AddModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[344:352])
 	y[0] = binary.BigEndian.Uint64(y_bytes[344:352])
 
-	mod := (*[44]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[43]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7075,7 +7162,9 @@ func AddModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[352:360])
 	y[0] = binary.BigEndian.Uint64(y_bytes[352:360])
 
-	mod := (*[45]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[44]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7348,7 +7437,9 @@ func AddModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[360:368])
 	y[0] = binary.BigEndian.Uint64(y_bytes[360:368])
 
-	mod := (*[46]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[45]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7626,7 +7717,9 @@ func AddModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[368:376])
 	y[0] = binary.BigEndian.Uint64(y_bytes[368:376])
 
-	mod := (*[47]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[46]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7909,7 +8002,9 @@ func AddModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[376:384])
 	y[0] = binary.BigEndian.Uint64(y_bytes[376:384])
 
-	mod := (*[48]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[47]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8197,7 +8292,9 @@ func AddModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[384:392])
 	y[0] = binary.BigEndian.Uint64(y_bytes[384:392])
 
-	mod := (*[49]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[48]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8490,7 +8587,9 @@ func AddModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[392:400])
 	y[0] = binary.BigEndian.Uint64(y_bytes[392:400])
 
-	mod := (*[50]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[49]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8788,7 +8887,9 @@ func AddModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[400:408])
 	y[0] = binary.BigEndian.Uint64(y_bytes[400:408])
 
-	mod := (*[51]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[50]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9091,7 +9192,9 @@ func AddModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[408:416])
 	y[0] = binary.BigEndian.Uint64(y_bytes[408:416])
 
-	mod := (*[52]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[51]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9399,7 +9502,9 @@ func AddModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[416:424])
 	y[0] = binary.BigEndian.Uint64(y_bytes[416:424])
 
-	mod := (*[53]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[52]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9712,7 +9817,9 @@ func AddModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[424:432])
 	y[0] = binary.BigEndian.Uint64(y_bytes[424:432])
 
-	mod := (*[54]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[53]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10030,7 +10137,9 @@ func AddModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[432:440])
 	y[0] = binary.BigEndian.Uint64(y_bytes[432:440])
 
-	mod := (*[55]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[54]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10353,7 +10462,9 @@ func AddModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[440:448])
 	y[0] = binary.BigEndian.Uint64(y_bytes[440:448])
 
-	mod := (*[56]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[55]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10681,7 +10792,9 @@ func AddModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[448:456])
 	y[0] = binary.BigEndian.Uint64(y_bytes[448:456])
 
-	mod := (*[57]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[56]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11014,7 +11127,9 @@ func AddModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[456:464])
 	y[0] = binary.BigEndian.Uint64(y_bytes[456:464])
 
-	mod := (*[58]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[57]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11352,7 +11467,9 @@ func AddModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[464:472])
 	y[0] = binary.BigEndian.Uint64(y_bytes[464:472])
 
-	mod := (*[59]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[58]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11695,7 +11812,9 @@ func AddModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[472:480])
 	y[0] = binary.BigEndian.Uint64(y_bytes[472:480])
 
-	mod := (*[60]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[59]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12043,7 +12162,9 @@ func AddModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[480:488])
 	y[0] = binary.BigEndian.Uint64(y_bytes[480:488])
 
-	mod := (*[61]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[60]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12396,7 +12517,9 @@ func AddModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[488:496])
 	y[0] = binary.BigEndian.Uint64(y_bytes[488:496])
 
-	mod := (*[62]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[61]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12754,7 +12877,9 @@ func AddModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[496:504])
 	y[0] = binary.BigEndian.Uint64(y_bytes[496:504])
 
-	mod := (*[63]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[62]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -13117,7 +13242,9 @@ func AddModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[504:512])
 	y[0] = binary.BigEndian.Uint64(y_bytes[504:512])
 
-	mod := (*[64]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+	_ = mod[63]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)

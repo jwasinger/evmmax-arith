@@ -55,6 +55,19 @@ func PadBytes8(val []byte) []byte {
     }
 }
 
+func PadBytes(val []byte, size uint64) []byte {
+    pad_len := int(size) - len(val)
+    if pad_len > 0 {
+        padding := make([]byte, pad_len)
+        return append(padding, val...)
+    } else if pad_len < 0 {
+        panic("pad_len < 0")
+    } else {
+        return val
+    }
+
+}
+
 func BytesToLimbs(val []byte) []uint64 {
     val = PadBytes8(val)
     res := make([]uint64, len(val) / 8)

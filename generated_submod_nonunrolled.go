@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/bits"
-	"unsafe"
 )
 
 func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
@@ -13,7 +12,8 @@ func SubModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[0:8])
 	y[0] = binary.BigEndian.Uint64(y_bytes[0:8])
 
-	mod := (*[1]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[0]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -65,7 +65,8 @@ func SubModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[1] = binary.BigEndian.Uint64(x_bytes[8:16])
 	y[1] = binary.BigEndian.Uint64(y_bytes[8:16])
 
-	mod := (*[2]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[1]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -122,7 +123,8 @@ func SubModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[2] = binary.BigEndian.Uint64(x_bytes[16:24])
 	y[2] = binary.BigEndian.Uint64(y_bytes[16:24])
 
-	mod := (*[3]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[2]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -184,7 +186,8 @@ func SubModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[3] = binary.BigEndian.Uint64(x_bytes[24:32])
 	y[3] = binary.BigEndian.Uint64(y_bytes[24:32])
 
-	mod := (*[4]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[3]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -251,7 +254,8 @@ func SubModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[4] = binary.BigEndian.Uint64(x_bytes[32:40])
 	y[4] = binary.BigEndian.Uint64(y_bytes[32:40])
 
-	mod := (*[5]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[4]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -323,7 +327,8 @@ func SubModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[5] = binary.BigEndian.Uint64(x_bytes[40:48])
 	y[5] = binary.BigEndian.Uint64(y_bytes[40:48])
 
-	mod := (*[6]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[5]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -400,7 +405,8 @@ func SubModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[6] = binary.BigEndian.Uint64(x_bytes[48:56])
 	y[6] = binary.BigEndian.Uint64(y_bytes[48:56])
 
-	mod := (*[7]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[6]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -482,7 +488,8 @@ func SubModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[7] = binary.BigEndian.Uint64(x_bytes[56:64])
 	y[7] = binary.BigEndian.Uint64(y_bytes[56:64])
 
-	mod := (*[8]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[7]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -569,7 +576,8 @@ func SubModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[8] = binary.BigEndian.Uint64(x_bytes[64:72])
 	y[8] = binary.BigEndian.Uint64(y_bytes[64:72])
 
-	mod := (*[9]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[8]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -661,7 +669,8 @@ func SubModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[9] = binary.BigEndian.Uint64(x_bytes[72:80])
 	y[9] = binary.BigEndian.Uint64(y_bytes[72:80])
 
-	mod := (*[10]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[9]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -758,7 +767,8 @@ func SubModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[10] = binary.BigEndian.Uint64(x_bytes[80:88])
 	y[10] = binary.BigEndian.Uint64(y_bytes[80:88])
 
-	mod := (*[11]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[10]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -860,7 +870,8 @@ func SubModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[11] = binary.BigEndian.Uint64(x_bytes[88:96])
 	y[11] = binary.BigEndian.Uint64(y_bytes[88:96])
 
-	mod := (*[12]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[11]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -967,7 +978,8 @@ func SubModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[12] = binary.BigEndian.Uint64(x_bytes[96:104])
 	y[12] = binary.BigEndian.Uint64(y_bytes[96:104])
 
-	mod := (*[13]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[12]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1079,7 +1091,8 @@ func SubModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[13] = binary.BigEndian.Uint64(x_bytes[104:112])
 	y[13] = binary.BigEndian.Uint64(y_bytes[104:112])
 
-	mod := (*[14]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[13]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1196,7 +1209,8 @@ func SubModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[14] = binary.BigEndian.Uint64(x_bytes[112:120])
 	y[14] = binary.BigEndian.Uint64(y_bytes[112:120])
 
-	mod := (*[15]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[14]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1318,7 +1332,8 @@ func SubModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[15] = binary.BigEndian.Uint64(x_bytes[120:128])
 	y[15] = binary.BigEndian.Uint64(y_bytes[120:128])
 
-	mod := (*[16]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[15]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1445,7 +1460,8 @@ func SubModNonUnrolled1088(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[16] = binary.BigEndian.Uint64(x_bytes[128:136])
 	y[16] = binary.BigEndian.Uint64(y_bytes[128:136])
 
-	mod := (*[17]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[16]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1577,7 +1593,8 @@ func SubModNonUnrolled1152(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[17] = binary.BigEndian.Uint64(x_bytes[136:144])
 	y[17] = binary.BigEndian.Uint64(y_bytes[136:144])
 
-	mod := (*[18]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[17]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1714,7 +1731,8 @@ func SubModNonUnrolled1216(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[18] = binary.BigEndian.Uint64(x_bytes[144:152])
 	y[18] = binary.BigEndian.Uint64(y_bytes[144:152])
 
-	mod := (*[19]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[18]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1856,7 +1874,8 @@ func SubModNonUnrolled1280(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[19] = binary.BigEndian.Uint64(x_bytes[152:160])
 	y[19] = binary.BigEndian.Uint64(y_bytes[152:160])
 
-	mod := (*[20]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[19]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2003,7 +2022,8 @@ func SubModNonUnrolled1344(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[20] = binary.BigEndian.Uint64(x_bytes[160:168])
 	y[20] = binary.BigEndian.Uint64(y_bytes[160:168])
 
-	mod := (*[21]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[20]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2155,7 +2175,8 @@ func SubModNonUnrolled1408(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[21] = binary.BigEndian.Uint64(x_bytes[168:176])
 	y[21] = binary.BigEndian.Uint64(y_bytes[168:176])
 
-	mod := (*[22]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[21]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2312,7 +2333,8 @@ func SubModNonUnrolled1472(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[22] = binary.BigEndian.Uint64(x_bytes[176:184])
 	y[22] = binary.BigEndian.Uint64(y_bytes[176:184])
 
-	mod := (*[23]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[22]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2474,7 +2496,8 @@ func SubModNonUnrolled1536(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[23] = binary.BigEndian.Uint64(x_bytes[184:192])
 	y[23] = binary.BigEndian.Uint64(y_bytes[184:192])
 
-	mod := (*[24]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[23]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2641,7 +2664,8 @@ func SubModNonUnrolled1600(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[24] = binary.BigEndian.Uint64(x_bytes[192:200])
 	y[24] = binary.BigEndian.Uint64(y_bytes[192:200])
 
-	mod := (*[25]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[24]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2813,7 +2837,8 @@ func SubModNonUnrolled1664(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[25] = binary.BigEndian.Uint64(x_bytes[200:208])
 	y[25] = binary.BigEndian.Uint64(y_bytes[200:208])
 
-	mod := (*[26]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[25]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2990,7 +3015,8 @@ func SubModNonUnrolled1728(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[26] = binary.BigEndian.Uint64(x_bytes[208:216])
 	y[26] = binary.BigEndian.Uint64(y_bytes[208:216])
 
-	mod := (*[27]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[26]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3172,7 +3198,8 @@ func SubModNonUnrolled1792(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[27] = binary.BigEndian.Uint64(x_bytes[216:224])
 	y[27] = binary.BigEndian.Uint64(y_bytes[216:224])
 
-	mod := (*[28]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[27]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3359,7 +3386,8 @@ func SubModNonUnrolled1856(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[28] = binary.BigEndian.Uint64(x_bytes[224:232])
 	y[28] = binary.BigEndian.Uint64(y_bytes[224:232])
 
-	mod := (*[29]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[28]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3551,7 +3579,8 @@ func SubModNonUnrolled1920(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[29] = binary.BigEndian.Uint64(x_bytes[232:240])
 	y[29] = binary.BigEndian.Uint64(y_bytes[232:240])
 
-	mod := (*[30]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[29]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3748,7 +3777,8 @@ func SubModNonUnrolled1984(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[30] = binary.BigEndian.Uint64(x_bytes[240:248])
 	y[30] = binary.BigEndian.Uint64(y_bytes[240:248])
 
-	mod := (*[31]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[30]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3950,7 +3980,8 @@ func SubModNonUnrolled2048(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[31] = binary.BigEndian.Uint64(x_bytes[248:256])
 	y[31] = binary.BigEndian.Uint64(y_bytes[248:256])
 
-	mod := (*[32]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[31]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4157,7 +4188,8 @@ func SubModNonUnrolled2112(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[32] = binary.BigEndian.Uint64(x_bytes[256:264])
 	y[32] = binary.BigEndian.Uint64(y_bytes[256:264])
 
-	mod := (*[33]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[32]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4369,7 +4401,8 @@ func SubModNonUnrolled2176(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[33] = binary.BigEndian.Uint64(x_bytes[264:272])
 	y[33] = binary.BigEndian.Uint64(y_bytes[264:272])
 
-	mod := (*[34]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[33]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4586,7 +4619,8 @@ func SubModNonUnrolled2240(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[34] = binary.BigEndian.Uint64(x_bytes[272:280])
 	y[34] = binary.BigEndian.Uint64(y_bytes[272:280])
 
-	mod := (*[35]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[34]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4808,7 +4842,8 @@ func SubModNonUnrolled2304(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[35] = binary.BigEndian.Uint64(x_bytes[280:288])
 	y[35] = binary.BigEndian.Uint64(y_bytes[280:288])
 
-	mod := (*[36]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[35]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5035,7 +5070,8 @@ func SubModNonUnrolled2368(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[36] = binary.BigEndian.Uint64(x_bytes[288:296])
 	y[36] = binary.BigEndian.Uint64(y_bytes[288:296])
 
-	mod := (*[37]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[36]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5267,7 +5303,8 @@ func SubModNonUnrolled2432(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[37] = binary.BigEndian.Uint64(x_bytes[296:304])
 	y[37] = binary.BigEndian.Uint64(y_bytes[296:304])
 
-	mod := (*[38]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[37]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5504,7 +5541,8 @@ func SubModNonUnrolled2496(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[38] = binary.BigEndian.Uint64(x_bytes[304:312])
 	y[38] = binary.BigEndian.Uint64(y_bytes[304:312])
 
-	mod := (*[39]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[38]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5746,7 +5784,8 @@ func SubModNonUnrolled2560(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[39] = binary.BigEndian.Uint64(x_bytes[312:320])
 	y[39] = binary.BigEndian.Uint64(y_bytes[312:320])
 
-	mod := (*[40]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[39]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5993,7 +6032,8 @@ func SubModNonUnrolled2624(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[40] = binary.BigEndian.Uint64(x_bytes[320:328])
 	y[40] = binary.BigEndian.Uint64(y_bytes[320:328])
 
-	mod := (*[41]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[40]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6245,7 +6285,8 @@ func SubModNonUnrolled2688(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[41] = binary.BigEndian.Uint64(x_bytes[328:336])
 	y[41] = binary.BigEndian.Uint64(y_bytes[328:336])
 
-	mod := (*[42]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[41]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6502,7 +6543,8 @@ func SubModNonUnrolled2752(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[42] = binary.BigEndian.Uint64(x_bytes[336:344])
 	y[42] = binary.BigEndian.Uint64(y_bytes[336:344])
 
-	mod := (*[43]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[42]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6764,7 +6806,8 @@ func SubModNonUnrolled2816(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[43] = binary.BigEndian.Uint64(x_bytes[344:352])
 	y[43] = binary.BigEndian.Uint64(y_bytes[344:352])
 
-	mod := (*[44]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[43]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7031,7 +7074,8 @@ func SubModNonUnrolled2880(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[44] = binary.BigEndian.Uint64(x_bytes[352:360])
 	y[44] = binary.BigEndian.Uint64(y_bytes[352:360])
 
-	mod := (*[45]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[44]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7303,7 +7347,8 @@ func SubModNonUnrolled2944(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[45] = binary.BigEndian.Uint64(x_bytes[360:368])
 	y[45] = binary.BigEndian.Uint64(y_bytes[360:368])
 
-	mod := (*[46]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[45]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7580,7 +7625,8 @@ func SubModNonUnrolled3008(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[46] = binary.BigEndian.Uint64(x_bytes[368:376])
 	y[46] = binary.BigEndian.Uint64(y_bytes[368:376])
 
-	mod := (*[47]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[46]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7862,7 +7908,8 @@ func SubModNonUnrolled3072(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[47] = binary.BigEndian.Uint64(x_bytes[376:384])
 	y[47] = binary.BigEndian.Uint64(y_bytes[376:384])
 
-	mod := (*[48]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[47]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8149,7 +8196,8 @@ func SubModNonUnrolled3136(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[48] = binary.BigEndian.Uint64(x_bytes[384:392])
 	y[48] = binary.BigEndian.Uint64(y_bytes[384:392])
 
-	mod := (*[49]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[48]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8441,7 +8489,8 @@ func SubModNonUnrolled3200(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[49] = binary.BigEndian.Uint64(x_bytes[392:400])
 	y[49] = binary.BigEndian.Uint64(y_bytes[392:400])
 
-	mod := (*[50]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[49]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8738,7 +8787,8 @@ func SubModNonUnrolled3264(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[50] = binary.BigEndian.Uint64(x_bytes[400:408])
 	y[50] = binary.BigEndian.Uint64(y_bytes[400:408])
 
-	mod := (*[51]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[50]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9040,7 +9090,8 @@ func SubModNonUnrolled3328(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[51] = binary.BigEndian.Uint64(x_bytes[408:416])
 	y[51] = binary.BigEndian.Uint64(y_bytes[408:416])
 
-	mod := (*[52]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[51]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9347,7 +9398,8 @@ func SubModNonUnrolled3392(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[52] = binary.BigEndian.Uint64(x_bytes[416:424])
 	y[52] = binary.BigEndian.Uint64(y_bytes[416:424])
 
-	mod := (*[53]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[52]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9659,7 +9711,8 @@ func SubModNonUnrolled3456(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[53] = binary.BigEndian.Uint64(x_bytes[424:432])
 	y[53] = binary.BigEndian.Uint64(y_bytes[424:432])
 
-	mod := (*[54]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[53]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9976,7 +10029,8 @@ func SubModNonUnrolled3520(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[54] = binary.BigEndian.Uint64(x_bytes[432:440])
 	y[54] = binary.BigEndian.Uint64(y_bytes[432:440])
 
-	mod := (*[55]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[54]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10298,7 +10352,8 @@ func SubModNonUnrolled3584(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[55] = binary.BigEndian.Uint64(x_bytes[440:448])
 	y[55] = binary.BigEndian.Uint64(y_bytes[440:448])
 
-	mod := (*[56]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[55]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10625,7 +10680,8 @@ func SubModNonUnrolled3648(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[56] = binary.BigEndian.Uint64(x_bytes[448:456])
 	y[56] = binary.BigEndian.Uint64(y_bytes[448:456])
 
-	mod := (*[57]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[56]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10957,7 +11013,8 @@ func SubModNonUnrolled3712(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[57] = binary.BigEndian.Uint64(x_bytes[456:464])
 	y[57] = binary.BigEndian.Uint64(y_bytes[456:464])
 
-	mod := (*[58]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[57]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11294,7 +11351,8 @@ func SubModNonUnrolled3776(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[58] = binary.BigEndian.Uint64(x_bytes[464:472])
 	y[58] = binary.BigEndian.Uint64(y_bytes[464:472])
 
-	mod := (*[59]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[58]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11636,7 +11694,8 @@ func SubModNonUnrolled3840(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[59] = binary.BigEndian.Uint64(x_bytes[472:480])
 	y[59] = binary.BigEndian.Uint64(y_bytes[472:480])
 
-	mod := (*[60]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[59]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11983,7 +12042,8 @@ func SubModNonUnrolled3904(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[60] = binary.BigEndian.Uint64(x_bytes[480:488])
 	y[60] = binary.BigEndian.Uint64(y_bytes[480:488])
 
-	mod := (*[61]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[60]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12335,7 +12395,8 @@ func SubModNonUnrolled3968(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[61] = binary.BigEndian.Uint64(x_bytes[488:496])
 	y[61] = binary.BigEndian.Uint64(y_bytes[488:496])
 
-	mod := (*[62]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[61]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12692,7 +12753,8 @@ func SubModNonUnrolled4032(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[62] = binary.BigEndian.Uint64(x_bytes[496:504])
 	y[62] = binary.BigEndian.Uint64(y_bytes[496:504])
 
-	mod := (*[63]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[62]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -13054,7 +13116,8 @@ func SubModNonUnrolled4096(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	x[63] = binary.BigEndian.Uint64(x_bytes[504:512])
 	y[63] = binary.BigEndian.Uint64(y_bytes[504:512])
 
-	mod := (*[64]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+	_ = mod[63]
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)

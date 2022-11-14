@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
+    "fmt"
 )
 
 const limbSize = 8
@@ -13,6 +14,7 @@ type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
 	Modulus               []byte
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
+    ModulusLimbs          []uint64
 
 	MontParamInterleaved    uint64
 	MontParamNonInterleaved *big.Int
@@ -96,6 +98,7 @@ func NewField(preset ArithPreset) *Field {
 	result := Field{
 		nil,
 		nil,
+        nil,
 
 		0,
 		nil,
@@ -136,6 +139,7 @@ func (m *Field) SetMod(mod []byte) error {
 	}
 
     mod = PadBytes8(mod)
+    fmt.Printf("mod is %+x (len=%d)\n", mod, len(mod))
 
     // TODO pad mod
 
@@ -156,7 +160,11 @@ func (m *Field) SetMod(mod []byte) error {
 	// want to compute r_val - (mod & (r_val - 1))
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
-    mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 9: len(mod) - 1])
+    fmt.Printf("mod is %+x (len=%d)\n", mod, len(mod))
+    fmt.Println(len(mod) - 8)
+    fmt.Println(len(mod) - 1)
+    mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 8: len(mod)])
+    fmt.Println("fin")
 
 	negModInt := new(big.Int)
 	negModInt.SetUint64(mod_uint64)
@@ -180,6 +188,7 @@ func (m *Field) SetMod(mod []byte) error {
     m.Modulus = mod
 	m.NumLimbs = uint(len(m.Modulus))
 	m.ElementSize = uint64(m.NumLimbs) * 8
+    m.ModulusLimbs = BytesToLimbs(m.Modulus)
 
 	var genericMulMontCutoff uint = 64
 	if m.NumLimbs >= genericMulMontCutoff {

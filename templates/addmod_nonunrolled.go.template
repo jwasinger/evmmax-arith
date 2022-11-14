@@ -16,7 +16,9 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
         {{- end}}
     {{- end}}
 
-	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
+	mod := f.ModulusLimbs
+    fmt.Printf("inside.  len(mod) = %d\n", len(mod))
+    _ = mod[{{$lastLimb}}]
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 
