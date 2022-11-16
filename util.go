@@ -65,7 +65,11 @@ func PadBytes(val []byte, size uint64) []byte {
     } else {
         return val
     }
+}
 
+func BytesToNumString(val []byte) string {
+    valInt := new(big.Int).SetBytes(val)
+    return valInt.String()
 }
 
 func BytesToLimbs(val []byte) []uint64 {

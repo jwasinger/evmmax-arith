@@ -21,7 +21,7 @@ type Field struct {
 	NumLimbs uint
 
 	r    *big.Int
-	rInv *big.Int
+    rInv *big.Int // TODO remove this
 
 	rSquared []byte
 
@@ -84,7 +84,7 @@ func (m *Field) ToNorm(val []byte) ([]byte, error) {
 	// TODO ensure val is less than the modulus?
 	out_bytes := make([]byte, m.NumLimbs*8)
 	one := make([]byte, len(val))
-	one[0] = 1
+	one[len(val) - 1] = 1
 
 	if err := m.MulMont(m, out_bytes, val, one); err != nil {
 		return nil, err

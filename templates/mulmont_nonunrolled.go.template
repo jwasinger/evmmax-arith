@@ -1,19 +1,19 @@
 {{ $limbCount := .LimbCount}}
+{{ $limbCountSub1 := sub $limbCount 1}}
 {{ $lastLimb := sub $limbCount 1}}
 {{ $limbBits := .LimbBits}}
 {{ $limbCountPlus1 := add .LimbCount 1 }}
 
 func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes, y_bytes []byte) (error) {
-    var x, y [{{$limbCount}}]uint64
+    var x, y, z [{{$limbCount}}]uint64
 
     // conversion to little-endian limb-order, system limb-endianess
-    {{- range $i := intRange 1 $limbCount}}
-        x[{{sub $limbCount $i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
-        y[{{sub $limbCount $i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+    {{- range $i := intRange 0 $limbCount}}
+        x[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        y[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
     {{- end}}
 
-	//z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
-	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&ctx.Modulus[0]))[:]
+	mod := ctx.ModulusLimbs
 	var t [{{add $limbCount 1}}]uint64
 	var D uint64
 	var m, C uint64
@@ -58,27 +58,24 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
 		t[{{$limbCount}}], _ = bits.Add64(0, D, C)
     }
 
-    var tmp_val uint64
-    {{- range $i := intRange 0 $limbCount}}
-        {{-  if eq $i 0 }}
-            tmp_val, D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
-            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], tmp_val)
-        {{-  else  }}
-            tmp_val, D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
-            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], tmp_val)
-        {{- end}}
-    {{- end}}
+	{{- range $i := intRange 0 $limbCount}}
+		{{-  if eq $i 0 }}
+			z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
+		{{-  else  }}
+			z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
+		{{- end}}
+	{{- end}}
 
+    var src []uint64
     if D != 0 && t[{{$limbCount}}] == 0 {
-        // reduction was not necessary
+        src = t[:{{$limbCount}}]
+	} else {
+        src = z[:]
+	}
 
-        // conversion to big-endian, padded to make the length a multiple of 64-bits
-        {{- range $i := intRange 0 $limbCount }}
-            binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], t[{{sub $limbCount $i}}])
-        {{- end }}
-    }/* else {
-        panic("not worst case performance")
-    }*/
+    {{- range $i := intRange 0 $limbCount }}
+        binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{sub $limbCountSub1 $i}}])
+    {{- end }}
 
 	return nil
 }
