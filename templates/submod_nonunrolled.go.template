@@ -1,12 +1,13 @@
 {{ $limbCount := .LimbCount}}
+{{ $limbCountSub1 := sub .LimbCount 1}}
 {{ $lastLimb := sub $limbCount 1}}
 {{ $limbBits := .LimbBits}}
 
 func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_bytes []byte) (error) {
     var x, y, z [{{$limbCount}}]uint64
     {{- range $i := intRange 0 $limbCount}}
-        x[{{$i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
-        y[{{$i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        x[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
+        y[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
     {{- end}}
 
 	mod := f.ModulusLimbs
@@ -38,7 +39,7 @@ func SubModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
     _ = src[{{sub $limbCount 1}}]
 
     {{- range $i := intRange 0 $limbCount}}
-        binary.BigEndian.PutUint64(out_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{$i}}])
+        binary.BigEndian.PutUint64(out_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{sub $limbCountSub1 $i}}])
     {{- end}}
     return nil
 }
