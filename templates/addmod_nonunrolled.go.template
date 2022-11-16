@@ -17,12 +17,9 @@ func AddModNonUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes,
     {{- end}}
 
 	mod := f.ModulusLimbs
-    fmt.Printf("inside.  len(mod) = %d\n", len(mod))
     _ = mod[{{$lastLimb}}]
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
-
-    fmt.Printf("inside\n x=%x\ny=%x\n\n", x, y)
 
     var c uint64 = 0
     var c1 uint64 = 0

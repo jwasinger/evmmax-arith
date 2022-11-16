@@ -1,7 +1,6 @@
 package mont_arith
 
 import (
-	"fmt"
 	"math/big"
 	"math/rand"
 	"strconv"
@@ -24,7 +23,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 func TestMulMontBLS12831(t *testing.T) {
 	montCtx := NewField(NonUnrolledPreset())
 	modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
-    mod := PadBytes8(modInt.Bytes())
+    mod := modInt.Bytes()
 
 	var limbCount uint = 6
 	montCtx.SetMod(mod)
@@ -32,7 +31,7 @@ func TestMulMontBLS12831(t *testing.T) {
 	s := rand.NewSource(42)
 	r := rand.New(s)
 
-    x := PadBytes8(randBigInt(r, modInt).Bytes())
+    x := PadBytes(randBigInt(r, modInt).Bytes(), montCtx.ElementSize)
 	montX, err := montCtx.ToMont(x)
 	if err != nil {
 		panic(err)
@@ -47,7 +46,7 @@ func TestMulMontBLS12831(t *testing.T) {
 		panic("mont form should have correct normal form")
 	}
 
-    y := PadBytes8(randBigInt(r, modInt).Bytes())
+    y := PadBytes(randBigInt(r, modInt).Bytes(), montCtx.ElementSize)
 	montY, err := montCtx.ToMont(y)
 	if err != nil {
 		panic(err)
@@ -95,7 +94,6 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 		t.Fatalf("could not parse mod")
 	}
 
-    fmt.Printf("addmod\nx=%s\ny=%s\nmod=%s\n\n", xInt.String(), yInt.String(), modInt.String())
 	limbCount, err := strconv.Atoi(limbCountStr)
 
 	resultBytes := make([]byte, limbCount*8)
@@ -173,7 +171,7 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected := new(big.Int)
 	expected.Sub(xInt, yInt).Mod(expected, modInt)
 
-	if err = montCtx.SubMod(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
+	if err = montCtx.SubMod(montCtx, resultBytes, PadBytes(xInt.Bytes(), montCtx.ElementSize), PadBytes(yInt.Bytes(), montCtx.ElementSize)); err != nil {
 		t.Fatal(err)
 	}
 
@@ -185,7 +183,7 @@ func testSubMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 	expected = new(big.Int)
 	expected.Sub(xInt, xInt)
 	expected.Mod(expected, modInt)
-    xBytes := PadBytes8(xInt.Bytes())
+    xBytes := PadBytes(xInt.Bytes(), montCtx.ElementSize)
 	if err = montCtx.SubMod(montCtx, xBytes, xBytes, xBytes); err != nil {
 		t.Fatal(err)
 	}
@@ -233,18 +231,16 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	expected.Mod(expected, modInt)
 
 	montCtx := NewField(preset)
-	err = montCtx.SetMod(PadBytes8(modInt.Bytes()))
+	err = montCtx.SetMod(modInt.Bytes())
 	if err != nil {
-		fmt.Println(err)
 		panic("error")
 	}
 
-	if err = montCtx.MulMont(montCtx, resultBytes, PadBytes8(xInt.Bytes()), PadBytes8(yInt.Bytes())); err != nil {
+	if err = montCtx.MulMont(montCtx, resultBytes, PadBytes(xInt.Bytes(), montCtx.ElementSize), PadBytes(yInt.Bytes(), montCtx.ElementSize)); err != nil {
 		t.Fatal(err)
 	}
 
 	if new(big.Int).SetBytes(resultBytes).Cmp(expected) != 0 {
-		fmt.Printf("mulmont failed.  x: %s\ny: %s\nmod: %s\nrInv: %s\n", xInt.String(), yInt.String(), modInt.String(), rInv.String())
 		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
 	}
 
@@ -253,7 +249,7 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	expected.Mul(xInt, xInt)
 	expected.Mul(expected, rInv)
 	expected.Mod(expected, modInt)
-    xBytes := PadBytes8(xInt.Bytes())
+    xBytes := PadBytes(xInt.Bytes(), montCtx.ElementSize)
 
 	if err = montCtx.MulMont(montCtx, xBytes, xBytes, xBytes); err != nil {
 		t.Fatal(err)
@@ -352,7 +348,7 @@ func TestMontgomeryConversion(t *testing.T) {
 		val := new(big.Int)
 		val.Sub(modInt, big.NewInt(3))
 
-		xNorm := PadBytes8(val.Bytes())
+		xNorm := PadBytes(val.Bytes(), montCtx.ElementSize)
 		xMont := make([]byte, limbCount*8)
 
 		montCtx.MulMont(montCtx, xMont, xNorm, montCtx.RSquared())

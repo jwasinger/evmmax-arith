@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
-    "fmt"
 )
 
 const limbSize = 8
@@ -130,18 +129,16 @@ func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
-// compute montgomery parameters given big-endian modulus bytes
+// compute montgomery parameters given big-endian modulus bytes.
+// don't pad the input bytes
 func (m *Field) SetMod(mod []byte) error {
-	var limbCount uint = uint(len(mod))
-
     if mod[len(mod) - 1] % 2 == 0 {
 		return errors.New("modulus cannot be even")
 	}
 
     mod = PadBytes8(mod)
-    fmt.Printf("mod is %+x (len=%d)\n", mod, len(mod))
+    limbCount := uint(len(mod)) / 8
 
-    // TODO pad mod
 
 	modInt := new(big.Int).SetBytes(mod)
 	rSquared := big.NewInt(1)
@@ -160,11 +157,7 @@ func (m *Field) SetMod(mod []byte) error {
 	// want to compute r_val - (mod & (r_val - 1))
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
-    fmt.Printf("mod is %+x (len=%d)\n", mod, len(mod))
-    fmt.Println(len(mod) - 8)
-    fmt.Println(len(mod) - 1)
     mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 8: len(mod)])
-    fmt.Println("fin")
 
 	negModInt := new(big.Int)
 	negModInt.SetUint64(mod_uint64)
@@ -186,9 +179,15 @@ func (m *Field) SetMod(mod []byte) error {
 	m.mask.Sub(m.mask, big.NewInt(1))
 
     m.Modulus = mod
-	m.NumLimbs = uint(len(m.Modulus))
-	m.ElementSize = uint64(m.NumLimbs) * 8
-    m.ModulusLimbs = BytesToLimbs(m.Modulus)
+	m.NumLimbs = limbCount
+	m.ElementSize = uint64(limbCount) * 8
+
+    m.ModulusLimbs = make([]uint64, m.NumLimbs)
+    for i := 0; i < int(m.NumLimbs); i++ {
+        // limb-order is little-endian internally
+        m.ModulusLimbs[int(m.NumLimbs) - 1 - i] = binary.BigEndian.Uint64(m.Modulus[i * 8:(i + 1) * 8])
+    }
+
 
 	var genericMulMontCutoff uint = 64
 	if m.NumLimbs >= genericMulMontCutoff {

@@ -46,8 +46,8 @@ func LimbsToLEBytes(val []uint64) []byte {
 
 // pad big-endian bytes to the nearest 8-bytes
 func PadBytes8(val []byte) []byte {
-    pad_len := len(val) % 8
-    if pad_len != 0 {
+    if len(val) % 8 != 0 {
+        pad_len := 8 - len(val) % 8
         padding := make([]byte, pad_len)
         return append(padding, val...)
     } else {
@@ -61,7 +61,7 @@ func PadBytes(val []byte, size uint64) []byte {
         padding := make([]byte, pad_len)
         return append(padding, val...)
     } else if pad_len < 0 {
-        panic("pad_len < 0")
+        panic(fmt.Sprintf("pad_len < 0. val len = %d. pad len = %d\n", len(val), pad_len))
     } else {
         return val
     }
