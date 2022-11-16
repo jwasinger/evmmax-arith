@@ -227,7 +227,7 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
 	if t.Cmp(m.ModulusNonInterleaved) >= 0 {
 		t.Sub(t, m.ModulusNonInterleaved)
 	}
-	copy(zBytes, LimbsToLEBytes(IntToLimbs(t, m.NumLimbs)))
+	copy(zBytes, PadBytes(t.Bytes(), m.ElementSize))
 
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strconv"
 	"testing"
+    "fmt"
 )
 
 const EVMMAXMaxLimbCount = 128
@@ -113,7 +114,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 
     result := new(big.Int).SetBytes(resultBytes)
 	if result.Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
+		t.Fatalf("result (%s) != expected (%s)\n", result.String(), expected.String())
 	}
 
     /*
@@ -220,7 +221,7 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	limbCount, err := strconv.Atoi(limbCountStr)
 
 	resultBytes := make([]byte, limbCount*8)
-	// rInv := pow(-r, -1, mod)
+	// rInv := pow(r, -1, mod)
 	rInv := big.NewInt(1)
 	rInv.Lsh(rInv, uint(limbCount)*64)
 	rInv.ModInverse(rInv, modInt)
@@ -235,13 +236,17 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	if err != nil {
 		panic("error")
 	}
+    fmt.Printf("testMulmont rInv %s RInv() %s\n", rInv.String(), montCtx.RInv().String())
 
 	if err = montCtx.MulMont(montCtx, resultBytes, PadBytes(xInt.Bytes(), montCtx.ElementSize), PadBytes(yInt.Bytes(), montCtx.ElementSize)); err != nil {
 		t.Fatal(err)
 	}
 
-	if new(big.Int).SetBytes(resultBytes).Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
+    fmt.Println(montCtx.ElementSize)
+    fmt.Printf("resultBytes: %x\n", resultBytes)
+    result := new(big.Int).SetBytes(resultBytes)
+	if result.Cmp(expected) != 0 {
+		t.Fatalf("result != expected\n%x\n%x\n", result, expected)
 	}
 
 	// test overlapping offsets - all the same
@@ -255,8 +260,9 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 		t.Fatal(err)
 	}
 
-	if new(big.Int).SetBytes(xBytes).Cmp(expected) != 0 {
-		t.Fatalf("result (%x) != expected (%x)\n", resultBytes, expected)
+    result = new(big.Int).SetBytes(xBytes)
+	if result.Cmp(expected) != 0 {
+		t.Fatalf("result != expected\n%x\n%x\n", result, expected)
 	}
 }
 
@@ -303,30 +309,38 @@ func largestVal(mod *big.Int, limbCount uint) *big.Int {
 }
 
 func TestMulMont(t *testing.T) {
-	presets := []ArithPreset{DefaultPreset(), NonUnrolledPreset(), GenericMulMontPreset()}
-	for presetIdx := 0; presetIdx < len(presets); presetIdx++ {
-		preset := presets[presetIdx]
-		for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
+    t.Run("non-unrolled", func(t *testing.T) {
+		for limbCount := uint(1); limbCount < 2; limbCount++ {
 			// test smallest mod
 			{
 				smallMod := smallModulus(limbCount)
 				// test mulmont(smallestVal, smallestVal)
 				smallVal := smallestVal(smallMod, limbCount)
-				testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+				testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), NonUnrolledPreset())
 				// test mulmont(largestVal, largestVal)
 				largeVal := largestVal(smallMod, limbCount)
-				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), preset)
+				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), NonUnrolledPreset())
 			}
 
-			// TODO ...
-			// test mid mod
-			// test mulmont(smallestVal, smallestVal)
-			// test mulmont(largestVal, largestVal)
-			// test largest mod
-			// test mulmont(smallestVal, smallestVal)
-			// test mulmont(largestVal, largestVal)
-		}
-	}
+            // TODO: test more mods...
+        }
+    })
+    t.Run("generic", func(t *testing.T) {
+		for limbCount := uint(1); limbCount < 65; limbCount++ {
+			// test smallest mod
+			{
+				smallMod := smallModulus(limbCount)
+				// test mulmont(smallestVal, smallestVal)
+				smallVal := smallestVal(smallMod, limbCount)
+				testMulMont(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), GenericMulMontPreset())
+				// test mulmont(largestVal, largestVal)
+				largeVal := largestVal(smallMod, limbCount)
+				testMulMont(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), GenericMulMontPreset())
+			}
+
+            // TODO: test more mods...
+        }
+    })
 }
 
 func TestMontgomeryConversion(t *testing.T) {

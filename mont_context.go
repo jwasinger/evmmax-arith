@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
+    "fmt"
 )
 
 const limbSize = 8
@@ -194,6 +195,7 @@ func (m *Field) SetMod(mod []byte) error {
 		m.MulMont = MulMontNonInterleaved
 		m.AddMod = AddModGeneric
 		m.SubMod = SubModGeneric
+        fmt.Println("setmod: using generic impls")
 	} else {
 		m.MulMont = m.preset.MulMontImpls[limbCount-1]
 
