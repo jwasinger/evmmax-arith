@@ -24,8 +24,8 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 	y = y.Sub(y, big.NewInt(100))
 
     outBytes := make([]byte, limbCount * 8)
-	xBytes := PadBytes8(x.Bytes())
-	yBytes := PadBytes8(y.Bytes())
+	xBytes := PadBytes(x.Bytes(), montCtx.ElementSize)
+	yBytes := PadBytes(y.Bytes(), montCtx.ElementSize)
 
 	b.ResetTimer()
 
@@ -48,8 +48,8 @@ func benchmarkAddMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	x = x.Sub(x, big.NewInt(2))
 	y := big.NewInt(1)
 	outBytes := make([]byte, limbCount*8)
-	xBytes := PadBytes8(x.Bytes())
-	yBytes := PadBytes8(y.Bytes())
+	xBytes := PadBytes(x.Bytes(), montCtx.ElementSize)
+	yBytes := PadBytes(y.Bytes(), montCtx.ElementSize)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
