@@ -75,11 +75,11 @@ func TestAddModInputs(t *testing.T) {
 	inputs := testInputs()
 
 	for i := 0; i < len(inputs); i += 4 {
-		testAddMod(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3])
+		testAddMod(t, inputs[i], inputs[i+1], inputs[i+2], inputs[i+3], DefaultPreset())
 	}
 }
 
-func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
+func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset ArithPreset) {
 	xInt, ok := new(big.Int).SetString(xStr, 10)
 	if !ok {
 		t.Fatalf("could not parse x")
@@ -99,7 +99,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 
 	resultBytes := make([]byte, limbCount*8)
 
-	montCtx := NewField(DefaultPreset())
+	montCtx := NewField(preset)
 	err = montCtx.SetMod(modInt.Bytes())
 	if err != nil {
 		panic("error")
@@ -133,6 +133,41 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string) {
 		t.Fatalf("result (%x) != expected (%x)\n", result, expected)
 	}
     */
+}
+
+func TestAddMod(t *testing.T) {
+    t.Run("non-unrolled", func(t *testing.T) {
+		for limbCount := uint(1); limbCount < 16; limbCount++ {
+			// test smallest mod
+			{
+				smallMod := smallModulus(limbCount)
+				// test mulmont(smallestVal, smallestVal)
+				smallVal := smallestVal(smallMod, limbCount)
+				testAddMod(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), NonUnrolledPreset())
+				// test mulmont(largestVal, largestVal)
+				largeVal := largestVal(smallMod, limbCount)
+				testAddMod(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), NonUnrolledPreset())
+			}
+
+            // TODO: test more mods...
+        }
+    })
+    t.Run("generic", func(t *testing.T) {
+		for limbCount := uint(1); limbCount < 16; limbCount++ {
+			// test smallest mod
+			{
+				smallMod := smallModulus(limbCount)
+				// test mulmont(smallestVal, smallestVal)
+				smallVal := smallestVal(smallMod, limbCount)
+				testAddMod(t, smallVal.String(), smallVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), GenericMulMontPreset())
+				// test mulmont(largestVal, largestVal)
+				largeVal := largestVal(smallMod, limbCount)
+				testAddMod(t, largeVal.String(), largeVal.String(), smallMod.String(), strconv.FormatUint(uint64(limbCount), 10), GenericMulMontPreset())
+			}
+
+            // TODO: test more mods...
+        }
+    })
 }
 
 func TestSubModInputs(t *testing.T) {
