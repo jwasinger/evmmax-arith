@@ -8,8 +8,6 @@ import (
     "fmt"
 )
 
-const EVMMAXMaxLimbCount = 128
-
 func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
     modulusLen := len(modulus.Bytes())
 	resBytes := make([]byte, modulusLen)
@@ -99,10 +97,14 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset Ar
 
 	resultBytes := make([]byte, limbCount*8)
 
+    if len(modInt.Bytes()) / 8 > MaxInputSize {
+        return
+    }
+
 	montCtx := NewField(preset)
 	err = montCtx.SetMod(modInt.Bytes())
 	if err != nil {
-		panic("error")
+		panic(err)
 	}
 
 	expected := new(big.Int)
@@ -137,7 +139,7 @@ func testAddMod(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset Ar
 
 func TestAddMod(t *testing.T) {
     t.Run("non-unrolled", func(t *testing.T) {
-		for limbCount := uint(1); limbCount < 16; limbCount++ {
+		for limbCount := uint(1); limbCount < MaxInputSize; limbCount++ {
 			// test smallest mod
 			{
 				smallMod := smallModulus(limbCount)
@@ -153,7 +155,7 @@ func TestAddMod(t *testing.T) {
         }
     })
     t.Run("generic", func(t *testing.T) {
-		for limbCount := uint(1); limbCount < 16; limbCount++ {
+		for limbCount := uint(1); limbCount < MaxInputSize; limbCount++ {
 			// test smallest mod
 			{
 				smallMod := smallModulus(limbCount)
@@ -254,6 +256,9 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	}
 
 	limbCount, err := strconv.Atoi(limbCountStr)
+    if limbCount > MaxInputSize {
+        return
+    }
 
 	resultBytes := make([]byte, limbCount*8)
 	// rInv := pow(r, -1, mod)
@@ -379,7 +384,7 @@ func TestMontgomeryConversion(t *testing.T) {
 	preset := DefaultPreset()
 	montCtx := NewField(preset)
 
-	for limbCount := uint(1); limbCount < EVMMAXMaxLimbCount; limbCount++ {
+	for limbCount := uint(1); limbCount < MaxInputSize; limbCount++ {
 		mod := MaxModulus(limbCount)
         modInt := new(big.Int).SetBytes(mod)
 		if err := montCtx.SetMod(mod); err != nil {

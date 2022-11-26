@@ -129,6 +129,9 @@ func (m *Field) ModIsSet() bool {
 	return m.NumLimbs != 0
 }
 
+// TODO increase this once we figure out what the cap will be
+const MaxInputSize = 16
+
 // compute montgomery parameters given big-endian modulus bytes.
 // don't pad the input bytes
 func (m *Field) SetMod(mod []byte) error {
@@ -136,10 +139,13 @@ func (m *Field) SetMod(mod []byte) error {
 		return errors.New("modulus cannot be even")
 	}
 
+    if len(mod) / 8 > MaxInputSize {
+        return errors.New("modulus larger than max size")
+    }
+
     mod = PadBytes8(mod)
     limbCount := uint(len(mod)) / 8
 	m.ElementSize = uint64(limbCount) * 8
-
 
 	modInt := new(big.Int).SetBytes(mod)
 	rSquared := big.NewInt(1)
@@ -147,11 +153,6 @@ func (m *Field) SetMod(mod []byte) error {
 	rSquared.Mod(rSquared, modInt)
 	rSquared.Mul(rSquared, rSquared)
 	rSquared.Mod(rSquared, modInt)
-
-	/*
-		rSquared = rSquared.Mul(rVal, rVal)
-		rSquared = rSquared.Mod(rSquared, modInt)
-	*/
 
 	m.rSquared = rSquared.Bytes()
     if len(m.rSquared) < int(m.ElementSize) {
@@ -161,6 +162,8 @@ func (m *Field) SetMod(mod []byte) error {
     }
 
 	// want to compute r_val - (mod & (r_val - 1))
+
+    // 1 << 64
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
     mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 8: len(mod)])
@@ -200,11 +203,11 @@ func (m *Field) SetMod(mod []byte) error {
 		m.SubMod = SubModGeneric
 	} else {
 		m.MulMont = m.preset.MulMontImpls[limbCount-1]
-
-		// TODO fix (TODO ?? what was I thinking was wrong here?)
 		m.AddMod = m.preset.AddModImpls[limbCount-1]
 		m.SubMod = m.preset.SubModImpls[limbCount-1]
 	}
+
+    // TODO when generic add/sub cutoff?
 
 	return nil
 }
