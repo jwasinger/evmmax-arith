@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/jwasinger/mont-arith/templates"
+	"github.com/jwasinger/evmmax-arith/templates"
 	"io/ioutil"
 	"log"
 	"os"

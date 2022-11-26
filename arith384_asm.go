@@ -1,7 +1,7 @@
 package mont_arith
 
 import (
-	"github.com/jwasinger/mont-arith/arith384_asm"
+	"github.com/jwasinger/evmmax-arith/arith384_asm"
 	"unsafe"
 )
 

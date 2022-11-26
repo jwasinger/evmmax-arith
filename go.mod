@@ -1,5 +1,3 @@
-module github.com/jwasinger/mont-arith
+module github.com/jwasinger/evmmax-arith
 
 go 1.16
-
-require github.com/mmcloughlin/addchain v0.4.0 // indirect
