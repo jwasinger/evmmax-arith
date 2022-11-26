@@ -13,21 +13,10 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
         y[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
     {{- end}}
 
-
-    /*
-    xInt := new(big.Int).SetBytes(x_bytes[0:{{mul $limbCount 8}}])
-    yInt := new(big.Int).SetBytes(y_bytes[0:{{mul $limbCount 8}}])
-    modInt := ctx.ModulusNonInterleaved
-    */
-    //fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [{{add $limbCount 1}}]uint64
 	var D uint64
 	var m, C uint64
-
-    fmt.Println("limbCount is {{$limbCount}}")
-    fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
     {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
 

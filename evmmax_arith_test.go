@@ -236,14 +236,11 @@ func testMulMont(t *testing.T, xStr, yStr, modStr, limbCountStr string, preset A
 	if err != nil {
 		panic("error")
 	}
-    fmt.Printf("testMulmont rInv %s RInv() %s\n", rInv.String(), montCtx.RInv().String())
 
 	if err = montCtx.MulMont(montCtx, resultBytes, PadBytes(xInt.Bytes(), montCtx.ElementSize), PadBytes(yInt.Bytes(), montCtx.ElementSize)); err != nil {
 		t.Fatal(err)
 	}
 
-    fmt.Println(montCtx.ElementSize)
-    fmt.Printf("resultBytes: %x\n", resultBytes)
     result := new(big.Int).SetBytes(resultBytes)
 	if result.Cmp(expected) != 0 {
 		t.Fatalf("result != expected\n%x\n%x\n", result, expected)
@@ -354,10 +351,8 @@ func TestMontgomeryConversion(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		one := make([]byte, limbCount * 8)
-		one[0] = 1
 		oneMont := make([]byte, limbCount * 8)
-		montCtx.MulMont(montCtx, oneMont, one, montCtx.RSquared())
+		oneMont[limbCount * 8 - 1] = 1
 
 		val := new(big.Int)
 		val.Sub(modInt, big.NewInt(3))
@@ -369,7 +364,7 @@ func TestMontgomeryConversion(t *testing.T) {
 		montCtx.MulMont(montCtx, xMont, xMont, oneMont)
 
 		if new(big.Int).SetBytes(xMont).Cmp(val) != 0 {
-			t.Fatalf("bad result")
+			t.Fatalf(fmt.Sprintf("result (%x) != expected (%x)\n", xMont, val))
 		}
 	}
 }

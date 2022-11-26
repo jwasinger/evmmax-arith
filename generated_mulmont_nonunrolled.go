@@ -11,17 +11,8 @@ func MulMontNonUnrolled64(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	var x, y, z [1]uint64
 
 	// conversion to little-endian limb-order, system limb-endianess
-    fmt.Printf("jared0. x_bytes=%x\n", x_bytes[0:8])
 	x[0] = binary.BigEndian.Uint64(x_bytes[0:8])
 	y[0] = binary.BigEndian.Uint64(y_bytes[0:8])
-    fmt.Printf("jared0. x=%x\n", x[0])
-
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:8])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:8])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
 
 	mod := ctx.ModulusLimbs
 	var t [2]uint64
@@ -72,19 +63,13 @@ func MulMontNonUnrolled64(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	}
 	z[0], D = bits.Sub64(t[0], mod[0], 0)
 
-    fmt.Println("jared")
-    fmt.Println(z[0])
-    fmt.Println(t[0])
-
 	var src []uint64
 	if D != 0 && t[1] == 0 {
 		src = t[:1]
 	} else {
 		src = z[:]
 	}
-    fmt.Println(src[0])
 	binary.BigEndian.PutUint64(z_bytes[0:8], src[0])
-    fmt.Printf("z_bytes are %x\n", z_bytes[0:8])
 
 	return nil
 }
@@ -98,20 +83,10 @@ func MulMontNonUnrolled128(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[8:16])
 	y[0] = binary.BigEndian.Uint64(y_bytes[8:16])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:16])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:16])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [3]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 2")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -187,20 +162,10 @@ func MulMontNonUnrolled192(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[16:24])
 	y[0] = binary.BigEndian.Uint64(y_bytes[16:24])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:24])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:24])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [4]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 3")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -286,20 +251,10 @@ func MulMontNonUnrolled256(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[24:32])
 	y[0] = binary.BigEndian.Uint64(y_bytes[24:32])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:32])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:32])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [5]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 4")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -395,20 +350,10 @@ func MulMontNonUnrolled320(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[32:40])
 	y[0] = binary.BigEndian.Uint64(y_bytes[32:40])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:40])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:40])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [6]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 5")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -514,20 +459,10 @@ func MulMontNonUnrolled384(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[40:48])
 	y[0] = binary.BigEndian.Uint64(y_bytes[40:48])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:48])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:48])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [7]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 6")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -643,20 +578,10 @@ func MulMontNonUnrolled448(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[48:56])
 	y[0] = binary.BigEndian.Uint64(y_bytes[48:56])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:56])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:56])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [8]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 7")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -782,20 +707,10 @@ func MulMontNonUnrolled512(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[56:64])
 	y[0] = binary.BigEndian.Uint64(y_bytes[56:64])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:64])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:64])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [9]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 8")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -931,20 +846,10 @@ func MulMontNonUnrolled576(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[64:72])
 	y[0] = binary.BigEndian.Uint64(y_bytes[64:72])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:72])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:72])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [10]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 9")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1090,20 +995,10 @@ func MulMontNonUnrolled640(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[72:80])
 	y[0] = binary.BigEndian.Uint64(y_bytes[72:80])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:80])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:80])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [11]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 10")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1259,20 +1154,10 @@ func MulMontNonUnrolled704(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[80:88])
 	y[0] = binary.BigEndian.Uint64(y_bytes[80:88])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:88])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:88])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [12]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 11")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1438,20 +1323,10 @@ func MulMontNonUnrolled768(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[88:96])
 	y[0] = binary.BigEndian.Uint64(y_bytes[88:96])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:96])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:96])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [13]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 12")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1627,20 +1502,10 @@ func MulMontNonUnrolled832(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[96:104])
 	y[0] = binary.BigEndian.Uint64(y_bytes[96:104])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:104])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:104])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [14]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 13")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -1826,20 +1691,10 @@ func MulMontNonUnrolled896(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[104:112])
 	y[0] = binary.BigEndian.Uint64(y_bytes[104:112])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:112])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:112])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [15]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 14")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2035,20 +1890,10 @@ func MulMontNonUnrolled960(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	x[0] = binary.BigEndian.Uint64(x_bytes[112:120])
 	y[0] = binary.BigEndian.Uint64(y_bytes[112:120])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:120])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:120])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [16]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 15")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2254,20 +2099,10 @@ func MulMontNonUnrolled1024(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[120:128])
 	y[0] = binary.BigEndian.Uint64(y_bytes[120:128])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:128])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:128])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [17]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 16")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2483,20 +2318,10 @@ func MulMontNonUnrolled1088(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[128:136])
 	y[0] = binary.BigEndian.Uint64(y_bytes[128:136])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:136])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:136])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [18]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 17")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2722,20 +2547,10 @@ func MulMontNonUnrolled1152(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[136:144])
 	y[0] = binary.BigEndian.Uint64(y_bytes[136:144])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:144])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:144])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [19]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 18")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -2971,20 +2786,10 @@ func MulMontNonUnrolled1216(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[144:152])
 	y[0] = binary.BigEndian.Uint64(y_bytes[144:152])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:152])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:152])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [20]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 19")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3230,20 +3035,10 @@ func MulMontNonUnrolled1280(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[152:160])
 	y[0] = binary.BigEndian.Uint64(y_bytes[152:160])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:160])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:160])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [21]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 20")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3499,20 +3294,10 @@ func MulMontNonUnrolled1344(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[160:168])
 	y[0] = binary.BigEndian.Uint64(y_bytes[160:168])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:168])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:168])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [22]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 21")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -3778,20 +3563,10 @@ func MulMontNonUnrolled1408(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[168:176])
 	y[0] = binary.BigEndian.Uint64(y_bytes[168:176])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:176])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:176])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [23]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 22")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4067,20 +3842,10 @@ func MulMontNonUnrolled1472(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[176:184])
 	y[0] = binary.BigEndian.Uint64(y_bytes[176:184])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:184])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:184])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [24]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 23")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4366,20 +4131,10 @@ func MulMontNonUnrolled1536(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[184:192])
 	y[0] = binary.BigEndian.Uint64(y_bytes[184:192])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:192])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:192])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [25]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 24")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4675,20 +4430,10 @@ func MulMontNonUnrolled1600(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[192:200])
 	y[0] = binary.BigEndian.Uint64(y_bytes[192:200])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:200])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:200])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [26]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 25")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -4994,20 +4739,10 @@ func MulMontNonUnrolled1664(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[200:208])
 	y[0] = binary.BigEndian.Uint64(y_bytes[200:208])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:208])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:208])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [27]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 26")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5323,20 +5058,10 @@ func MulMontNonUnrolled1728(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[208:216])
 	y[0] = binary.BigEndian.Uint64(y_bytes[208:216])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:216])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:216])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [28]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 27")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -5662,20 +5387,10 @@ func MulMontNonUnrolled1792(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[216:224])
 	y[0] = binary.BigEndian.Uint64(y_bytes[216:224])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:224])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:224])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [29]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 28")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6011,20 +5726,10 @@ func MulMontNonUnrolled1856(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[224:232])
 	y[0] = binary.BigEndian.Uint64(y_bytes[224:232])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:232])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:232])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [30]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 29")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6370,20 +6075,10 @@ func MulMontNonUnrolled1920(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[232:240])
 	y[0] = binary.BigEndian.Uint64(y_bytes[232:240])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:240])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:240])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [31]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 30")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -6739,20 +6434,10 @@ func MulMontNonUnrolled1984(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[240:248])
 	y[0] = binary.BigEndian.Uint64(y_bytes[240:248])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:248])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:248])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [32]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 31")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7118,20 +6803,10 @@ func MulMontNonUnrolled2048(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[248:256])
 	y[0] = binary.BigEndian.Uint64(y_bytes[248:256])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:256])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:256])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [33]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 32")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7507,20 +7182,10 @@ func MulMontNonUnrolled2112(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[256:264])
 	y[0] = binary.BigEndian.Uint64(y_bytes[256:264])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:264])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:264])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [34]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 33")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -7906,20 +7571,10 @@ func MulMontNonUnrolled2176(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[264:272])
 	y[0] = binary.BigEndian.Uint64(y_bytes[264:272])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:272])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:272])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [35]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 34")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8315,20 +7970,10 @@ func MulMontNonUnrolled2240(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[272:280])
 	y[0] = binary.BigEndian.Uint64(y_bytes[272:280])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:280])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:280])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [36]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 35")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -8734,20 +8379,10 @@ func MulMontNonUnrolled2304(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[280:288])
 	y[0] = binary.BigEndian.Uint64(y_bytes[280:288])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:288])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:288])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [37]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 36")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9163,20 +8798,10 @@ func MulMontNonUnrolled2368(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[288:296])
 	y[0] = binary.BigEndian.Uint64(y_bytes[288:296])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:296])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:296])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [38]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 37")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -9602,20 +9227,10 @@ func MulMontNonUnrolled2432(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[296:304])
 	y[0] = binary.BigEndian.Uint64(y_bytes[296:304])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:304])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:304])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [39]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 38")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10051,20 +9666,10 @@ func MulMontNonUnrolled2496(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[304:312])
 	y[0] = binary.BigEndian.Uint64(y_bytes[304:312])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:312])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:312])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [40]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 39")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10510,20 +10115,10 @@ func MulMontNonUnrolled2560(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[312:320])
 	y[0] = binary.BigEndian.Uint64(y_bytes[312:320])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:320])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:320])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [41]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 40")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -10979,20 +10574,10 @@ func MulMontNonUnrolled2624(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[320:328])
 	y[0] = binary.BigEndian.Uint64(y_bytes[320:328])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:328])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:328])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [42]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 41")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11458,20 +11043,10 @@ func MulMontNonUnrolled2688(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[328:336])
 	y[0] = binary.BigEndian.Uint64(y_bytes[328:336])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:336])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:336])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [43]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 42")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -11947,20 +11522,10 @@ func MulMontNonUnrolled2752(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[336:344])
 	y[0] = binary.BigEndian.Uint64(y_bytes[336:344])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:344])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:344])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [44]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 43")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12446,20 +12011,10 @@ func MulMontNonUnrolled2816(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[344:352])
 	y[0] = binary.BigEndian.Uint64(y_bytes[344:352])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:352])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:352])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [45]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 44")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -12955,20 +12510,10 @@ func MulMontNonUnrolled2880(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[352:360])
 	y[0] = binary.BigEndian.Uint64(y_bytes[352:360])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:360])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:360])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [46]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 45")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -13474,20 +13019,10 @@ func MulMontNonUnrolled2944(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[360:368])
 	y[0] = binary.BigEndian.Uint64(y_bytes[360:368])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:368])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:368])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [47]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 46")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -14003,20 +13538,10 @@ func MulMontNonUnrolled3008(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[368:376])
 	y[0] = binary.BigEndian.Uint64(y_bytes[368:376])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:376])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:376])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [48]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 47")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -14542,20 +14067,10 @@ func MulMontNonUnrolled3072(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[376:384])
 	y[0] = binary.BigEndian.Uint64(y_bytes[376:384])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:384])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:384])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [49]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 48")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -15091,20 +14606,10 @@ func MulMontNonUnrolled3136(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[384:392])
 	y[0] = binary.BigEndian.Uint64(y_bytes[384:392])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:392])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:392])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [50]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 49")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -15650,20 +15155,10 @@ func MulMontNonUnrolled3200(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[392:400])
 	y[0] = binary.BigEndian.Uint64(y_bytes[392:400])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:400])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:400])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [51]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 50")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -16219,20 +15714,10 @@ func MulMontNonUnrolled3264(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[400:408])
 	y[0] = binary.BigEndian.Uint64(y_bytes[400:408])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:408])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:408])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [52]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 51")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -16798,20 +16283,10 @@ func MulMontNonUnrolled3328(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[408:416])
 	y[0] = binary.BigEndian.Uint64(y_bytes[408:416])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:416])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:416])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [53]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 52")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -17387,20 +16862,10 @@ func MulMontNonUnrolled3392(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[416:424])
 	y[0] = binary.BigEndian.Uint64(y_bytes[416:424])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:424])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:424])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [54]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 53")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -17986,20 +17451,10 @@ func MulMontNonUnrolled3456(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[424:432])
 	y[0] = binary.BigEndian.Uint64(y_bytes[424:432])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:432])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:432])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [55]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 54")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -18595,20 +18050,10 @@ func MulMontNonUnrolled3520(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[432:440])
 	y[0] = binary.BigEndian.Uint64(y_bytes[432:440])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:440])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:440])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [56]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 55")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -19214,20 +18659,10 @@ func MulMontNonUnrolled3584(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[440:448])
 	y[0] = binary.BigEndian.Uint64(y_bytes[440:448])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:448])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:448])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [57]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 56")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -19843,20 +19278,10 @@ func MulMontNonUnrolled3648(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[448:456])
 	y[0] = binary.BigEndian.Uint64(y_bytes[448:456])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:456])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:456])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [58]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 57")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -20482,20 +19907,10 @@ func MulMontNonUnrolled3712(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[456:464])
 	y[0] = binary.BigEndian.Uint64(y_bytes[456:464])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:464])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:464])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [59]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 58")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -21131,20 +20546,10 @@ func MulMontNonUnrolled3776(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[464:472])
 	y[0] = binary.BigEndian.Uint64(y_bytes[464:472])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:472])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:472])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [60]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 59")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -21790,20 +21195,10 @@ func MulMontNonUnrolled3840(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[472:480])
 	y[0] = binary.BigEndian.Uint64(y_bytes[472:480])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:480])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:480])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [61]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 60")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -22459,20 +21854,10 @@ func MulMontNonUnrolled3904(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[480:488])
 	y[0] = binary.BigEndian.Uint64(y_bytes[480:488])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:488])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:488])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [62]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 61")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -23138,20 +22523,10 @@ func MulMontNonUnrolled3968(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[488:496])
 	y[0] = binary.BigEndian.Uint64(y_bytes[488:496])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:496])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:496])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [63]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 62")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -23827,20 +23202,10 @@ func MulMontNonUnrolled4032(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[496:504])
 	y[0] = binary.BigEndian.Uint64(y_bytes[496:504])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:504])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:504])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [64]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 63")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)
@@ -24526,20 +23891,10 @@ func MulMontNonUnrolled4096(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	x[0] = binary.BigEndian.Uint64(x_bytes[504:512])
 	y[0] = binary.BigEndian.Uint64(y_bytes[504:512])
 
-	/*
-	   xInt := new(big.Int).SetBytes(x_bytes[0:512])
-	   yInt := new(big.Int).SetBytes(y_bytes[0:512])
-	   modInt := ctx.ModulusNonInterleaved
-	*/
-	//fmt.Printf("mulmont\n x=%s\n y=%s\n mod=%s\n", xInt.String(), yInt.String(), modInt.String())
-
 	mod := ctx.ModulusLimbs
 	var t [65]uint64
 	var D uint64
 	var m, C uint64
-
-	fmt.Println("limbCount is 64")
-	fmt.Printf("inside mulmont.\n x = %x\n y = %x\n mod = %x\n", x, y, ctx.ModulusLimbs)
 
 	var gteC1, gteC2 uint64
 	_, gteC1 = bits.Sub64(mod[0], x[0], gteC1)

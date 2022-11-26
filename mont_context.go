@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"errors"
 	"math/big"
-    "fmt"
 )
 
 const limbSize = 8
@@ -139,6 +138,7 @@ func (m *Field) SetMod(mod []byte) error {
 
     mod = PadBytes8(mod)
     limbCount := uint(len(mod)) / 8
+	m.ElementSize = uint64(limbCount) * 8
 
 
 	modInt := new(big.Int).SetBytes(mod)
@@ -154,6 +154,11 @@ func (m *Field) SetMod(mod []byte) error {
 	*/
 
 	m.rSquared = rSquared.Bytes()
+    if len(m.rSquared) < int(m.ElementSize) {
+        pad_size := int(m.ElementSize) - len(m.rSquared)
+        padding := make([]byte, pad_size)
+        m.rSquared = append(padding, m.rSquared...)
+    }
 
 	// want to compute r_val - (mod & (r_val - 1))
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
@@ -181,7 +186,6 @@ func (m *Field) SetMod(mod []byte) error {
 
     m.Modulus = mod
 	m.NumLimbs = limbCount
-	m.ElementSize = uint64(limbCount) * 8
 
     m.ModulusLimbs = make([]uint64, m.NumLimbs)
     for i := 0; i < int(m.NumLimbs); i++ {
@@ -189,13 +193,11 @@ func (m *Field) SetMod(mod []byte) error {
         m.ModulusLimbs[int(m.NumLimbs) - 1 - i] = binary.BigEndian.Uint64(m.Modulus[i * 8:(i + 1) * 8])
     }
 
-
 	var genericMulMontCutoff uint = 64
 	if m.NumLimbs >= genericMulMontCutoff {
 		m.MulMont = MulMontNonInterleaved
 		m.AddMod = AddModGeneric
 		m.SubMod = SubModGeneric
-        fmt.Println("setmod: using generic impls")
 	} else {
 		m.MulMont = m.preset.MulMontImpls[limbCount-1]
 
