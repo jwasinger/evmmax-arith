@@ -1,4 +1,4 @@
-package mont_arith
+package evmmax_arith
 
 import (
 	"encoding/binary"
@@ -113,7 +113,6 @@ func LimbsToInt(limbs []uint64) *big.Int {
 	return new(big.Int).SetBytes(limbs_bytes)
 }
 
-// **NOTE** naming confusing.  actually the second-largest modulus (largest would have modinv as 1)
 func MaxModulus(limbCount uint) []byte {
 	mod := make([]byte, limbCount * 8, limbCount * 8)
 
