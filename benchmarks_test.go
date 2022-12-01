@@ -23,7 +23,7 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 	y := new(big.Int).SetBytes(mod)
 	y = y.Sub(y, big.NewInt(100))
 
-    outBytes := make([]byte, limbCount * 8)
+	outBytes := make([]byte, limbCount*8)
 	xBytes := PadBytes(x.Bytes(), montCtx.ElementSize)
 	yBytes := PadBytes(y.Bytes(), montCtx.ElementSize)
 
@@ -36,7 +36,7 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 
 func benchmarkAddMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	// worst-case performance: unecessary final subtraction
-    // TODO verify this again
+	// TODO verify this again
 	mod := MaxModulus(limbCount)
 	montCtx := NewField(preset)
 
@@ -102,7 +102,7 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := uint(1); limbCount <= 100000; {
+			for limbCount := preset.benchRanges[op].min; limbCount <= preset.benchRanges[op].max; {
 				cluster := true
 				var dist uint
 				// bench every 3 if it's under 100

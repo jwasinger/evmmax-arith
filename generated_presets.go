@@ -664,7 +664,6 @@ func DefaultPreset() ArithPreset {
 
 func AllPresets() []ArithPreset {
 	return []ArithPreset{
-		GenericMulMontPreset(),
 		NonUnrolledPreset(),
 		Asm384Preset(),
 	}

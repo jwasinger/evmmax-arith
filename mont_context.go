@@ -13,7 +13,7 @@ type Field struct {
 	// TODO make most of these private and the arith operations methods of this struct
 	Modulus               []byte
 	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
-    ModulusLimbs          []uint64
+	ModulusLimbs          []uint64
 
 	MontParamInterleaved    uint64
 	MontParamNonInterleaved *big.Int
@@ -21,7 +21,7 @@ type Field struct {
 	NumLimbs uint
 
 	r    *big.Int
-    rInv *big.Int // TODO remove this
+	rInv *big.Int // TODO remove this
 
 	rSquared []byte
 
@@ -42,7 +42,7 @@ type Field struct {
 }
 
 func (m *Field) RSquared() []byte {
-	rSquared := make([]byte, m.NumLimbs * 8)
+	rSquared := make([]byte, m.NumLimbs*8)
 	copy(rSquared, m.rSquared)
 	return rSquared
 }
@@ -84,7 +84,7 @@ func (m *Field) ToNorm(val []byte) ([]byte, error) {
 	// TODO ensure val is less than the modulus?
 	out_bytes := make([]byte, m.NumLimbs*8)
 	one := make([]byte, len(val))
-	one[len(val) - 1] = 1
+	one[len(val)-1] = 1
 
 	if err := m.MulMont(m, out_bytes, val, one); err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func NewField(preset ArithPreset) *Field {
 	result := Field{
 		nil,
 		nil,
-        nil,
+		nil,
 
 		0,
 		nil,
@@ -135,16 +135,16 @@ const MaxInputSize = 16
 // compute montgomery parameters given big-endian modulus bytes.
 // don't pad the input bytes
 func (m *Field) SetMod(mod []byte) error {
-    if mod[len(mod) - 1] % 2 == 0 {
+	if mod[len(mod)-1]%2 == 0 {
 		return errors.New("modulus cannot be even")
 	}
 
-    if len(mod) / 8 > MaxInputSize {
-        return errors.New("modulus larger than max size")
-    }
+	if len(mod)/8 > MaxInputSize {
+		return errors.New("modulus larger than max size")
+	}
 
-    mod = PadBytes8(mod)
-    limbCount := uint(len(mod)) / 8
+	mod = PadBytes8(mod)
+	limbCount := uint(len(mod)) / 8
 	m.ElementSize = uint64(limbCount) * 8
 
 	modInt := new(big.Int).SetBytes(mod)
@@ -155,18 +155,18 @@ func (m *Field) SetMod(mod []byte) error {
 	rSquared.Mod(rSquared, modInt)
 
 	m.rSquared = rSquared.Bytes()
-    if len(m.rSquared) < int(m.ElementSize) {
-        pad_size := int(m.ElementSize) - len(m.rSquared)
-        padding := make([]byte, pad_size)
-        m.rSquared = append(padding, m.rSquared...)
-    }
+	if len(m.rSquared) < int(m.ElementSize) {
+		pad_size := int(m.ElementSize) - len(m.rSquared)
+		padding := make([]byte, pad_size)
+		m.rSquared = append(padding, m.rSquared...)
+	}
 
 	// want to compute r_val - (mod & (r_val - 1))
 
-    // 1 << 64
+	// 1 << 64
 	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
 
-    mod_uint64 := binary.BigEndian.Uint64(mod[len(mod) - 8: len(mod)])
+	mod_uint64 := binary.BigEndian.Uint64(mod[len(mod)-8:])
 
 	negModInt := new(big.Int)
 	negModInt.SetUint64(mod_uint64)
@@ -175,26 +175,20 @@ func (m *Field) SetMod(mod []byte) error {
 	modInv.ModInverse(negModInt, littleRVal)
 
 	m.MontParamInterleaved = modInv.Uint64()
-
 	m.ModulusNonInterleaved = modInt
-	rVal := big.NewInt(1)
-	rVal.Lsh(rVal, 64*limbCount)
-	negModInt = new(big.Int)
-	negModInt.Neg(modInt)
-	m.MontParamNonInterleaved = new(big.Int)
-	m.MontParamNonInterleaved.ModInverse(negModInt, rVal)
+
 	m.mask = big.NewInt(1)
 	m.mask.Lsh(m.mask, 64*limbCount)
 	m.mask.Sub(m.mask, big.NewInt(1))
 
-    m.Modulus = mod
+	m.Modulus = mod
 	m.NumLimbs = limbCount
 
-    m.ModulusLimbs = make([]uint64, m.NumLimbs)
-    for i := 0; i < int(m.NumLimbs); i++ {
-        // limb-order is little-endian internally
-        m.ModulusLimbs[int(m.NumLimbs) - 1 - i] = binary.BigEndian.Uint64(m.Modulus[i * 8:(i + 1) * 8])
-    }
+	m.ModulusLimbs = make([]uint64, m.NumLimbs)
+	for i := 0; i < int(m.NumLimbs); i++ {
+		// limb-order is little-endian internally
+		m.ModulusLimbs[int(m.NumLimbs)-1-i] = binary.BigEndian.Uint64(m.Modulus[i*8 : (i+1)*8])
+	}
 
 	var genericMulMontCutoff uint = 64
 	if m.NumLimbs >= genericMulMontCutoff {
@@ -207,7 +201,7 @@ func (m *Field) SetMod(mod []byte) error {
 		m.SubMod = m.preset.SubModImpls[limbCount-1]
 	}
 
-    // TODO when generic add/sub cutoff?
+	// TODO when generic add/sub cutoff?
 
 	return nil
 }
