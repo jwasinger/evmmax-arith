@@ -6,15 +6,13 @@ import (
 	"testing"
 )
 
-var MaxLimbsEVMMAX uint = 64
-
 func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 	mod := GenTestModulus(limbCount)
 	montCtx := NewField(preset)
 
 	err := montCtx.SetMod(mod)
 	if err != nil {
-		panic("error")
+		panic(err)
 	}
 
 	x := new(big.Int).SetBytes(mod)

@@ -235,7 +235,7 @@ func genPresets(maxLimbs int) {
 
 func main() {
     // TODO document this (it's the point where we have definitively switched over to the generic algo):
-    maxLimbs := 64
+    maxLimbs := 16
 	genPresets(maxLimbs)
 	genMulMont("nonunrolled", maxLimbs)
 	genAddMod("nonunrolled", maxLimbs)
