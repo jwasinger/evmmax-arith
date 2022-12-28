@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const EVMMAXMaxLimbCount = 128
+const EVMMAXMaxLimbCount = 16
 
 func randBigInt(r *rand.Rand, modulus *big.Int, limbCount uint) *big.Int {
 	resBytes := make([]byte, limbCount*8)
