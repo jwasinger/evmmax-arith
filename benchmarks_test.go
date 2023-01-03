@@ -106,7 +106,7 @@ func BenchmarkOps(b *testing.B) {
 				continue
 			}
 
-			for limbCount := uint(1); limbCount <= 100000; {
+			for limbCount := uint(1); limbCount <= 16; {
 				cluster := true
 				var dist uint
 				// bench every 3 if it's under 100
