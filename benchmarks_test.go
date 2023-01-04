@@ -139,7 +139,7 @@ func BenchmarkOps(b *testing.B) {
 					fn = benchmarkSetMod
 				}
 				_ = cluster // TODO?
-				const samplesPerBench = 10
+				const samplesPerBench = 5
 				for i := 0; i < samplesPerBench; i++ {
 					b.Run(fmt.Sprintf("%s_%s_%d", preset.name, op, limbCount*64), func(b *testing.B) {
 						fn(b, limbCount, preset)
