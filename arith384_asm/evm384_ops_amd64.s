@@ -8,6 +8,8 @@ TEXT ·AddMod384(SB), NOSPLIT, $0-32
   MOVQ    a+8(FP), SI
   MOVQ    0(SI), R8
   MOVQ    8(SI), R9
+  BSWAPQ  R8
+
   MOVQ    16(SI), R10
   MOVQ    24(SI), R11
   MOVQ    32(SI), R12
