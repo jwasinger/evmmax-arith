@@ -2,7 +2,7 @@ package evmmax_arith
 
 import (
 	"fmt"
-	"math/big"
+	"math/rand"
 	"testing"
 )
 
@@ -15,20 +15,21 @@ func benchmarkMulMont(b *testing.B, limbCount uint, preset ArithPreset) {
 		panic(err)
 	}
 
-	x := new(big.Int).SetBytes(mod)
-	x = x.Sub(x, big.NewInt(100))
+	mem := make([]byte, limbCount*8*256)
 
-	y := new(big.Int).SetBytes(mod)
-	y = y.Sub(y, big.NewInt(100))
-
-	outBytes := make([]byte, limbCount*8)
-	xBytes := PadBytes(x.Bytes(), montCtx.ElementSize)
-	yBytes := PadBytes(y.Bytes(), montCtx.ElementSize)
+	xIdxs := make([]int, 256)
+	yIdxs := make([]int, 256)
+	outIdxs := make([]int, 256)
+	for i := 0; i < 256; i++ {
+		outIdxs[i] = rand.Intn(255)
+		xIdxs[i] = rand.Intn(255)
+		yIdxs[i] = rand.Intn(255)
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		montCtx.MulMont(montCtx, outBytes, xBytes, yBytes)
+		montCtx.MulMont(montCtx, mem[outIdxs[i%256]:outIdxs[i%256]+48], mem[xIdxs[i%256]:xIdxs[i%256]+48], mem[yIdxs[i%256]:yIdxs[i%256]+48])
 	}
 }
 
@@ -42,37 +43,47 @@ func benchmarkAddMod(b *testing.B, limbCount uint, preset ArithPreset) {
 	if err != nil {
 		panic("error")
 	}
-	x := new(big.Int).SetBytes(mod)
-	x = x.Sub(x, big.NewInt(2))
-	y := big.NewInt(1)
-	outBytes := make([]byte, limbCount*8)
-	xBytes := PadBytes(x.Bytes(), montCtx.ElementSize)
-	yBytes := PadBytes(y.Bytes(), montCtx.ElementSize)
+	mem := make([]byte, limbCount*8*256)
+
+	xIdxs := make([]int, 256)
+	yIdxs := make([]int, 256)
+	outIdxs := make([]int, 256)
+	for i := 0; i < 256; i++ {
+		outIdxs[i] = rand.Intn(255)
+		xIdxs[i] = rand.Intn(255)
+		yIdxs[i] = rand.Intn(255)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		montCtx.AddMod(montCtx, outBytes, xBytes, yBytes)
+		montCtx.AddMod(montCtx, mem[outIdxs[i%256]:outIdxs[i%256]+48], mem[xIdxs[i%256]:xIdxs[i%256]+48], mem[yIdxs[i%256]:yIdxs[i%256]+48])
 	}
 }
 
 func benchmarkSubMod(b *testing.B, limbCount uint, preset ArithPreset) {
-	modLimbs := MaxModulus(limbCount)
+	// worst-case performance: unecessary final subtraction
+	// TODO verify this again
+	mod := MaxModulus(limbCount)
 	montCtx := NewField(preset)
 
-	// worst-case performance: unecessary final subtraction
-	err := montCtx.SetMod(modLimbs)
+	err := montCtx.SetMod(mod)
 	if err != nil {
 		panic("error")
 	}
-	x := big.NewInt(1)
-	y := big.NewInt(0)
-	outBytes := make([]byte, limbCount*8)
-	xBytes := LimbsToLEBytes(IntToLimbs(x, limbCount))
-	yBytes := LimbsToLEBytes(IntToLimbs(y, limbCount))
+	mem := make([]byte, limbCount*8*256)
+
+	xIdxs := make([]int, 256)
+	yIdxs := make([]int, 256)
+	outIdxs := make([]int, 256)
+	for i := 0; i < 256; i++ {
+		outIdxs[i] = rand.Intn(255)
+		xIdxs[i] = rand.Intn(255)
+		yIdxs[i] = rand.Intn(255)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		montCtx.SubMod(montCtx, outBytes, xBytes, yBytes)
+		montCtx.AddMod(montCtx, mem[outIdxs[i%256]:outIdxs[i%256]+48], mem[xIdxs[i%256]:xIdxs[i%256]+48], mem[yIdxs[i%256]:yIdxs[i%256]+48])
 	}
 }
 
