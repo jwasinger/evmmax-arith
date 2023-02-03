@@ -1,7 +1,7 @@
 .PHONY: build
 
 clean:
-	rm generated*.go
+	rm -f generated*.go
 
 build:
 	cd generator && go build && cd ..  && ./generator/generator 64 

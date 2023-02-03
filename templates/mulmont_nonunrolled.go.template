@@ -12,8 +12,6 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_byt
 	var D uint64
 	var m, C uint64
 
-    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
-
     C, t[0] = bits.Mul64(x[0], y[0])
     {{- range $i := intRange 1 $limbCount}}
         C, t[{{$i}}] = madd1(x[0], y[{{$i}}], C)

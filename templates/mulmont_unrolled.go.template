@@ -12,8 +12,6 @@ func MulMontUnrolled{{mul $limbCount $limbBits}}(ctx *Field, out_bytes, x_bytes,
 	var D uint64
 	var m, C uint64
 
-    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
-
 	{{- range $j := intRange 0 $limbCount}}
 		// -----------------------------------
 		// First loop

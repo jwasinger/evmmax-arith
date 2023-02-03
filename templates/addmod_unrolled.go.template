@@ -9,8 +9,6 @@ func AddModUnrolled{{mul $limbCount $limbBits}}(f *Field, out_bytes, x_bytes, y_
 	z := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&out_bytes[0]))[:]
 	mod := (*[{{$limbCount}}]uint64)(unsafe.Pointer(&f.Modulus[0]))[:]
 
-    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
-
     var c uint64 = 0
     var c1 uint64 = 0
     tmp := make([]uint64, {{$limbCount}})
