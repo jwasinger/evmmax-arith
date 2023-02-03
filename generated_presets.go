@@ -1,4 +1,4 @@
-package mont_arith
+package evmmax_arith
 
 type benchRange struct {
 	min uint

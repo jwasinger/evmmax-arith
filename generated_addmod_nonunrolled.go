@@ -1,4 +1,4 @@
-package mont_arith
+package evmmax_arith
 
 import (
 	"math/bits"

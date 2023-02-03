@@ -1,3 +1,3 @@
-module github.com/jwasinger/mont-arith
+module github.com/jwasinger/evmmax-arith
 
 go 1.16
