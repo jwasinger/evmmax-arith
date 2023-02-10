@@ -21,7 +21,7 @@ fmt.Println({{$.z}})
 */
 
 if gteC1 != 0 || gteC2 != 0 {
-    return errors.New(fmt.Sprintf("input gte modulus"))
+    return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 }
 {{ end }}
 `

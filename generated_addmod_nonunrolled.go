@@ -29,7 +29,7 @@ func AddModNonUnrolled64(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -83,7 +83,7 @@ func AddModNonUnrolled128(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -142,7 +142,7 @@ func AddModNonUnrolled192(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -206,7 +206,7 @@ func AddModNonUnrolled256(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -275,7 +275,7 @@ func AddModNonUnrolled320(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -349,7 +349,7 @@ func AddModNonUnrolled384(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -428,7 +428,7 @@ func AddModNonUnrolled448(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -512,7 +512,7 @@ func AddModNonUnrolled512(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -601,7 +601,7 @@ func AddModNonUnrolled576(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -695,7 +695,7 @@ func AddModNonUnrolled640(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -794,7 +794,7 @@ func AddModNonUnrolled704(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -898,7 +898,7 @@ func AddModNonUnrolled768(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -1007,7 +1007,7 @@ func AddModNonUnrolled832(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -1121,7 +1121,7 @@ func AddModNonUnrolled896(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -1240,7 +1240,7 @@ func AddModNonUnrolled960(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0
@@ -1364,7 +1364,7 @@ func AddModNonUnrolled1024(f *Field, out_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	var c uint64 = 0

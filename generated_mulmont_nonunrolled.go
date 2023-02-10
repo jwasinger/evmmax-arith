@@ -33,7 +33,7 @@ func MulMontNonUnrolled64(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -104,7 +104,7 @@ func MulMontNonUnrolled128(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -185,7 +185,7 @@ func MulMontNonUnrolled192(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -276,7 +276,7 @@ func MulMontNonUnrolled256(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -377,7 +377,7 @@ func MulMontNonUnrolled320(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -488,7 +488,7 @@ func MulMontNonUnrolled384(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -609,7 +609,7 @@ func MulMontNonUnrolled448(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -740,7 +740,7 @@ func MulMontNonUnrolled512(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -881,7 +881,7 @@ func MulMontNonUnrolled576(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1032,7 +1032,7 @@ func MulMontNonUnrolled640(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1193,7 +1193,7 @@ func MulMontNonUnrolled704(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1364,7 +1364,7 @@ func MulMontNonUnrolled768(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1545,7 +1545,7 @@ func MulMontNonUnrolled832(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1736,7 +1736,7 @@ func MulMontNonUnrolled896(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -1937,7 +1937,7 @@ func MulMontNonUnrolled960(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error {
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
@@ -2148,7 +2148,7 @@ func MulMontNonUnrolled1024(ctx *Field, z_bytes, x_bytes, y_bytes []byte) error 
 	*/
 
 	if gteC1 != 0 || gteC2 != 0 {
-		return errors.New(fmt.Sprintf("input gte modulus"))
+		return errors.New(fmt.Sprintf("input gte modulus: x=%x,y=%x,mod=%x", x, y, z))
 	}
 
 	C, t[0] = bits.Mul64(x[0], y[0])
