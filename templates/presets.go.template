@@ -36,21 +36,13 @@ func (a *ArithPreset) MaxLimbCount() uint {
 func Asm384Preset() ArithPreset {
 	addModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-		{{- if eq $i 6 }}
-			AddMod384_asm,
-		{{- else }}
 			AddModNonUnrolled{{mul $i $limbBits}},
-		{{- end }}
 		{{- end}}
 	}
 
 	subModImpls := []arithFunc {
 		{{- range $i := intRange 1 $limbCountPlusOne}}
-		{{- if eq $i 6 }}
-			SubMod384_asm,
-		{{- else }}
 			SubModNonUnrolled{{mul $i $limbBits}},
-		{{- end }}
 		{{- end}}
 	}
 	mulMontImpls := []arithFunc {
