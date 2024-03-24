@@ -1,6 +1,7 @@
 package evmmax_arith
 
 import (
+	"bytes"
 	"math"
 	"math/big"
 	"math/rand"
@@ -24,19 +25,25 @@ func TestMulMontBLS12831(t *testing.T) {
 
 	var limbCount uint = 6
 	montCtx, _ := NewModulusState(mod, 256)
-	elemSize := int(math.Ceil(float64(len(mod))/8.0)) * 8
+	elemSize := int(math.Ceil(float64(len(mod)) / 8.0))
+
+	s := rand.NewSource(42)
+	r := rand.New(s)
 
 	/*
-		s := rand.NewSource(42)
-		r := rand.New(s)
-
-		x := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
-		y := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
+			x := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
+			y := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
+		xInt := big.NewInt(2)
+		yInt := big.NewInt(3)
 	*/
-	x := PadBytes(big.NewInt(2).Bytes(), uint64(elemSize))
-	y := PadBytes(big.NewInt(3).Bytes(), uint64(elemSize))
-	montCtx.Store(1, 1, x)
+	xInt := randBigInt(r, modInt)
+	yInt := randBigInt(r, modInt)
 
+	x := PadBytes(xInt.Bytes(), uint64(elemSize)*8)
+	y := PadBytes(yInt.Bytes(), uint64(elemSize)*8)
+	expected := new(big.Int).Mul(xInt, yInt)
+	expected.Mod(expected, montCtx.modulusInt)
+	montCtx.Store(1, 1, x)
 	montCtx.Store(2, 1, y)
 
 	montCtx.MulMod(montCtx.modInv,
@@ -46,6 +53,8 @@ func TestMulMontBLS12831(t *testing.T) {
 		montCtx.scratchSpace[elemSize*2:elemSize*3])
 	outBytes := make([]byte, limbCount*8)
 	montCtx.Load(outBytes, 0, 1)
-	panic(outBytes)
+	if bytes.Compare(PadBytes(expected.Bytes(), uint64(elemSize)*8), outBytes) != 0 {
+		t.Fatalf("result not matching")
+	}
 	// TODO assert that the result is correct
 }

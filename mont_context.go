@@ -1,8 +1,8 @@
 package evmmax_arith
 
 import (
+	"encoding/binary"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 )
@@ -10,10 +10,12 @@ import (
 const limbSize = 8
 
 type ModulusState struct {
-	Modulus      []byte
-	R2           []byte
-	modInv       uint64
-	scratchSpace []byte
+	Modulus []uint64
+	R2      []uint64
+	modInv  uint64
+
+	// TODO: make this uint
+	scratchSpace []uint64
 	AddSubCost   uint64
 	MulCost      uint64
 
@@ -21,7 +23,20 @@ type ModulusState struct {
 	SubMod arithFunc
 	MulMod arithFunc
 
-	one []byte
+	one        []uint64
+	modulusInt *big.Int
+}
+
+func bytesToLimbs(b []byte) []uint64 {
+	limbs := make([]uint64, len(b)/8)
+	for i := 0; i < len(b)/8; i++ {
+		limbs[i] = binary.BigEndian.Uint64(b[i*8 : (i+1)*8])
+	}
+	// reverse to little-endian limb ordering
+	for i, j := 0, len(limbs)-1; i < j; i, j = i+1, j-1 {
+		limbs[i], limbs[j] = limbs[j], limbs[i]
+	}
+	return limbs
 }
 
 func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
@@ -53,50 +68,51 @@ func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
 		r2Bytes = append(r2Bytes, make([]byte, paddedSize-len(r2Bytes))...)
 	}
 
-	one := make([]byte, paddedSize)
-	one[paddedSize-1] = 1
+	one := make([]uint64, paddedSize/8)
+	one[len(one)-1] = 1
 
-	// TODO: represent scratch space as array of uints internally (?)
 	m := ModulusState{
-		Modulus:      modBytes,
+		Modulus:      bytesToLimbs(modBytes),
 		modInv:       modInv,
-		R2:           r2Bytes,
+		R2:           bytesToLimbs(r2Bytes),
 		MulMod:       Preset[paddedSize/8-1],
-		scratchSpace: make([]byte, paddedSize*scratchSize),
+		scratchSpace: make([]uint64, (paddedSize/8)*scratchSize),
 		one:          one,
+		modulusInt:   mod,
 	}
 	return &m, nil
 }
 func (m *ModulusState) Store(dst, count int, from []byte) error {
 	elemSize := len(m.Modulus)
-	dstIdx := dst
-	for srcIdx := 0; srcIdx < elemSize*count; srcIdx += elemSize {
-		if !lte(from[srcIdx:srcIdx+elemSize], m.Modulus) {
+	dstIdx := dst * elemSize
+	for srcIdx := 0; srcIdx < elemSize*8*count; srcIdx += elemSize * 8 {
+		// convert the big-endian bytes to little-endian limbs, descending-significance ordered
+		val := bytesToLimbs(from[srcIdx : srcIdx+elemSize*8])
+		if !lt(val, m.Modulus) {
 			return errors.New("value must be less than modulus")
 		}
-		fmt.Println("converting to mont")
-		fmt.Printf("modulus=%x\n", m.Modulus)
-		fmt.Printf("modinv=%x\n", m.modInv)
-		fmt.Printf("arg=%x\n", from[srcIdx:(srcIdx+1)*elemSize])
-		fmt.Printf("r2=%x\n", m.R2)
-
 		// convert to Montgomery form
 		m.MulMod(m.modInv,
 			m.Modulus,
-			m.scratchSpace[dstIdx*elemSize:(dstIdx+1)*elemSize],
-			from[srcIdx:(srcIdx+1)*elemSize],
+			m.scratchSpace[dstIdx:dstIdx+elemSize],
+			val,
 			m.R2)
-		fmt.Printf("result=%x\n", m.scratchSpace[dstIdx*elemSize:(dstIdx+1)*elemSize])
 		dstIdx++
 	}
 	return nil
 }
 
 func (m *ModulusState) Load(dst []byte, from, count int) {
-	dstIdx := 0
 	elemSize := len(m.Modulus)
-	for srcIdx := from * elemSize; srcIdx < (from+count)*elemSize; srcIdx += elemSize {
+	var dstIdx int
+	for srcIdx := from; srcIdx < from+count; srcIdx++ {
+		res := make([]uint64, elemSize)
 		// convert from Montgomery to canonical form
-		m.MulMod(m.modInv, m.Modulus, dst[dstIdx:dstIdx+elemSize], m.scratchSpace[srcIdx:srcIdx+elemSize], m.one)
+		m.MulMod(m.modInv, m.Modulus, res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one)
+		// swap each limb to big endian (the result in dst is a big-endian number)
+		for i := 0; i < elemSize; i++ {
+			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[i])
+		}
+		dstIdx += elemSize * 8
 	}
 }

@@ -6,33 +6,18 @@
 {{ $bitWidthBytes := 8 }}
 
 
-func MontMul{{mul $limbCount $limbBits}}(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul{{mul $limbCount $limbBits}}(modInv uint64, mod, out, x, y []uint64) {
 	var t [{{- add $limbCount 1}}]uint64
 	var D uint64
 	var m, C uint64
 
-        var (
-            mod [{{$limbCount}}]uint64
-            x [{{$limbCount}}]uint64
-            y [{{$limbCount}}]uint64
-            res [{{$limbCount}}]uint64
-        )
+    var res [{{$limbCount}}]uint64
 
     // signal to compiler to avoid subsequent bounds checks
-    _ = xBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
-    _ = yBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
-    _ = outBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
-    _ = modBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
-
-    {{- range $i := intRange 0 $limbCountSub1 }}
-        x[{{$i}}] = binary.LittleEndian.Uint64(xBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
-    {{- end}}
-    {{- range $i := intRange 0 $limbCountSub1 }}
-        y[{{$i}}] = binary.LittleEndian.Uint64(yBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
-    {{- end}}
-    {{- range $i := intRange 0 $limbCountSub1 }}
-        mod[{{$i}}] = binary.LittleEndian.Uint64(modBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
-    {{- end}}
+    _ = x[{{sub $limbCount 1}}]
+    _ = y[{{sub $limbCount 1}}]
+    _ = out[{{sub $limbCount 1}}]
+    _ = mod[{{sub $limbCount 1}}]
 
 
     // 1st outer loop:
@@ -90,7 +75,5 @@ func MontMul{{mul $limbCount $limbBits}}(modInv uint64, modBytes, outBytes, xByt
         src = res[:]
 	}
 
-    {{- range $i := intRange 0 $limbCount }}
-        binary.LittleEndian.PutUint64(outBytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{sub $limbCountSub1 $i}}])
-    {{- end }}
+	copy(out[:], src)
 }

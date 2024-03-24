@@ -1,7 +1,6 @@
 package evmmax_arith
 
 import (
-	"encoding/binary"
 	"math/bits"
 )
 
@@ -22,23 +21,18 @@ var Preset = []arithFunc{
 	MontMul896,
 }
 
-func MontMul64(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul64(modInv uint64, mod, out, x, y []uint64) {
 	var t [2]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [1]uint64
-		x   [1]uint64
-		y   [1]uint64
-		res [1]uint64
-	)
+	var res [1]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[7]
-	_ = yBytes[7]
-	_ = outBytes[7]
-	_ = modBytes[7]
+	_ = x[0]
+	_ = y[0]
+	_ = out[0]
+	_ = mod[0]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -75,29 +69,22 @@ func MontMul64(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul128(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul128(modInv uint64, mod, out, x, y []uint64) {
 	var t [3]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [2]uint64
-		x   [2]uint64
-		y   [2]uint64
-		res [2]uint64
-	)
+	var res [2]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[15]
-	_ = yBytes[15]
-	_ = outBytes[15]
-	_ = modBytes[15]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
+	_ = x[1]
+	_ = y[1]
+	_ = out[1]
+	_ = mod[1]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -139,33 +126,22 @@ func MontMul128(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[1])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul192(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul192(modInv uint64, mod, out, x, y []uint64) {
 	var t [4]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [3]uint64
-		x   [3]uint64
-		y   [3]uint64
-		res [3]uint64
-	)
+	var res [3]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[23]
-	_ = yBytes[23]
-	_ = outBytes[23]
-	_ = modBytes[23]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
+	_ = x[2]
+	_ = y[2]
+	_ = out[2]
+	_ = mod[2]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -212,37 +188,22 @@ func MontMul192(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[2])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[1])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul256(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul256(modInv uint64, mod, out, x, y []uint64) {
 	var t [5]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [4]uint64
-		x   [4]uint64
-		y   [4]uint64
-		res [4]uint64
-	)
+	var res [4]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[31]
-	_ = yBytes[31]
-	_ = outBytes[31]
-	_ = modBytes[31]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
+	_ = x[3]
+	_ = y[3]
+	_ = out[3]
+	_ = mod[3]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -294,41 +255,22 @@ func MontMul256(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[3])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[2])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[1])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul320(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul320(modInv uint64, mod, out, x, y []uint64) {
 	var t [6]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [5]uint64
-		x   [5]uint64
-		y   [5]uint64
-		res [5]uint64
-	)
+	var res [5]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[39]
-	_ = yBytes[39]
-	_ = outBytes[39]
-	_ = modBytes[39]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
+	_ = x[4]
+	_ = y[4]
+	_ = out[4]
+	_ = mod[4]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -385,45 +327,22 @@ func MontMul320(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[4])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[3])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[2])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[1])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul384(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul384(modInv uint64, mod, out, x, y []uint64) {
 	var t [7]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [6]uint64
-		x   [6]uint64
-		y   [6]uint64
-		res [6]uint64
-	)
+	var res [6]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[47]
-	_ = yBytes[47]
-	_ = outBytes[47]
-	_ = modBytes[47]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
+	_ = x[5]
+	_ = y[5]
+	_ = out[5]
+	_ = mod[5]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -485,49 +404,22 @@ func MontMul384(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[5])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[4])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[3])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[2])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[1])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul448(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul448(modInv uint64, mod, out, x, y []uint64) {
 	var t [8]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [7]uint64
-		x   [7]uint64
-		y   [7]uint64
-		res [7]uint64
-	)
+	var res [7]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[55]
-	_ = yBytes[55]
-	_ = outBytes[55]
-	_ = modBytes[55]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
+	_ = x[6]
+	_ = y[6]
+	_ = out[6]
+	_ = mod[6]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -594,53 +486,22 @@ func MontMul448(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[6])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[5])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[4])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[3])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[2])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[1])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul512(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul512(modInv uint64, mod, out, x, y []uint64) {
 	var t [9]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [8]uint64
-		x   [8]uint64
-		y   [8]uint64
-		res [8]uint64
-	)
+	var res [8]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[63]
-	_ = yBytes[63]
-	_ = outBytes[63]
-	_ = modBytes[63]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
+	_ = x[7]
+	_ = y[7]
+	_ = out[7]
+	_ = mod[7]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -712,57 +573,22 @@ func MontMul512(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[7])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[6])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[5])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[4])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[3])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[2])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[1])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul576(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul576(modInv uint64, mod, out, x, y []uint64) {
 	var t [10]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [9]uint64
-		x   [9]uint64
-		y   [9]uint64
-		res [9]uint64
-	)
+	var res [9]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[71]
-	_ = yBytes[71]
-	_ = outBytes[71]
-	_ = modBytes[71]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
+	_ = x[8]
+	_ = y[8]
+	_ = out[8]
+	_ = mod[8]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -839,61 +665,22 @@ func MontMul576(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[8])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[7])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[6])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[5])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[4])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[3])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[2])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[1])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul640(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul640(modInv uint64, mod, out, x, y []uint64) {
 	var t [11]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [10]uint64
-		x   [10]uint64
-		y   [10]uint64
-		res [10]uint64
-	)
+	var res [10]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[79]
-	_ = yBytes[79]
-	_ = outBytes[79]
-	_ = modBytes[79]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
+	_ = x[9]
+	_ = y[9]
+	_ = out[9]
+	_ = mod[9]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -975,65 +762,22 @@ func MontMul640(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[9])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[8])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[7])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[6])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[5])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[4])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[3])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[2])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[1])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul704(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul704(modInv uint64, mod, out, x, y []uint64) {
 	var t [12]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [11]uint64
-		x   [11]uint64
-		y   [11]uint64
-		res [11]uint64
-	)
+	var res [11]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[87]
-	_ = yBytes[87]
-	_ = outBytes[87]
-	_ = modBytes[87]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
+	_ = x[10]
+	_ = y[10]
+	_ = out[10]
+	_ = mod[10]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1120,69 +864,22 @@ func MontMul704(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[10])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[9])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[8])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[7])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[6])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[5])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[4])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[3])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[2])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[1])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul768(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul768(modInv uint64, mod, out, x, y []uint64) {
 	var t [13]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [12]uint64
-		x   [12]uint64
-		y   [12]uint64
-		res [12]uint64
-	)
+	var res [12]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[95]
-	_ = yBytes[95]
-	_ = outBytes[95]
-	_ = modBytes[95]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	x[10] = binary.LittleEndian.Uint64(xBytes[80:88])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	y[10] = binary.LittleEndian.Uint64(yBytes[80:88])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
-	mod[10] = binary.LittleEndian.Uint64(modBytes[80:88])
+	_ = x[11]
+	_ = y[11]
+	_ = out[11]
+	_ = mod[11]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1274,73 +971,22 @@ func MontMul768(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[11])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[10])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[9])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[8])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[7])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[6])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[5])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[4])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[3])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[2])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[1])
-	binary.LittleEndian.PutUint64(outBytes[88:96], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul832(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul832(modInv uint64, mod, out, x, y []uint64) {
 	var t [14]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [13]uint64
-		x   [13]uint64
-		y   [13]uint64
-		res [13]uint64
-	)
+	var res [13]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[103]
-	_ = yBytes[103]
-	_ = outBytes[103]
-	_ = modBytes[103]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	x[10] = binary.LittleEndian.Uint64(xBytes[80:88])
-	x[11] = binary.LittleEndian.Uint64(xBytes[88:96])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	y[10] = binary.LittleEndian.Uint64(yBytes[80:88])
-	y[11] = binary.LittleEndian.Uint64(yBytes[88:96])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
-	mod[10] = binary.LittleEndian.Uint64(modBytes[80:88])
-	mod[11] = binary.LittleEndian.Uint64(modBytes[88:96])
+	_ = x[12]
+	_ = y[12]
+	_ = out[12]
+	_ = mod[12]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1437,77 +1083,22 @@ func MontMul832(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[12])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[11])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[10])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[9])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[8])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[7])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[6])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[5])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[4])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[3])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[2])
-	binary.LittleEndian.PutUint64(outBytes[88:96], src[1])
-	binary.LittleEndian.PutUint64(outBytes[96:104], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul896(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul896(modInv uint64, mod, out, x, y []uint64) {
 	var t [15]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [14]uint64
-		x   [14]uint64
-		y   [14]uint64
-		res [14]uint64
-	)
+	var res [14]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[111]
-	_ = yBytes[111]
-	_ = outBytes[111]
-	_ = modBytes[111]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	x[10] = binary.LittleEndian.Uint64(xBytes[80:88])
-	x[11] = binary.LittleEndian.Uint64(xBytes[88:96])
-	x[12] = binary.LittleEndian.Uint64(xBytes[96:104])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	y[10] = binary.LittleEndian.Uint64(yBytes[80:88])
-	y[11] = binary.LittleEndian.Uint64(yBytes[88:96])
-	y[12] = binary.LittleEndian.Uint64(yBytes[96:104])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
-	mod[10] = binary.LittleEndian.Uint64(modBytes[80:88])
-	mod[11] = binary.LittleEndian.Uint64(modBytes[88:96])
-	mod[12] = binary.LittleEndian.Uint64(modBytes[96:104])
+	_ = x[13]
+	_ = y[13]
+	_ = out[13]
+	_ = mod[13]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1609,81 +1200,22 @@ func MontMul896(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[13])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[12])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[11])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[10])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[9])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[8])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[7])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[6])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[5])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[4])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[3])
-	binary.LittleEndian.PutUint64(outBytes[88:96], src[2])
-	binary.LittleEndian.PutUint64(outBytes[96:104], src[1])
-	binary.LittleEndian.PutUint64(outBytes[104:112], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul960(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul960(modInv uint64, mod, out, x, y []uint64) {
 	var t [16]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [15]uint64
-		x   [15]uint64
-		y   [15]uint64
-		res [15]uint64
-	)
+	var res [15]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[119]
-	_ = yBytes[119]
-	_ = outBytes[119]
-	_ = modBytes[119]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	x[10] = binary.LittleEndian.Uint64(xBytes[80:88])
-	x[11] = binary.LittleEndian.Uint64(xBytes[88:96])
-	x[12] = binary.LittleEndian.Uint64(xBytes[96:104])
-	x[13] = binary.LittleEndian.Uint64(xBytes[104:112])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	y[10] = binary.LittleEndian.Uint64(yBytes[80:88])
-	y[11] = binary.LittleEndian.Uint64(yBytes[88:96])
-	y[12] = binary.LittleEndian.Uint64(yBytes[96:104])
-	y[13] = binary.LittleEndian.Uint64(yBytes[104:112])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
-	mod[10] = binary.LittleEndian.Uint64(modBytes[80:88])
-	mod[11] = binary.LittleEndian.Uint64(modBytes[88:96])
-	mod[12] = binary.LittleEndian.Uint64(modBytes[96:104])
-	mod[13] = binary.LittleEndian.Uint64(modBytes[104:112])
+	_ = x[14]
+	_ = y[14]
+	_ = out[14]
+	_ = mod[14]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1790,85 +1322,22 @@ func MontMul960(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[14])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[13])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[12])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[11])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[10])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[9])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[8])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[7])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[6])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[5])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[4])
-	binary.LittleEndian.PutUint64(outBytes[88:96], src[3])
-	binary.LittleEndian.PutUint64(outBytes[96:104], src[2])
-	binary.LittleEndian.PutUint64(outBytes[104:112], src[1])
-	binary.LittleEndian.PutUint64(outBytes[112:120], src[0])
+
+	copy(out[:], src)
 }
 
-func MontMul1024(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+func MontMul1024(modInv uint64, mod, out, x, y []uint64) {
 	var t [17]uint64
 	var D uint64
 	var m, C uint64
 
-	var (
-		mod [16]uint64
-		x   [16]uint64
-		y   [16]uint64
-		res [16]uint64
-	)
+	var res [16]uint64
 
 	// signal to compiler to avoid subsequent bounds checks
-	_ = xBytes[127]
-	_ = yBytes[127]
-	_ = outBytes[127]
-	_ = modBytes[127]
-	x[0] = binary.LittleEndian.Uint64(xBytes[0:8])
-	x[1] = binary.LittleEndian.Uint64(xBytes[8:16])
-	x[2] = binary.LittleEndian.Uint64(xBytes[16:24])
-	x[3] = binary.LittleEndian.Uint64(xBytes[24:32])
-	x[4] = binary.LittleEndian.Uint64(xBytes[32:40])
-	x[5] = binary.LittleEndian.Uint64(xBytes[40:48])
-	x[6] = binary.LittleEndian.Uint64(xBytes[48:56])
-	x[7] = binary.LittleEndian.Uint64(xBytes[56:64])
-	x[8] = binary.LittleEndian.Uint64(xBytes[64:72])
-	x[9] = binary.LittleEndian.Uint64(xBytes[72:80])
-	x[10] = binary.LittleEndian.Uint64(xBytes[80:88])
-	x[11] = binary.LittleEndian.Uint64(xBytes[88:96])
-	x[12] = binary.LittleEndian.Uint64(xBytes[96:104])
-	x[13] = binary.LittleEndian.Uint64(xBytes[104:112])
-	x[14] = binary.LittleEndian.Uint64(xBytes[112:120])
-	y[0] = binary.LittleEndian.Uint64(yBytes[0:8])
-	y[1] = binary.LittleEndian.Uint64(yBytes[8:16])
-	y[2] = binary.LittleEndian.Uint64(yBytes[16:24])
-	y[3] = binary.LittleEndian.Uint64(yBytes[24:32])
-	y[4] = binary.LittleEndian.Uint64(yBytes[32:40])
-	y[5] = binary.LittleEndian.Uint64(yBytes[40:48])
-	y[6] = binary.LittleEndian.Uint64(yBytes[48:56])
-	y[7] = binary.LittleEndian.Uint64(yBytes[56:64])
-	y[8] = binary.LittleEndian.Uint64(yBytes[64:72])
-	y[9] = binary.LittleEndian.Uint64(yBytes[72:80])
-	y[10] = binary.LittleEndian.Uint64(yBytes[80:88])
-	y[11] = binary.LittleEndian.Uint64(yBytes[88:96])
-	y[12] = binary.LittleEndian.Uint64(yBytes[96:104])
-	y[13] = binary.LittleEndian.Uint64(yBytes[104:112])
-	y[14] = binary.LittleEndian.Uint64(yBytes[112:120])
-	mod[0] = binary.LittleEndian.Uint64(modBytes[0:8])
-	mod[1] = binary.LittleEndian.Uint64(modBytes[8:16])
-	mod[2] = binary.LittleEndian.Uint64(modBytes[16:24])
-	mod[3] = binary.LittleEndian.Uint64(modBytes[24:32])
-	mod[4] = binary.LittleEndian.Uint64(modBytes[32:40])
-	mod[5] = binary.LittleEndian.Uint64(modBytes[40:48])
-	mod[6] = binary.LittleEndian.Uint64(modBytes[48:56])
-	mod[7] = binary.LittleEndian.Uint64(modBytes[56:64])
-	mod[8] = binary.LittleEndian.Uint64(modBytes[64:72])
-	mod[9] = binary.LittleEndian.Uint64(modBytes[72:80])
-	mod[10] = binary.LittleEndian.Uint64(modBytes[80:88])
-	mod[11] = binary.LittleEndian.Uint64(modBytes[88:96])
-	mod[12] = binary.LittleEndian.Uint64(modBytes[96:104])
-	mod[13] = binary.LittleEndian.Uint64(modBytes[104:112])
-	mod[14] = binary.LittleEndian.Uint64(modBytes[112:120])
+	_ = x[15]
+	_ = y[15]
+	_ = out[15]
+	_ = mod[15]
 
 	// 1st outer loop:
 	// 1st inner loop: t <- x[0] * y
@@ -1980,20 +1449,6 @@ func MontMul1024(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
 	} else {
 		src = res[:]
 	}
-	binary.LittleEndian.PutUint64(outBytes[0:8], src[15])
-	binary.LittleEndian.PutUint64(outBytes[8:16], src[14])
-	binary.LittleEndian.PutUint64(outBytes[16:24], src[13])
-	binary.LittleEndian.PutUint64(outBytes[24:32], src[12])
-	binary.LittleEndian.PutUint64(outBytes[32:40], src[11])
-	binary.LittleEndian.PutUint64(outBytes[40:48], src[10])
-	binary.LittleEndian.PutUint64(outBytes[48:56], src[9])
-	binary.LittleEndian.PutUint64(outBytes[56:64], src[8])
-	binary.LittleEndian.PutUint64(outBytes[64:72], src[7])
-	binary.LittleEndian.PutUint64(outBytes[72:80], src[6])
-	binary.LittleEndian.PutUint64(outBytes[80:88], src[5])
-	binary.LittleEndian.PutUint64(outBytes[88:96], src[4])
-	binary.LittleEndian.PutUint64(outBytes[96:104], src[3])
-	binary.LittleEndian.PutUint64(outBytes[104:112], src[2])
-	binary.LittleEndian.PutUint64(outBytes[112:120], src[1])
-	binary.LittleEndian.PutUint64(outBytes[120:128], src[0])
+
+	copy(out[:], src)
 }

@@ -7,7 +7,6 @@ package evmmax_arith
 
 import (
     "math/bits"
-    "encoding/binary"
 )
 
 var Preset = []arithFunc{
