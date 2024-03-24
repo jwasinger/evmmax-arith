@@ -2,8 +2,6 @@ package evmmax_arith
 
 import (
 	"encoding/binary"
-	"errors"
-	"math/big"
 	"math/bits"
 	"reflect"
 	"unsafe"
@@ -80,7 +78,7 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 }
 */
 
-type arithFunc func(f *Field, out, x, y []byte) error
+type arithFunc func(modinv uint64, modulus, out, x, y []byte)
 
 // TODO: compute y-m,x-m and compute GTE from that (like the template version)
 func GTE(x, y []uint64) bool {
@@ -123,6 +121,15 @@ func leBytesToLimbs(b []byte) []uint64 {
 	return result
 }
 
+func lte(x, y []byte) bool {
+	for i := len(x) - 1; i > 0; i-- {
+		if x[i] <= y[i] {
+			return true
+		}
+	}
+	return false
+}
+
 // https://groups.google.com/g/golang-nuts/c/aPjvemV4F0U?pli=1
 // touint64 assumes len(x)%8 == 0
 func toUint64(x []byte) []uint64 {
@@ -134,6 +141,7 @@ func toUint64(x []byte) []uint64 {
 	return xx
 }
 
+/*
 func AddModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
 	var c uint64 = 0
 	var c1 uint64 = 0
@@ -198,7 +206,9 @@ func SubModGeneric(f *Field, zBytes, xBytes, yBytes []byte) error {
 	}
 	return nil
 }
+*/
 
+/*
 func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
 	product := new(big.Int)
 	t := new(big.Int)
@@ -231,3 +241,4 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
 
 	return nil
 }
+*/

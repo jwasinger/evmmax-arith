@@ -1,12 +1,17 @@
 {{ $limbCount := .LimbCount}}
 {{ $limbCountPlusOne := add .LimbCount 1}}
 {{ $limbBits := .LimbBits}}
+{{ $limbCountSub1 := sub $limbCount 1}}
 
 package evmmax_arith
 
 import (
-	"math/bits"
+    "math/bits"
     "encoding/binary"
-    "errors"
-    "fmt"
 )
+
+var Preset = []arithFunc{
+{{- range $i := intRange 1 $limbCountSub1 }}
+    MontMul{{mul $i $limbBits}},
+{{- end}}
+}

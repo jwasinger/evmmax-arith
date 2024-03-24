@@ -3,23 +3,40 @@
 {{ $lastLimb := sub $limbCount 1}}
 {{ $limbBits := .LimbBits}}
 {{ $limbCountPlus1 := add .LimbCount 1 }}
+{{ $bitWidthBytes := 8 }}
 
-func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes, y_bytes []byte) (error) {
-    var x, y, z [{{$limbCount}}]uint64
 
-    // conversion to little-endian limb-order, system limb-endianess
-    {{- range $i := intRange 0 $limbCount}}
-        x[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(x_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
-        y[{{sub $limbCountSub1 $i}}] = binary.BigEndian.Uint64(y_bytes[{{mul $i 8}}:{{mulp1 $i 8}}])
-    {{- end}}
-
-	mod := ctx.ModulusLimbs
-	var t [{{add $limbCount 1}}]uint64
+func MontMul{{mul $limbCount $limbBits}}(modInv uint64, modBytes, outBytes, xBytes, yBytes []byte) {
+	var t [{{- add $limbCount 1}}]uint64
 	var D uint64
 	var m, C uint64
 
-    {{ template "GTE" dict "limbCount" $limbCount "x" "x" "y" "y" "z" "mod"}}
+        var (
+            mod [{{$limbCount}}]uint64
+            x [{{$limbCount}}]uint64
+            y [{{$limbCount}}]uint64
+            res [{{$limbCount}}]uint64
+        )
 
+    // signal to compiler to avoid subsequent bounds checks
+    _ = xBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
+    _ = yBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
+    _ = outBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
+    _ = modBytes[{{sub (mul $bitWidthBytes  $limbCount) 1}}]
+
+    {{- range $i := intRange 0 $limbCountSub1 }}
+        x[{{$i}}] = binary.LittleEndian.Uint64(xBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
+    {{- end}}
+    {{- range $i := intRange 0 $limbCountSub1 }}
+        y[{{$i}}] = binary.LittleEndian.Uint64(yBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
+    {{- end}}
+    {{- range $i := intRange 0 $limbCountSub1 }}
+        mod[{{$i}}] = binary.LittleEndian.Uint64(modBytes[{{offsetStart $i}}:{{offsetEnd $i}}])
+    {{- end}}
+
+
+    // 1st outer loop:
+    // 1st inner loop: t <- x[0] * y
     C, t[0] = bits.Mul64(x[0], y[0])
     {{- range $i := intRange 1 $limbCount}}
         C, t[{{$i}}] = madd1(x[0], y[{{$i}}], C)
@@ -27,7 +44,7 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
 
     t[{{$limbCount}}], D = bits.Add64(t[{{$limbCount}}], C, 0)
     // m = t[0]n'[0] mod W
-    m = t[0] * ctx.MontParamInterleaved
+    m = t[0] * modInv
 
     // -----------------------------------
     // Second inner loop: reduce 1 limb at a time (B**1, B**2, ...)
@@ -46,7 +63,7 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
         {{- end}}
 		t[{{$limbCount}}], D = bits.Add64(t[{{$limbCount}}], C, 0)
 		// m = t[0]n'[0] mod W
-		m = t[0] * ctx.MontParamInterleaved
+		m = t[0] * modInv
 
 		// -----------------------------------
 		// Second inner loop: reduce 1 limb at a time (B**1, B**2, ...)
@@ -60,9 +77,9 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
 
 	{{- range $i := intRange 0 $limbCount}}
 		{{-  if eq $i 0 }}
-			z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
+			res[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], 0)
 		{{-  else  }}
-			z[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
+			res[{{$i}}], D = bits.Sub64(t[{{$i}}], mod[{{$i}}], D)
 		{{- end}}
 	{{- end}}
 
@@ -70,12 +87,10 @@ func MulMontNonUnrolled{{mul $limbCount $limbBits}}(ctx *Field, z_bytes, x_bytes
     if D != 0 && t[{{$limbCount}}] == 0 {
         src = t[:{{$limbCount}}]
 	} else {
-        src = z[:]
+        src = res[:]
 	}
 
     {{- range $i := intRange 0 $limbCount }}
-        binary.BigEndian.PutUint64(z_bytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{sub $limbCountSub1 $i}}])
+        binary.LittleEndian.PutUint64(outBytes[{{mul $i 8}}:{{mulp1 $i 8}}], src[{{sub $limbCountSub1 $i}}])
     {{- end }}
-
-	return nil
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/jwasinger/evmmax-arith/templates"
 	"io/ioutil"
 	"log"
 	"os"
@@ -52,6 +51,12 @@ var funcs = template.FuncMap{
 		}
 		return result
 	},
+	"offsetStart": func(idx int) int {
+		return idx * 8
+        },
+        "offsetEnd": func(idx int) int {
+        	return (idx + 1) * 8
+        },
 	"add": func(val, v2 int) int {
 		return val + v2
 	},
@@ -90,14 +95,6 @@ func aggregate(values []string) string {
 	return sb.String()
 }
 
-var tmplDeps []string = []string{
-	templates.GTE,
-}
-
-func prependDeps(tmplContent string) string {
-	return aggregate([]string{aggregate(tmplDeps), tmplContent})
-}
-
 func buildTemplate(dest_path, template_path string, params *TemplateParams) {
 	f, err := os.Create(dest_path)
 	if err != nil {
@@ -116,88 +113,14 @@ func buildTemplate(dest_path, template_path string, params *TemplateParams) {
 
 	f.Close()
 }
-
-func genAddMod(addModType string, maxLimbs int) {
-	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
-	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
-
-	params := TemplateParams{0, 64}
-	buf := new(bytes.Buffer)
-
-	f, err := os.Create(fmt.Sprintf("generated_addmod_%s.go", addModType))
-	if err != nil {
-		log.Fatal(err)
-		panic("")
-	}
-
-	if err := headerTemplate.Execute(buf, params); err != nil {
-		log.Fatal(err)
-		panic("")
-	}
-
-	addModTemplateContent := loadTextFile(fmt.Sprintf("templates/addmod_%s.go.template", addModType))
-	addModTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(addModTemplateContent)))
-
-	// TODO account for the implementations at 1 limb
-	for i := 1; i <= maxLimbs; i++ {
-		params = TemplateParams{i, 64}
-		if err := addModTemplate.Execute(buf, params); err != nil {
-			log.Fatal(err)
-			panic("")
-		}
-	}
-
-	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
-		panic(err)
-	}
-}
-
-// TODO merge genSubMod/genAddMod into same function
-func genSubMod(subModType string, maxLimbs int) {
-	fmt.Println("submod start")
-	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
-	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
-
-	params := TemplateParams{0, 64}
-	buf := new(bytes.Buffer)
-
-	f, err := os.Create(fmt.Sprintf("generated_submod_%s.go", subModType))
-	if err != nil {
-		log.Fatal(err)
-		panic("")
-	}
-
-	if err := headerTemplate.Execute(buf, params); err != nil {
-		log.Fatal(err)
-		panic("")
-	}
-
-	subModTemplateContent := loadTextFile(fmt.Sprintf("templates/submod_%s.go.template", subModType))
-	subModTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(subModTemplateContent)))
-
-	fmt.Println("submod loop")
-	for i := 1; i <= maxLimbs; i++ {
-		fmt.Println("iteration")
-		params = TemplateParams{i, 64}
-		if err := subModTemplate.Execute(buf, params); err != nil {
-			log.Fatal(err)
-			panic("")
-		}
-	}
-
-	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
-		panic(err)
-	}
-}
-
-func genMulMont(mulmontType string, maxLimbs int) {
+func genMulMont(maxLimbs int) {
 	headerTemplateContent := loadTextFile("templates/mulmontheader.go.template")
 	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
 
 	params := TemplateParams{maxLimbs, 64}
 	buf := new(bytes.Buffer)
 
-	f, err := os.Create(fmt.Sprintf("generated_mulmont_%s.go", mulmontType))
+	f, err := os.Create("mulmont.go")
 	if err != nil {
 		log.Fatal(err)
 		panic("")
@@ -208,8 +131,8 @@ func genMulMont(mulmontType string, maxLimbs int) {
 		panic("")
 	}
 
-	mulMontTemplateContent := loadTextFile(fmt.Sprintf("templates/mulmont_%s.go.template", mulmontType))
-	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(prependDeps(mulMontTemplateContent)))
+	mulMontTemplateContent := loadTextFile("templates/mulmont.go.template")
+	mulMontTemplate := template.Must(template.New("").Funcs(funcs).Parse(mulMontTemplateContent))
 
 	for i := 1; i <= maxLimbs; i++ {
 		params = TemplateParams{i, 64}
@@ -224,20 +147,8 @@ func genMulMont(mulmontType string, maxLimbs int) {
 	}
 }
 
-func genInverse() {
-
-}
-
-func genPresets(maxLimbs int) {
-	params := TemplateParams{maxLimbs, 64}
-	buildTemplate("generated_presets.go", "templates/presets.go.template", &params)
-}
-
 func main() {
     // TODO document this (it's the point where we have definitively switched over to the generic algo):
     maxLimbs := 16
-	genPresets(maxLimbs)
-	genMulMont("nonunrolled", maxLimbs)
-	genAddMod("nonunrolled", maxLimbs)
-	genSubMod("nonunrolled", maxLimbs)
+    genMulMont(maxLimbs)
 }

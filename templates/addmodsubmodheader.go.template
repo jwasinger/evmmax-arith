@@ -1,8 +1,0 @@
-package evmmax_arith
-
-import (
-	"math/bits"
-    "errors"
-    "encoding/binary"
-    "fmt"
-)

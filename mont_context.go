@@ -1,207 +1,102 @@
 package evmmax_arith
 
 import (
-	"encoding/binary"
 	"errors"
+	"fmt"
+	"math"
 	"math/big"
 )
 
 const limbSize = 8
 
-// TODO rename to Context
-type Field struct {
-	// TODO make most of these private and the arith operations methods of this struct
-	Modulus               []byte
-	ModulusNonInterleaved *big.Int // just here for convenience XXX better naming
-	ModulusLimbs          []uint64
+type ModulusState struct {
+	Modulus      []byte
+	R2           []byte
+	modInv       uint64
+	scratchSpace []byte
+	AddSubCost   uint64
+	MulCost      uint64
 
-	MontParamInterleaved    uint64
-	MontParamNonInterleaved *big.Int
+	AddMod arithFunc
+	SubMod arithFunc
+	MulMod arithFunc
 
-	NumLimbs uint
-
-	r    *big.Int
-	rInv *big.Int // TODO remove this
-
-	rSquared []byte
-
-	// mask for mod by R: 0xfff...fff - (1 << NumLimbs * 64) - 1
-	mask *big.Int
-
-	MulMont     arithFunc
-	AddMod      arithFunc
-	SubMod      arithFunc
-	MulMontCost uint64
-	AddModCost  uint64
-	SubModCost  uint64
-	SetModCost  uint64
-
-	ElementSize uint64
-
-	preset ArithPreset
+	one []byte
 }
 
-func (m *Field) RSquared() []byte {
-	rSquared := make([]byte, m.NumLimbs*8)
-	copy(rSquared, m.rSquared)
-	return rSquared
-}
-
-func (m *Field) RVal() *big.Int {
-	r := big.NewInt(1)
-	r.Lsh(r, limbSize*m.NumLimbs*8)
-	return r
-}
-
-func (m *Field) RInv() *big.Int {
-	r := m.RVal()
-	r.ModInverse(r, m.ModulusNonInterleaved)
-	return r
-}
-
-func (m *Field) ModInv() *big.Int {
-	rVal := m.RVal()
-	result := new(big.Int)
-	result.Set(m.ModulusNonInterleaved)
-	result.Neg(result)
-	result.ModInverse(result, rVal)
-	return result
-}
-
-// TODO this should not do allocation/copying.  should be just as fast as mulmont
-func (m *Field) ToMont(val []byte) ([]byte, error) {
-	// TODO ensure val is less than modulus
-	out_bytes := make([]byte, m.NumLimbs*8)
-	r_squared_bytes := m.RSquared()
-
-	if err := m.MulMont(m, out_bytes, val, r_squared_bytes); err != nil {
-		return nil, err
+func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
+	// TODO: will move validation into EVM
+	if len(modBytes) >= 96 {
+		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
-	return out_bytes, nil
-}
+	if modBytes[len(modBytes)-1]%2 == 0 {
+		return nil, errors.New("modulus cannot be even")
+	}
+	if modBytes[0] == 0 {
+		return nil, errors.New("modulus must be entirely occupied")
+	}
+	if scratchSize > 256 {
+		return nil, errors.New("scratch space can be 256-sized max")
+	}
+	mod := new(big.Int).SetBytes(modBytes)
+	paddedSize := int(math.Ceil(float64(len(modBytes))/8.0)) * 8
+	modInv := new(big.Int).ModInverse(big.NewInt(-int64(mod.Uint64())), new(big.Int).Lsh(big.NewInt(1), 64)).Uint64()
 
-func (m *Field) ToNorm(val []byte) ([]byte, error) {
-	// TODO ensure val is less than the modulus?
-	out_bytes := make([]byte, m.NumLimbs*8)
-	one := make([]byte, len(val))
-	one[len(val)-1] = 1
+	r2 := new(big.Int).Lsh(big.NewInt(1), uint(paddedSize)*8*2)
+	r2.Mod(r2, mod)
 
-	if err := m.MulMont(m, out_bytes, val, one); err != nil {
-		return nil, err
+	r2Bytes := r2.Bytes()
+	if len(modBytes) < paddedSize {
+		modBytes = append(modBytes, make([]byte, paddedSize-len(modBytes))...)
+	}
+	if len(r2Bytes) < paddedSize {
+		r2Bytes = append(r2Bytes, make([]byte, paddedSize-len(r2Bytes))...)
 	}
 
-	return out_bytes, nil
+	one := make([]byte, paddedSize)
+	one[paddedSize-1] = 1
+
+	// TODO: represent scratch space as array of uints internally (?)
+	m := ModulusState{
+		Modulus:      modBytes,
+		modInv:       modInv,
+		R2:           r2Bytes,
+		MulMod:       Preset[paddedSize/8-1],
+		scratchSpace: make([]byte, paddedSize*scratchSize),
+		one:          one,
+	}
+	return &m, nil
 }
+func (m *ModulusState) Store(dst, count int, from []byte) error {
+	elemSize := len(m.Modulus)
+	dstIdx := dst
+	for srcIdx := 0; srcIdx < elemSize*count; srcIdx += elemSize {
+		if !lte(from[srcIdx:srcIdx+elemSize], m.Modulus) {
+			return errors.New("value must be less than modulus")
+		}
+		fmt.Println("converting to mont")
+		fmt.Printf("modulus=%x\n", m.Modulus)
+		fmt.Printf("modinv=%x\n", m.modInv)
+		fmt.Printf("arg=%x\n", from[srcIdx:(srcIdx+1)*elemSize])
+		fmt.Printf("r2=%x\n", m.R2)
 
-func NewField(preset ArithPreset) *Field {
-	result := Field{
-		nil,
-		nil,
-		nil,
-
-		0,
-		nil,
-
-		0,
-		nil,
-		nil,
-		nil,
-
-		nil,
-
-		nil,
-		nil,
-		nil,
-
-		0,
-		0,
-		0,
-		0,
-		0,
-
-		preset,
+		// convert to Montgomery form
+		m.MulMod(m.modInv,
+			m.Modulus,
+			m.scratchSpace[dstIdx*elemSize:(dstIdx+1)*elemSize],
+			from[srcIdx:(srcIdx+1)*elemSize],
+			m.R2)
+		fmt.Printf("result=%x\n", m.scratchSpace[dstIdx*elemSize:(dstIdx+1)*elemSize])
+		dstIdx++
 	}
-
-	return &result
-}
-
-func (m *Field) ModIsSet() bool {
-	return m.NumLimbs != 0
-}
-
-// TODO increase this once we figure out what the cap will be
-const MaxInputSize = 16
-
-// compute montgomery parameters given big-endian modulus bytes.
-// don't pad the input bytes
-func (m *Field) SetMod(mod []byte) error {
-	if mod[len(mod)-1]%2 == 0 {
-		return errors.New("modulus cannot be even")
-	}
-
-	if len(mod)/8 > MaxInputSize {
-		return errors.New("modulus larger than max size")
-	}
-
-	mod = PadBytes8(mod)
-	limbCount := uint(len(mod)) / 8
-	m.ElementSize = uint64(limbCount) * 8
-
-	modInt := new(big.Int).SetBytes(mod)
-	rSquared := big.NewInt(1)
-	rSquared.Lsh(rSquared, 64*limbCount)
-	rSquared.Mod(rSquared, modInt)
-	rSquared.Mul(rSquared, rSquared)
-	rSquared.Mod(rSquared, modInt)
-
-	m.rSquared = rSquared.Bytes()
-	if len(m.rSquared) < int(m.ElementSize) {
-		pad_size := int(m.ElementSize) - len(m.rSquared)
-		padding := make([]byte, pad_size)
-		m.rSquared = append(padding, m.rSquared...)
-	}
-
-	// want to compute r_val - (mod & (r_val - 1))
-
-	// 1 << 64
-	littleRVal, _ := new(big.Int).SetString("18446744073709551616", 10)
-
-	mod_uint64 := binary.BigEndian.Uint64(mod[len(mod)-8:])
-
-	negModInt := new(big.Int)
-	negModInt.SetUint64(mod_uint64)
-	negModInt.Sub(littleRVal, negModInt)
-	modInv := new(big.Int)
-	modInv.ModInverse(negModInt, littleRVal)
-
-	m.MontParamInterleaved = modInv.Uint64()
-	m.ModulusNonInterleaved = modInt
-
-	m.mask = big.NewInt(1)
-	m.mask.Lsh(m.mask, 64*limbCount)
-	m.mask.Sub(m.mask, big.NewInt(1))
-
-	m.Modulus = mod
-	m.NumLimbs = limbCount
-
-	m.ModulusLimbs = make([]uint64, m.NumLimbs)
-	for i := 0; i < int(m.NumLimbs); i++ {
-		// limb-order is little-endian internally
-		m.ModulusLimbs[int(m.NumLimbs)-1-i] = binary.BigEndian.Uint64(m.Modulus[i*8 : (i+1)*8])
-	}
-
-	var genericMulMontCutoff uint = 64
-	if m.NumLimbs >= genericMulMontCutoff {
-		m.MulMont = MulMontNonInterleaved
-		m.AddMod = AddModGeneric
-		m.SubMod = SubModGeneric
-	} else {
-		m.MulMont = m.preset.MulMontImpls[limbCount-1]
-		m.AddMod = m.preset.AddModImpls[limbCount-1]
-		m.SubMod = m.preset.SubModImpls[limbCount-1]
-	}
-
-	// TODO when generic add/sub cutoff?
-
 	return nil
+}
+
+func (m *ModulusState) Load(dst []byte, from, count int) {
+	dstIdx := 0
+	elemSize := len(m.Modulus)
+	for srcIdx := from * elemSize; srcIdx < (from+count)*elemSize; srcIdx += elemSize {
+		// convert from Montgomery to canonical form
+		m.MulMod(m.modInv, m.Modulus, dst[dstIdx:dstIdx+elemSize], m.scratchSpace[srcIdx:srcIdx+elemSize], m.one)
+	}
 }
