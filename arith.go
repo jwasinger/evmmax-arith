@@ -78,7 +78,7 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 }
 */
 
-type arithFunc func(modinv uint64, modulus, out, x, y []uint64)
+type arithFunc func(out, x, y, mod []uint64, modInv uint64)
 
 // TODO: compute y-m,x-m and compute GTE from that (like the template version)
 func GTE(x, y []uint64) bool {

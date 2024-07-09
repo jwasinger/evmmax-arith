@@ -9,7 +9,7 @@ import (
 
 const limbSize = 8
 
-type ModulusState struct {
+type FieldContext struct {
 	Modulus []uint64
 	R2      []uint64
 	modInv  uint64
@@ -27,6 +27,7 @@ type ModulusState struct {
 	modulusInt *big.Int
 }
 
+// convert a big-endian byte-slice to little-endian, ascending significance limbs
 func bytesToLimbs(b []byte) []uint64 {
 	limbs := make([]uint64, len(b)/8)
 	for i := 0; i < len(b)/8; i++ {
@@ -39,9 +40,9 @@ func bytesToLimbs(b []byte) []uint64 {
 	return limbs
 }
 
-func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
+func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	// TODO: will move validation into EVM
-	if len(modBytes) >= 96 {
+	if len(modBytes) > 96 {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
 	if modBytes[len(modBytes)-1]%2 == 0 {
@@ -69,9 +70,9 @@ func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
 	}
 
 	one := make([]uint64, paddedSize/8)
-	one[len(one)-1] = 1
+	one[0] = 1
 
-	m := ModulusState{
+	m := FieldContext{
 		Modulus:      bytesToLimbs(modBytes),
 		modInv:       modInv,
 		R2:           bytesToLimbs(r2Bytes),
@@ -82,7 +83,8 @@ func NewModulusState(modBytes []byte, scratchSize int) (*ModulusState, error) {
 	}
 	return &m, nil
 }
-func (m *ModulusState) Store(dst, count int, from []byte) error {
+
+func (m *FieldContext) Store(dst, count int, from []byte) error {
 	elemSize := len(m.Modulus)
 	dstIdx := dst * elemSize
 	for srcIdx := 0; srcIdx < elemSize*8*count; srcIdx += elemSize * 8 {
@@ -92,26 +94,26 @@ func (m *ModulusState) Store(dst, count int, from []byte) error {
 			return errors.New("value must be less than modulus")
 		}
 		// convert to Montgomery form
-		m.MulMod(m.modInv,
-			m.Modulus,
-			m.scratchSpace[dstIdx:dstIdx+elemSize],
+		m.MulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
 			val,
-			m.R2)
+			m.R2,
+			m.Modulus,
+			m.modInv)
 		dstIdx++
 	}
 	return nil
 }
 
-func (m *ModulusState) Load(dst []byte, from, count int) {
+func (m *FieldContext) Load(dst []byte, from, count int) {
 	elemSize := len(m.Modulus)
 	var dstIdx int
 	for srcIdx := from; srcIdx < from+count; srcIdx++ {
 		res := make([]uint64, elemSize)
 		// convert from Montgomery to canonical form
-		m.MulMod(m.modInv, m.Modulus, res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one)
+		m.MulMod(res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one, m.Modulus, m.modInv)
 		// swap each limb to big endian (the result in dst is a big-endian number)
 		for i := 0; i < elemSize; i++ {
-			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[i])
+			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[len(res)-(i+1)])
 		}
 		dstIdx += elemSize * 8
 	}

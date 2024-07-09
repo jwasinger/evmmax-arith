@@ -24,18 +24,12 @@ func TestMulMontBLS12831(t *testing.T) {
 	mod := modInt.Bytes()
 
 	var limbCount uint = 6
-	montCtx, _ := NewModulusState(mod, 256)
+	montCtx, _ := NewFieldContext(mod, 256)
 	elemSize := int(math.Ceil(float64(len(mod)) / 8.0))
 
 	s := rand.NewSource(42)
 	r := rand.New(s)
 
-	/*
-			x := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
-			y := PadBytes(randBigInt(r, modInt).Bytes(), uint64(elemSize))
-		xInt := big.NewInt(2)
-		yInt := big.NewInt(3)
-	*/
 	xInt := randBigInt(r, modInt)
 	yInt := randBigInt(r, modInt)
 
@@ -46,15 +40,14 @@ func TestMulMontBLS12831(t *testing.T) {
 	montCtx.Store(1, 1, x)
 	montCtx.Store(2, 1, y)
 
-	montCtx.MulMod(montCtx.modInv,
-		montCtx.Modulus,
-		montCtx.scratchSpace[0:elemSize],
+	montCtx.MulMod(montCtx.scratchSpace[0:elemSize],
 		montCtx.scratchSpace[elemSize:2*elemSize],
-		montCtx.scratchSpace[elemSize*2:elemSize*3])
+		montCtx.scratchSpace[elemSize*2:elemSize*3],
+		montCtx.Modulus,
+		montCtx.modInv)
 	outBytes := make([]byte, limbCount*8)
 	montCtx.Load(outBytes, 0, 1)
 	if bytes.Compare(PadBytes(expected.Bytes(), uint64(elemSize)*8), outBytes) != 0 {
 		t.Fatalf("result not matching")
 	}
-	// TODO assert that the result is correct
 }

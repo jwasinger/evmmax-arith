@@ -10,7 +10,7 @@ import (
 )
 
 var Preset = []arithFunc{
-{{- range $i := intRange 1 $limbCountSub1 }}
+{{- range $i := intRange 1 $limbCountPlusOne }}
     MontMul{{mul $i $limbBits}},
 {{- end}}
 }

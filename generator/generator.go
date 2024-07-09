@@ -53,10 +53,10 @@ var funcs = template.FuncMap{
 	},
 	"offsetStart": func(idx int) int {
 		return idx * 8
-        },
-        "offsetEnd": func(idx int) int {
-        	return (idx + 1) * 8
-        },
+	},
+	"offsetEnd": func(idx int) int {
+		return (idx + 1) * 8
+	},
 	"add": func(val, v2 int) int {
 		return val + v2
 	},
@@ -76,9 +76,9 @@ var funcs = template.FuncMap{
 	"mul": func(val, v2 int) int {
 		return val * v2
 	},
-    "mulp1": func(val, v2 int) int {
-        return (val + 1 ) * v2
-    },
+	"mulp1": func(val, v2 int) int {
+		return (val + 1) * v2
+	},
 	// returns "[x]uint64 {0, 0, 0, ......, 0}"
 	"makeZeroedLimbs": func(numLimbs int) string {
 		result := fmt.Sprintf("[%d]uint64 {", numLimbs)
@@ -120,7 +120,7 @@ func genMulMont(maxLimbs int) {
 	params := TemplateParams{maxLimbs, 64}
 	buf := new(bytes.Buffer)
 
-	f, err := os.Create("mulmont.go")
+	f, err := os.Create("mulmont-generated.go")
 	if err != nil {
 		log.Fatal(err)
 		panic("")
@@ -148,7 +148,6 @@ func genMulMont(maxLimbs int) {
 }
 
 func main() {
-    // TODO document this (it's the point where we have definitively switched over to the generic algo):
-    maxLimbs := 16
-    genMulMont(maxLimbs)
+	maxLimbs := 12
+	genMulMont(maxLimbs)
 }

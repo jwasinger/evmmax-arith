@@ -6,7 +6,7 @@
 {{ $bitWidthBytes := 8 }}
 
 
-func MontMul{{mul $limbCount $limbBits}}(modInv uint64, mod, out, x, y []uint64) {
+func MontMul{{mul $limbCount $limbBits}}(out, x, y, mod []uint64, modInv uint64) {
 	var t [{{- add $limbCount 1}}]uint64
 	var D uint64
 	var m, C uint64
