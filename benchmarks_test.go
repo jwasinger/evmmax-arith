@@ -2,10 +2,14 @@ package evmmax_arith
 
 import (
 	"fmt"
+	"math/big"
 	"math/rand"
 	"testing"
 )
 
+func benchmarkOp(b *testing.B, op string, mod *big.Int) {
+
+}
 func benchmarkMulMod(b *testing.B, limbCount int) {
 	mod := MaxModulus(limbCount)
 	modState, err := NewFieldContext(LimbsToBytes(mod), 256)
@@ -23,12 +27,7 @@ func benchmarkMulMod(b *testing.B, limbCount int) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		modState.MulMod(
-			modState.scratchSpace[outIdxs[i%256]:outIdxs[i%256]+limbCount],
-			modState.scratchSpace[xIdxs[i%256]:xIdxs[i%256]+limbCount],
-			modState.scratchSpace[yIdxs[i%256]:yIdxs[i%256]+limbCount],
-			modState.Modulus,
-			modState.modInv)
+		modState.MulMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
 	}
 }
 

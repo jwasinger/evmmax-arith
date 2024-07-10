@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"math/big"
 )
 
 func MaxModulus(limbCount int) []uint64 {
@@ -13,6 +14,23 @@ func MaxModulus(limbCount int) []uint64 {
 		mod[i] = math.MaxUint64
 	}
 	return mod
+}
+
+func limbsToInt(limbs []uint64) *big.Int {
+	return nil
+}
+
+// convert a big-endian byte-slice to little-endian, ascending significance limbs
+func bytesToLimbs(b []byte) []uint64 {
+	limbs := make([]uint64, len(b)/8)
+	for i := 0; i < len(b)/8; i++ {
+		limbs[i] = binary.BigEndian.Uint64(b[i*8 : (i+1)*8])
+	}
+	// reverse to little-endian limb ordering
+	for i, j := 0, len(limbs)-1; i < j; i, j = i+1, j-1 {
+		limbs[i], limbs[j] = limbs[j], limbs[i]
+	}
+	return limbs
 }
 
 func LimbsToBytes(limbs []uint64) []byte {

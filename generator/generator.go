@@ -146,8 +146,82 @@ func genMulMont(maxLimbs int) {
 		panic(err)
 	}
 }
+func genAddMod(addModType string, maxLimbs int) {
+	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
+	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
+
+	// note: hack of using LimbCount to store maxLimbs here
+	params := TemplateParams{maxLimbs, 64}
+	buf := new(bytes.Buffer)
+
+	f, err := os.Create(fmt.Sprintf("generated_addmod_%s.go", addModType))
+	if err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	if err := headerTemplate.Execute(buf, params); err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	addModTemplateContent := loadTextFile(fmt.Sprintf("templates/addmod_%s.go.template", addModType))
+	addModTemplate := template.Must(template.New("").Funcs(funcs).Parse(addModTemplateContent))
+
+	// TODO account for the implementations at 1 limb
+	for i := 1; i <= maxLimbs; i++ {
+		params = TemplateParams{i, 64}
+		if err := addModTemplate.Execute(buf, params); err != nil {
+			log.Fatal(err)
+			panic("")
+		}
+	}
+
+	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
+		panic(err)
+	}
+}
+
+// TODO merge genSubMod/genAddMod into same function
+func genSubMod(subModType string, maxLimbs int) {
+	headerTemplateContent := loadTextFile("templates/addmodsubmodheader.go.template")
+	headerTemplate := template.Must(template.New("").Funcs(funcs).Parse(headerTemplateContent))
+
+	params := TemplateParams{0, 64}
+	buf := new(bytes.Buffer)
+
+	f, err := os.Create(fmt.Sprintf("generated_submod_%s.go", subModType))
+	if err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	if err := headerTemplate.Execute(buf, params); err != nil {
+		log.Fatal(err)
+		panic("")
+	}
+
+	subModTemplateContent := loadTextFile(fmt.Sprintf("templates/submod_%s.go.template", subModType))
+	subModTemplate := template.Must(template.New("").Funcs(funcs).Parse(subModTemplateContent))
+
+	fmt.Println("submod loop")
+	for i := 1; i <= maxLimbs; i++ {
+		fmt.Println("iteration")
+		params = TemplateParams{i, 64}
+		if err := subModTemplate.Execute(buf, params); err != nil {
+			log.Fatal(err)
+			panic("")
+		}
+	}
+
+	if n, err := f.Write(buf.Bytes()); err != nil || n != len(buf.Bytes()) {
+		panic(err)
+	}
+}
 
 func main() {
 	maxLimbs := 12
 	genMulMont(maxLimbs)
+	genAddMod("unrolled", 12)
+	genSubMod("unrolled", 12)
 }

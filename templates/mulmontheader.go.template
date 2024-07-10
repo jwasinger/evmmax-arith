@@ -9,8 +9,20 @@ import (
     "math/bits"
 )
 
-var Preset = []arithFunc{
+var mulmodPreset = []mulFunc {
 {{- range $i := intRange 1 $limbCountPlusOne }}
     MontMul{{mul $i $limbBits}},
+{{- end}}
+}
+
+var addmodPreset = []addOrSubFunc {
+{{- range $i := intRange 1 $limbCountPlusOne }}
+    AddMod{{mul $i $limbBits}},
+{{- end}}
+}
+
+var submodPreset = []addOrSubFunc {
+{{- range $i := intRange 1 $limbCountPlusOne }}
+    SubMod{{mul $i $limbBits}},
 {{- end}}
 }

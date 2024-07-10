@@ -78,7 +78,8 @@ func mulMont64(f *Field, outBytes, xBytes, yBytes []byte) error {
 }
 */
 
-type arithFunc func(out, x, y, mod []uint64, modInv uint64)
+type mulFunc func(out, x, y, mod []uint64, modInv uint64)
+type addOrSubFunc func(out, x, y, mod []uint64)
 
 // TODO: compute y-m,x-m and compute GTE from that (like the template version)
 func GTE(x, y []uint64) bool {
@@ -122,8 +123,8 @@ func leBytesToLimbs(b []byte) []uint64 {
 }
 
 func lt(x, y []uint64) bool {
-	for i := len(x) - 1; i > 0; i-- {
-		if x[i] < y[i] {
+	for i := len(x); i > 0; i-- {
+		if x[i-1] < y[i-1] {
 			return true
 		}
 	}

@@ -1,7 +1,8 @@
 package evmmax_arith
 
 import (
-	"bytes"
+	cryptorand "crypto/rand"
+	"fmt"
 	"math"
 	"math/big"
 	"math/rand"
@@ -16,38 +17,87 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 	}
 
 	res := new(big.Int).SetBytes(resBytes)
-	return res.Mod(res, modulus)
+	res.Mod(res, modulus)
+	return res
 }
 
-func TestMulMontBLS12831(t *testing.T) {
-	modInt, _ := new(big.Int).SetString("1a0111ea397fe69a4b1ba7b6434bacd764774b84f38512bf6730d2a0f6b0f6241eabfffeb153ffffb9feffffffffaaab", 16)
-	mod := modInt.Bytes()
+const opRepeat = 1 //1000
 
-	var limbCount uint = 6
-	montCtx, _ := NewFieldContext(mod, 256)
-	elemSize := int(math.Ceil(float64(len(mod)) / 8.0))
+func testOp(t *testing.T, op string, mod *big.Int) {
+	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256)
+	elemSize := int(math.Ceil(float64(len(mod.Bytes())) / 8.0))
 
 	s := rand.NewSource(42)
 	r := rand.New(s)
 
-	xInt := randBigInt(r, modInt)
-	yInt := randBigInt(r, modInt)
+	for i := 0; i < opRepeat; i++ {
+		xInt := randBigInt(r, mod)
+		yInt := randBigInt(r, mod)
+		x := PadBytes(xInt.Bytes(), uint64(elemSize)*8)
+		y := PadBytes(yInt.Bytes(), uint64(elemSize)*8)
+		var expected *big.Int
 
-	x := PadBytes(xInt.Bytes(), uint64(elemSize)*8)
-	y := PadBytes(yInt.Bytes(), uint64(elemSize)*8)
-	expected := new(big.Int).Mul(xInt, yInt)
-	expected.Mod(expected, montCtx.modulusInt)
-	montCtx.Store(1, 1, x)
-	montCtx.Store(2, 1, y)
+		if err := fieldCtx.Store(1, 1, x); err != nil {
+			t.Fatalf("error storing value: %v", err)
+		}
+		if err := fieldCtx.Store(2, 1, y); err != nil {
+			t.Fatalf("error storing value: %v", err)
+		}
 
-	montCtx.MulMod(montCtx.scratchSpace[0:elemSize],
-		montCtx.scratchSpace[elemSize:2*elemSize],
-		montCtx.scratchSpace[elemSize*2:elemSize*3],
-		montCtx.Modulus,
-		montCtx.modInv)
-	outBytes := make([]byte, limbCount*8)
-	montCtx.Load(outBytes, 0, 1)
-	if bytes.Compare(PadBytes(expected.Bytes(), uint64(elemSize)*8), outBytes) != 0 {
-		t.Fatalf("result not matching")
+		switch op {
+		case "mul":
+			fieldCtx.MulMod(0, 1, 2)
+			expected = new(big.Int).Mul(xInt, yInt)
+			expected.Mod(expected, fieldCtx.modulusInt)
+		case "add":
+			fieldCtx.AddMod(0, 1, 2)
+			expected = new(big.Int).Add(xInt, yInt)
+			expected.Mod(expected, mod)
+		case "sub":
+			fieldCtx.SubMod(0, 1, 2)
+			expected = new(big.Int).Sub(xInt, yInt)
+			expected.Mod(expected, mod)
+		default:
+			panic("unknown op")
+		}
+
+		resBytes := make([]byte, elemSize*8)
+		fieldCtx.Load(resBytes, 0, 1)
+		res := new(big.Int).SetBytes(resBytes)
+		if res.Cmp(expected) != 0 {
+			fmt.Printf("x = %s\ny = %s\nmod = %s\n", xInt.String(), yInt.String(), mod.String())
+			t.Fatalf("mismatch. received %s != expected %s\n", res.String(), expected.String())
+		}
+	}
+}
+
+func randOddModulus(size int) []byte {
+	res := make([]byte, size)
+
+	for {
+		_, err := cryptorand.Read(res[:])
+		if err != nil {
+			panic(err)
+		}
+		if res[len(res)-1]%2 != 0 {
+			return res
+		}
+	}
+}
+
+func TestMulMontBLS12831(t *testing.T) {
+	for i := 1; i < 768; i++ {
+		mod := new(big.Int).SetBytes(randOddModulus(i))
+		t.Run(fmt.Sprintf("mulmod-%dbyte", i), func(t *testing.T) {
+			testOp(t, "mul", mod)
+
+		})
+		t.Run(fmt.Sprintf("addmod-%dbyte", i), func(t *testing.T) {
+			testOp(t, "add", mod)
+
+		})
+		t.Run(fmt.Sprintf("submod-%dbyte", i), func(t *testing.T) {
+			testOp(t, "sub", mod)
+		})
 	}
 }

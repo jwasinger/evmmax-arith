@@ -3,6 +3,7 @@ package evmmax_arith
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 )
@@ -19,25 +20,12 @@ type FieldContext struct {
 	AddSubCost   uint64
 	MulCost      uint64
 
-	AddMod arithFunc
-	SubMod arithFunc
-	MulMod arithFunc
+	addMod addOrSubFunc
+	subMod addOrSubFunc
+	mulMod mulFunc
 
 	one        []uint64
 	modulusInt *big.Int
-}
-
-// convert a big-endian byte-slice to little-endian, ascending significance limbs
-func bytesToLimbs(b []byte) []uint64 {
-	limbs := make([]uint64, len(b)/8)
-	for i := 0; i < len(b)/8; i++ {
-		limbs[i] = binary.BigEndian.Uint64(b[i*8 : (i+1)*8])
-	}
-	// reverse to little-endian limb ordering
-	for i, j := 0, len(limbs)-1; i < j; i, j = i+1, j-1 {
-		limbs[i], limbs[j] = limbs[j], limbs[i]
-	}
-	return limbs
 }
 
 func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
@@ -76,12 +64,39 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		Modulus:      bytesToLimbs(modBytes),
 		modInv:       modInv,
 		R2:           bytesToLimbs(r2Bytes),
-		MulMod:       Preset[paddedSize/8-1],
+		mulMod:       mulmodPreset[paddedSize/8-1],
+		addMod:       addmodPreset[paddedSize/8-1],
+		subMod:       submodPreset[paddedSize/8-1],
 		scratchSpace: make([]uint64, (paddedSize/8)*scratchSize),
 		one:          one,
 		modulusInt:   mod,
 	}
 	return &m, nil
+}
+
+func (m *FieldContext) MulMod(out, x, y int) {
+	elemSize := len(m.Modulus)
+	m.mulMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
+		m.scratchSpace[x*elemSize:(x+1)*elemSize],
+		m.scratchSpace[y*elemSize:(y+1)*elemSize],
+		m.Modulus,
+		m.modInv)
+}
+
+func (m *FieldContext) SubMod(out, x, y int) {
+	elemSize := len(m.Modulus)
+	m.subMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
+		m.scratchSpace[x*elemSize:(x+1)*elemSize],
+		m.scratchSpace[y*elemSize:(y+1)*elemSize],
+		m.Modulus)
+}
+
+func (m *FieldContext) AddMod(out, x, y int) {
+	elemSize := len(m.Modulus)
+	m.addMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
+		m.scratchSpace[x*elemSize:(x+1)*elemSize],
+		m.scratchSpace[y*elemSize:(y+1)*elemSize],
+		m.Modulus)
 }
 
 func (m *FieldContext) Store(dst, count int, from []byte) error {
@@ -91,10 +106,12 @@ func (m *FieldContext) Store(dst, count int, from []byte) error {
 		// convert the big-endian bytes to little-endian limbs, descending-significance ordered
 		val := bytesToLimbs(from[srcIdx : srcIdx+elemSize*8])
 		if !lt(val, m.Modulus) {
-			return errors.New("value must be less than modulus")
+			return fmt.Errorf("value (%+v) must be less than modulus (%+v)", val, m.Modulus)
 		}
+
+		fmt.Printf("Mulmont\n-------\nx=%s\ny=%s\nmod=%s\nmodinv=%d\n\n")
 		// convert to Montgomery form
-		m.MulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
+		m.mulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
 			val,
 			m.R2,
 			m.Modulus,
@@ -110,7 +127,7 @@ func (m *FieldContext) Load(dst []byte, from, count int) {
 	for srcIdx := from; srcIdx < from+count; srcIdx++ {
 		res := make([]uint64, elemSize)
 		// convert from Montgomery to canonical form
-		m.MulMod(res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one, m.Modulus, m.modInv)
+		m.mulMod(res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one, m.Modulus, m.modInv)
 		// swap each limb to big endian (the result in dst is a big-endian number)
 		for i := 0; i < elemSize; i++ {
 			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[len(res)-(i+1)])

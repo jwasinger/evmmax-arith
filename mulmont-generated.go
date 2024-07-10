@@ -4,7 +4,7 @@ import (
 	"math/bits"
 )
 
-var Preset = []arithFunc{
+var mulmodPreset = []mulFunc{
 	MontMul64,
 	MontMul128,
 	MontMul192,
@@ -17,6 +17,36 @@ var Preset = []arithFunc{
 	MontMul640,
 	MontMul704,
 	MontMul768,
+}
+
+var addmodPreset = []addOrSubFunc{
+	AddMod64,
+	AddMod128,
+	AddMod192,
+	AddMod256,
+	AddMod320,
+	AddMod384,
+	AddMod448,
+	AddMod512,
+	AddMod576,
+	AddMod640,
+	AddMod704,
+	AddMod768,
+}
+
+var submodPreset = []addOrSubFunc{
+	SubMod64,
+	SubMod128,
+	SubMod192,
+	SubMod256,
+	SubMod320,
+	SubMod384,
+	SubMod448,
+	SubMod512,
+	SubMod576,
+	SubMod640,
+	SubMod704,
+	SubMod768,
 }
 
 func MontMul64(out, x, y, mod []uint64, modInv uint64) {
