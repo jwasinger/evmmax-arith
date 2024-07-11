@@ -40,7 +40,7 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		return nil, errors.New("modulus must be entirely occupied")
 	}
 	if scratchSize > 256 {
-		return nil, errors.New("scratch space can be 256-sized max")
+		return nil, errors.New("scratch space can allocate a maximum of 256 field elements")
 	}
 	mod := new(big.Int).SetBytes(modBytes)
 	paddedSize := int(math.Ceil(float64(len(modBytes))/8.0)) * 8
@@ -51,10 +51,10 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 
 	r2Bytes := r2.Bytes()
 	if len(modBytes) < paddedSize {
-		modBytes = append(modBytes, make([]byte, paddedSize-len(modBytes))...)
+		modBytes = append(make([]byte, paddedSize-len(modBytes)), modBytes...)
 	}
 	if len(r2Bytes) < paddedSize {
-		r2Bytes = append(r2Bytes, make([]byte, paddedSize-len(r2Bytes))...)
+		r2Bytes = append(make([]byte, paddedSize-len(r2Bytes)), r2Bytes...)
 	}
 
 	one := make([]uint64, paddedSize/8)
@@ -109,7 +109,6 @@ func (m *FieldContext) Store(dst, count int, from []byte) error {
 			return fmt.Errorf("value (%+v) must be less than modulus (%+v)", val, m.Modulus)
 		}
 
-		fmt.Printf("Mulmont\n-------\nx=%s\ny=%s\nmod=%s\nmodinv=%d\n\n")
 		// convert to Montgomery form
 		m.mulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
 			val,

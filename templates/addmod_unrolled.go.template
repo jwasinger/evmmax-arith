@@ -1,0 +1,34 @@
+{{ $limbCount := .LimbCount}}
+{{ $lastLimb := sub $limbCount 1}}
+{{ $limbCountPlus1 := add .LimbCount 1 }}
+{{ $limbCountSub1 := sub .LimbCount 1 }}
+{{ $limbBits := .LimbBits}}
+
+func AddMod{{mul $limbCount $limbBits}}(out, x, y, mod []uint64) {
+    _ = mod[{{$lastLimb}}]
+    _ = x[{{$lastLimb}}]
+    _ = y[{{$lastLimb}}]
+    _ = out[{{$lastLimb}}]
+
+    var c uint64 = 0
+    var c1 uint64 = 0
+	tmp := {{ makeZeroedLimbs $limbCount}}
+
+    for i := 0; i < {{$limbCount}}; i++ {
+        tmp[i], c = bits.Add64(x[i], y[i], c)
+    }
+
+    for i := 0; i < {{$limbCount}}; i++ {
+        out[i], c1 = bits.Sub64(tmp[i], mod[i], c1)
+    }
+
+    var src []uint64
+    // final sub was unnecessary, but do the copy anyways to make the impl constant time
+    if c == 0 && c1 != 0 {
+        src = tmp[:]
+    } else {
+        src = out[:]
+    }
+
+    copy(out[:], src[:])
+}

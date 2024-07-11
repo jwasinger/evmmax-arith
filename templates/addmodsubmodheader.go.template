@@ -1,0 +1,8 @@
+{{ $limbCount := .LimbCount}}
+{{ $limbCountPlusOne := add .LimbCount 1 }}
+{{ $limbBits := .LimbBits}}
+package evmmax_arith
+
+import (
+	"math/bits"
+)

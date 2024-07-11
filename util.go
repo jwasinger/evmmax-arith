@@ -17,7 +17,12 @@ func MaxModulus(limbCount int) []uint64 {
 }
 
 func limbsToInt(limbs []uint64) *big.Int {
-	return nil
+	numBytes := make([]byte, len(limbs)*8)
+	for i, limb := range limbs {
+		binary.BigEndian.PutUint64(numBytes[i:i+8], limb)
+	}
+
+	return new(big.Int).SetBytes(numBytes)
 }
 
 // convert a big-endian byte-slice to little-endian, ascending significance limbs

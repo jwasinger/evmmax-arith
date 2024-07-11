@@ -21,7 +21,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 	return res
 }
 
-const opRepeat = 1 //1000
+const opRepeat = 10
 
 func testOp(t *testing.T, op string, mod *big.Int) {
 	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256)
@@ -65,7 +65,6 @@ func testOp(t *testing.T, op string, mod *big.Int) {
 		fieldCtx.Load(resBytes, 0, 1)
 		res := new(big.Int).SetBytes(resBytes)
 		if res.Cmp(expected) != 0 {
-			fmt.Printf("x = %s\ny = %s\nmod = %s\n", xInt.String(), yInt.String(), mod.String())
 			t.Fatalf("mismatch. received %s != expected %s\n", res.String(), expected.String())
 		}
 	}
@@ -85,8 +84,8 @@ func randOddModulus(size int) []byte {
 	}
 }
 
-func TestMulMontBLS12831(t *testing.T) {
-	for i := 1; i < 768; i++ {
+func TestOps(t *testing.T) {
+	for i := 1; i < 96; i++ {
 		mod := new(big.Int).SetBytes(randOddModulus(i))
 		t.Run(fmt.Sprintf("mulmod-%dbyte", i), func(t *testing.T) {
 			testOp(t, "mul", mod)
