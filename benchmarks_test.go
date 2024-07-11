@@ -8,17 +8,17 @@ import (
 )
 
 func benchmarkOp(b *testing.B, op string, mod *big.Int) {
-	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, nil)
 	if err != nil {
 		panic(err)
 	}
-	xIdxs := make([]int, 256)
-	yIdxs := make([]int, 256)
-	outIdxs := make([]int, 256)
+	xIdxs := make([]uint, 256)
+	yIdxs := make([]uint, 256)
+	outIdxs := make([]uint, 256)
 	for i := 0; i < 256; i++ {
-		outIdxs[i] = rand.Intn(255)
-		xIdxs[i] = rand.Intn(255)
-		yIdxs[i] = rand.Intn(255)
+		outIdxs[i] = uint(rand.Intn(255))
+		xIdxs[i] = uint(rand.Intn(255))
+		yIdxs[i] = uint(rand.Intn(255))
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

@@ -24,7 +24,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 const opRepeat = 10
 
 func testOp(t *testing.T, op string, mod *big.Int) {
-	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256)
+	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256, nil)
 	elemSize := int(math.Ceil(float64(len(mod.Bytes())) / 8.0))
 
 	s := rand.NewSource(42)
@@ -46,7 +46,9 @@ func testOp(t *testing.T, op string, mod *big.Int) {
 
 		switch op {
 		case "mul":
-			fieldCtx.MulMod(0, 1, 2)
+			if err := fieldCtx.MulMod(0, 1, 2); err != nil {
+				t.Fatalf("error %v", err)
+			}
 			expected = new(big.Int).Mul(xInt, yInt)
 			expected.Mod(expected, fieldCtx.modulusInt)
 		case "add":
