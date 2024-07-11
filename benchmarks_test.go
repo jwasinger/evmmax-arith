@@ -8,11 +8,7 @@ import (
 )
 
 func benchmarkOp(b *testing.B, op string, mod *big.Int) {
-
-}
-func benchmarkMulMod(b *testing.B, limbCount int) {
-	mod := MaxModulus(limbCount)
-	modState, err := NewFieldContext(LimbsToBytes(mod), 256)
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
 	if err != nil {
 		panic(err)
 	}
@@ -24,19 +20,34 @@ func benchmarkMulMod(b *testing.B, limbCount int) {
 		xIdxs[i] = rand.Intn(255)
 		yIdxs[i] = rand.Intn(255)
 	}
-
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		modState.MulMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+		switch op {
+		case "add":
+			fieldCtx.AddMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+		case "sub":
+			fieldCtx.SubMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+		case "mul":
+			fieldCtx.MulMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+		default:
+			panic("invalid op")
+		}
 	}
 }
 
-type opFn func(*testing.B, uint)
-
 func BenchmarkOps(b *testing.B) {
 	for i := 1; i <= 12; i++ {
-		b.Run(fmt.Sprintf("%d-bit", i*64), func(b *testing.B) {
-			benchmarkMulMod(b, i)
+		limbs := MaxModulus(i)
+		mod := limbsToInt(limbs)
+
+		b.Run(fmt.Sprintf("add-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "add", mod)
+		})
+		b.Run(fmt.Sprintf("sub-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "sub", mod)
+		})
+		b.Run(fmt.Sprintf("mul-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "mul", mod)
 		})
 	}
 }

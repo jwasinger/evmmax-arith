@@ -17,11 +17,7 @@ func MaxModulus(limbCount int) []uint64 {
 }
 
 func limbsToInt(limbs []uint64) *big.Int {
-	numBytes := make([]byte, len(limbs)*8)
-	for i, limb := range limbs {
-		binary.BigEndian.PutUint64(numBytes[i:i+8], limb)
-	}
-
+	numBytes := limbsToBytes(limbs)
 	return new(big.Int).SetBytes(numBytes)
 }
 
@@ -38,7 +34,8 @@ func bytesToLimbs(b []byte) []uint64 {
 	return limbs
 }
 
-func LimbsToBytes(limbs []uint64) []byte {
+// convert limbs format to big-endian bytes
+func limbsToBytes(limbs []uint64) []byte {
 	res := make([]byte, len(limbs)*8, len(limbs)*8)
 
 	for i := 0; i < len(limbs); i++ {
