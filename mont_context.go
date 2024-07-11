@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"math/bits"
 )
 
 const limbSize = 8
@@ -15,7 +16,6 @@ type FieldContext struct {
 	R2      []uint64
 	modInv  uint64
 
-	// TODO: make this uint
 	scratchSpace []uint64
 	AddSubCost   uint64
 	MulCost      uint64
@@ -44,7 +44,7 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	}
 	mod := new(big.Int).SetBytes(modBytes)
 	paddedSize := int(math.Ceil(float64(len(modBytes))/8.0)) * 8
-	modInv := new(big.Int).ModInverse(big.NewInt(-int64(mod.Uint64())), new(big.Int).Lsh(big.NewInt(1), 64)).Uint64()
+	modInv := negModInverse(mod.Uint64())
 
 	r2 := new(big.Int).Lsh(big.NewInt(1), uint(paddedSize)*8*2)
 	r2.Mod(r2, mod)
@@ -72,6 +72,19 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		modulusInt:   mod,
 	}
 	return &m, nil
+}
+
+// compute -mod ** -1 % 1 << 64 .
+// from (paper), used in go-stdlib
+func negModInverse(mod uint64) uint64 {
+	k0 := 2 - mod
+	t := mod - 1
+	for i := 1; i < bits.UintSize; i <<= 1 {
+		t *= t
+		k0 *= (t + 1)
+	}
+	k0 = -k0
+	return k0
 }
 
 func (m *FieldContext) MulMod(out, x, y int) {
