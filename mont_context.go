@@ -80,6 +80,10 @@ func NewFieldContext(modBytes []byte, scratchSize int, allocCostFn func(uint) er
 	return &m, nil
 }
 
+func (f *FieldContext) AllocedSize() uint64 {
+	return uint64(len(f.scratchSpace)) * 8
+}
+
 // compute -mod ** -1 % 1 << 64 .
 // from (paper), used in go-stdlib
 func negModInverse(mod uint64) uint64 {
