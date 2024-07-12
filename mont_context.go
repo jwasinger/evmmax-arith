@@ -76,6 +76,10 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	return &m, nil
 }
 
+func (f *FieldContext) NumElems() uint {
+	return uint(len(f.scratchSpace) / int(f.elemSize))
+}
+
 func (f *FieldContext) AllocedSize() uint {
 	return uint(len(f.scratchSpace) * 8)
 }
