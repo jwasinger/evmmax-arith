@@ -28,7 +28,7 @@ type FieldContext struct {
 	modulusInt *big.Int
 }
 
-func NewFieldContext(modBytes []byte, scratchSize int, allocCostFn func(uint) error) (*FieldContext, error) {
+func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	if len(modBytes) > maxModulusSize {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
@@ -60,12 +60,6 @@ func NewFieldContext(modBytes []byte, scratchSize int, allocCostFn func(uint) er
 	one := make([]uint64, paddedSize/8)
 	one[0] = 1
 
-	scratchSpaceSizeBytes := uint((paddedSize / 8) * scratchSize * 8)
-	if allocCostFn != nil {
-		if err := allocCostFn(scratchSpaceSizeBytes); err != nil {
-			return nil, err
-		}
-	}
 	m := FieldContext{
 		Modulus:      bytesToLimbs(modBytes),
 		modInv:       modInv,
