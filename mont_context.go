@@ -26,6 +26,7 @@ type FieldContext struct {
 
 	one        []uint64
 	modulusInt *big.Int
+	elemSize   uint
 }
 
 func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
@@ -70,12 +71,17 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		scratchSpace: make([]uint64, (paddedSize/8)*scratchSize),
 		one:          one,
 		modulusInt:   mod,
+		elemSize:     uint(paddedSize),
 	}
 	return &m, nil
 }
 
-func (f *FieldContext) AllocedSize() uint64 {
-	return uint64(len(f.scratchSpace)) * 8
+func (f *FieldContext) AllocedSize() uint {
+	return uint(len(f.scratchSpace) * 8)
+}
+
+func (f *FieldContext) ElemSize() uint {
+	return f.elemSize
 }
 
 // compute -mod ** -1 % 1 << 64 .

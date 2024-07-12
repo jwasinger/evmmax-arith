@@ -8,7 +8,7 @@ import (
 )
 
 func benchmarkOp(b *testing.B, op string, mod *big.Int) {
-	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, nil)
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
 	if err != nil {
 		panic(err)
 	}
