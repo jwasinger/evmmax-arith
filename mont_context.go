@@ -104,6 +104,8 @@ func negModInverse(mod uint64) uint64 {
 	return k0
 }
 
+// Note: manually inlining the arith funcs here into the opcode handler seems to give overall ~6-7% performance increase on g2 mul
+// benchmark
 func (m *FieldContext) MulMod(out, x, y uint) error {
 	elemSize := uint(len(m.Modulus))
 
