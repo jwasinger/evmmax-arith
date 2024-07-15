@@ -33,6 +33,10 @@ func testOp(t *testing.T, op string, mod *big.Int) {
 	for i := 0; i < opRepeat; i++ {
 		xInt := randBigInt(r, mod)
 		yInt := randBigInt(r, mod)
+		if i == 0 {
+			xInt = new(big.Int)
+			yInt = new(big.Int)
+		}
 		x := PadBytes(xInt.Bytes(), uint64(elemSize)*8)
 		y := PadBytes(yInt.Bytes(), uint64(elemSize)*8)
 		var expected *big.Int

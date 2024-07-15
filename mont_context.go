@@ -24,9 +24,10 @@ type FieldContext struct {
 	subMod addOrSubFunc
 	mulMod mulFunc
 
-	one        []uint64
-	modulusInt *big.Int
-	elemSize   uint
+	one                   []uint64
+	modulusInt            *big.Int
+	elemSize              uint
+	scratchSpaceElemCount uint
 }
 
 func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
@@ -62,28 +63,30 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	one[0] = 1
 
 	m := FieldContext{
-		Modulus:      bytesToLimbs(modBytes),
-		modInv:       modInv,
-		R2:           bytesToLimbs(r2Bytes),
-		mulMod:       mulmodPreset[paddedSize/8-1],
-		addMod:       addmodPreset[paddedSize/8-1],
-		subMod:       submodPreset[paddedSize/8-1],
-		scratchSpace: make([]uint64, (paddedSize/8)*scratchSize),
-		one:          one,
-		modulusInt:   mod,
-		elemSize:     uint(paddedSize),
+		Modulus:               bytesToLimbs(modBytes),
+		modInv:                modInv,
+		R2:                    bytesToLimbs(r2Bytes),
+		mulMod:                mulmodPreset[paddedSize/8-1],
+		addMod:                addmodPreset[paddedSize/8-1],
+		subMod:                submodPreset[paddedSize/8-1],
+		scratchSpace:          make([]uint64, (paddedSize/8)*scratchSize),
+		scratchSpaceElemCount: uint(scratchSize),
+		one:                   one,
+		modulusInt:            mod,
+		elemSize:              uint(paddedSize),
 	}
 	return &m, nil
 }
 
 func (f *FieldContext) NumElems() uint {
-	return uint(len(f.scratchSpace) / int(f.elemSize))
+	return f.scratchSpaceElemCount
 }
 
 func (f *FieldContext) AllocedSize() uint {
 	return uint(len(f.scratchSpace) * 8)
 }
 
+// elem size in bytes
 func (f *FieldContext) ElemSize() uint {
 	return f.elemSize
 }
@@ -104,38 +107,44 @@ func negModInverse(mod uint64) uint64 {
 func (m *FieldContext) MulMod(out, x, y uint) error {
 	elemSize := uint(len(m.Modulus))
 
-	if greatest := max(out, x, y); greatest*elemSize > uint(len(m.scratchSpace)) {
+	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
 		return errors.New("out of bounds field element access")
 	}
+	//fmt.Printf("mulmodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
 	m.mulMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
 		m.scratchSpace[x*elemSize:(x+1)*elemSize],
 		m.scratchSpace[y*elemSize:(y+1)*elemSize],
 		m.Modulus,
 		m.modInv)
+	//fmt.Printf(" out(%d)=%s\n", out, limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
 	return nil
 }
 
 func (m *FieldContext) SubMod(out, x, y uint) error {
 	elemSize := uint(len(m.Modulus))
-	if greatest := max(out, x, y); greatest*elemSize > uint(len(m.scratchSpace)) {
+	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
 		return errors.New("out of bounds field element access")
 	}
+	//fmt.Printf("submodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
 	m.subMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
 		m.scratchSpace[x*elemSize:(x+1)*elemSize],
 		m.scratchSpace[y*elemSize:(y+1)*elemSize],
 		m.Modulus)
+	//fmt.Printf(" out=%s\n", limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
 	return nil
 }
 
 func (m *FieldContext) AddMod(out, x, y uint) error {
 	elemSize := uint(len(m.Modulus))
-	if greatest := max(out, x, y); greatest*elemSize > uint(len(m.scratchSpace)) {
+	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
 		return errors.New("out of bounds field element access")
 	}
+	//fmt.Printf("addmodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
 	m.addMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
 		m.scratchSpace[x*elemSize:(x+1)*elemSize],
 		m.scratchSpace[y*elemSize:(y+1)*elemSize],
 		m.Modulus)
+	//fmt.Printf(" out=%s\n", limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
 	return nil
 }
 
@@ -143,21 +152,27 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 	elemSize := uint(len(m.Modulus))
 	dstIdx := dst * elemSize
 
-	if (dstIdx+count)*elemSize > uint(len(m.scratchSpace)) {
+	if dstIdx+count > m.scratchSpaceElemCount {
 		return errors.New("out of bounds field element store")
 	}
-	for srcIdx := uint(0); srcIdx < elemSize*8*count; srcIdx += elemSize * 8 {
+	for i := uint(0); i < count; i++ {
+		srcIdx := i * elemSize * 8
+		dstIdx := dst*elemSize + i*elemSize
+
 		// convert the big-endian bytes to little-endian limbs, descending-significance ordered
 		val := bytesToLimbs(from[srcIdx : srcIdx+elemSize*8])
 		if !lt(val, m.Modulus) {
 			return fmt.Errorf("value (%+v) must be less than modulus (%+v)", val, m.Modulus)
 		}
+
+		//fmt.Printf("store (%d).  norm %s\n", dst+i, limbsToInt(val).String())
 		// convert to Montgomery form
 		m.mulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
 			val,
 			m.R2,
 			m.Modulus,
 			m.modInv)
+		//fmt.Printf("mont %s\n\n", limbsToInt(m.scratchSpace[dstIdx:dstIdx+elemSize]).String())
 		dstIdx++
 	}
 	return nil
@@ -166,10 +181,13 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 func (m *FieldContext) Load(dst []byte, from, count int) {
 	elemSize := len(m.Modulus)
 	var dstIdx int
+	// TODO: source bounds already checked in gas table?
 	for srcIdx := from; srcIdx < from+count; srcIdx++ {
 		res := make([]uint64, elemSize)
+		//fmt.Printf("load (%d).  mont %s\n", srcIdx, limbsToInt(m.scratchSpace[srcIdx:srcIdx+elemSize]).String())
 		// convert from Montgomery to canonical form
-		m.mulMod(res, m.scratchSpace[srcIdx:srcIdx+elemSize], m.one, m.Modulus, m.modInv)
+		m.mulMod(res, m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize], m.one, m.Modulus, m.modInv)
+		//fmt.Printf("load (%d).  norm %s\n", srcIdx, limbsToInt(res).String())
 		// swap each limb to big endian (the result in dst is a big-endian number)
 		for i := 0; i < elemSize; i++ {
 			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[len(res)-(i+1)])
