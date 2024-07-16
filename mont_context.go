@@ -34,11 +34,17 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	if len(modBytes) > maxModulusSize {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
+	if len(modBytes) == 0 {
+		return nil, errors.New("modulus must be non-empty")
+	}
 	if modBytes[len(modBytes)-1]%2 == 0 {
 		return nil, errors.New("modulus cannot be even")
 	}
 	if modBytes[0] == 0 {
 		return nil, errors.New("most significant byte of modulus must not be zero")
+	}
+	if scratchSize == 0 {
+		return nil, errors.New("scratch space must have non-zero size")
 	}
 	if scratchSize > 256 {
 		return nil, errors.New("scratch space can allocate a maximum of 256 field elements")
