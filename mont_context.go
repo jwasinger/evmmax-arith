@@ -30,7 +30,13 @@ type FieldContext struct {
 	scratchSpaceElemCount uint
 }
 
-func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
+const (
+	FallBackOnly = iota
+	MulModAsm = iota
+	AllAsm = iota
+)
+
+func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*FieldContext, error) {
 	if len(modBytes) > maxModulusSize {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
@@ -81,6 +87,24 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		modulusInt:            mod,
 		elemSize:              uint(paddedSize),
 	}
+
+	switch preset384bit {
+	case FallBackOnly:
+		break
+	case MulModAsm:
+		if paddedSize/8 == 6 {
+			m.mulMod = MulMont384_asm
+		}
+	case AllAsm:
+		if paddedSize/8 == 6 {
+			m.mulMod = MulMont384_asm
+			m.addMod = AddMod384_asm
+			m.subMod = SubMod384_asm
+		}
+	default:
+		panic("invalid parameter for 384-bit preset")
+	}
+
 	return &m, nil
 }
 

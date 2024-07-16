@@ -24,7 +24,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 const opRepeat = 10
 
 func testOp(t *testing.T, op string, mod *big.Int) {
-	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256)
+	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256, FallBackOnly)
 	elemSize := int(math.Ceil(float64(len(mod.Bytes())) / 8.0))
 
 	s := rand.NewSource(42)

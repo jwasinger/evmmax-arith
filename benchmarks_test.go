@@ -7,8 +7,8 @@ import (
 	"testing"
 )
 
-func benchmarkOp(b *testing.B, op string, mod *big.Int) {
-	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
+func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, preset384)
 	if err != nil {
 		panic(err)
 	}
@@ -41,13 +41,26 @@ func BenchmarkOps(b *testing.B) {
 		mod := limbsToInt(limbs)
 
 		b.Run(fmt.Sprintf("add-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "add", mod)
+			benchmarkOp(b, "add", mod, FallBackOnly)
 		})
 		b.Run(fmt.Sprintf("sub-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "sub", mod)
+			benchmarkOp(b, "sub", mod, FallBackOnly)
 		})
 		b.Run(fmt.Sprintf("mul-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "mul", mod)
+			benchmarkOp(b, "mul", mod, FallBackOnly)
 		})
 	}
+
+	limbs := MaxModulus(6)
+	mod := limbsToInt(limbs)
+
+	b.Run(fmt.Sprintf("mul-%d-bit-asm", 384), func(b *testing.B) {
+		benchmarkOp(b, "mul", mod, AllAsm)
+	})
+	b.Run(fmt.Sprintf("add-%d-bit-asm", 384), func(b *testing.B) {
+		benchmarkOp(b, "add", mod, AllAsm)
+	})
+	b.Run(fmt.Sprintf("sub-%d-bit-asm", 384), func(b *testing.B) {
+		benchmarkOp(b, "sub", mod, AllAsm)
+	})
 }
