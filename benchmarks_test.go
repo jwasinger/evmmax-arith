@@ -35,6 +35,15 @@ func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
 	}
 }
 
+func benchmarkSetmod(b *testing.B, mod *big.Int) {
+	for i := 0; i < b.N; i++ {
+		_, err := NewFieldContext(mod.Bytes(), 1)
+		if err != nil {
+			panic(err)
+		}
+	}		
+}
+
 func BenchmarkOps(b *testing.B) {
 	for i := 1; i <= 12; i++ {
 		limbs := MaxModulus(i)
@@ -48,6 +57,9 @@ func BenchmarkOps(b *testing.B) {
 		})
 		b.Run(fmt.Sprintf("mul-%d-bit", i*64), func(b *testing.B) {
 			benchmarkOp(b, "mul", mod, FallBackOnly)
+		})
+		b.Run(fmt.Sprintf("setmod-%d-bit", i*64), func(b *testing.B) {
+			benchmarkSetmod(b, mod)
 		})
 	}
 
