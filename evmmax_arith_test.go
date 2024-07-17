@@ -3,7 +3,6 @@ package evmmax_arith
 import (
 	cryptorand "crypto/rand"
 	"fmt"
-	"math"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -25,7 +24,9 @@ const opRepeat = 10
 
 func testOp(t *testing.T, op string, mod *big.Int) {
 	fieldCtx, _ := NewFieldContext(mod.Bytes(), 256, FallBackOnly)
-	elemSize := int(math.Ceil(float64(len(mod.Bytes())) / 8.0))
+	// TODO: dedup this calculation (already done in NewFieldContext)
+	// elemSize in limbs
+	elemSize := (len(mod.Bytes()) + 7) / 8
 
 	s := rand.NewSource(42)
 	r := rand.New(s)
@@ -39,6 +40,7 @@ func testOp(t *testing.T, op string, mod *big.Int) {
 		}
 		x := PadBytes(xInt.Bytes(), uint64(elemSize)*8)
 		y := PadBytes(yInt.Bytes(), uint64(elemSize)*8)
+
 		var expected *big.Int
 
 		if err := fieldCtx.Store(1, 1, x); err != nil {

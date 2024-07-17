@@ -37,7 +37,7 @@ func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
 
 func benchmarkSetmod(b *testing.B, mod *big.Int) {
 	for i := 0; i < b.N; i++ {
-		_, err := NewFieldContext(mod.Bytes(), 1)
+		_, err := NewFieldContext(mod.Bytes(), 1, FallBackOnly)
 		if err != nil {
 			panic(err)
 		}
@@ -49,16 +49,16 @@ func BenchmarkOps(b *testing.B) {
 		limbs := MaxModulus(i)
 		mod := limbsToInt(limbs)
 
-		b.Run(fmt.Sprintf("add-%d-bit", i*64), func(b *testing.B) {
+		b.Run(fmt.Sprintf("add-%d-fallback", i*64), func(b *testing.B) {
 			benchmarkOp(b, "add", mod, FallBackOnly)
 		})
-		b.Run(fmt.Sprintf("sub-%d-bit", i*64), func(b *testing.B) {
+		b.Run(fmt.Sprintf("sub-%d-fallback", i*64), func(b *testing.B) {
 			benchmarkOp(b, "sub", mod, FallBackOnly)
 		})
-		b.Run(fmt.Sprintf("mul-%d-bit", i*64), func(b *testing.B) {
+		b.Run(fmt.Sprintf("mul-%d-fallback", i*64), func(b *testing.B) {
 			benchmarkOp(b, "mul", mod, FallBackOnly)
 		})
-		b.Run(fmt.Sprintf("setmod-%d-bit", i*64), func(b *testing.B) {
+		b.Run(fmt.Sprintf("setmod-%d-fallback", i*64), func(b *testing.B) {
 			benchmarkSetmod(b, mod)
 		})
 	}
@@ -66,13 +66,13 @@ func BenchmarkOps(b *testing.B) {
 	limbs := MaxModulus(6)
 	mod := limbsToInt(limbs)
 
-	b.Run(fmt.Sprintf("mul-%d-bit-asm", 384), func(b *testing.B) {
+	b.Run(fmt.Sprintf("mul-%d-asm", 384), func(b *testing.B) {
 		benchmarkOp(b, "mul", mod, AllAsm)
 	})
-	b.Run(fmt.Sprintf("add-%d-bit-asm", 384), func(b *testing.B) {
+	b.Run(fmt.Sprintf("add-%d-asm", 384), func(b *testing.B) {
 		benchmarkOp(b, "add", mod, AllAsm)
 	})
-	b.Run(fmt.Sprintf("sub-%d-bit-asm", 384), func(b *testing.B) {
+	b.Run(fmt.Sprintf("sub-%d-asm", 384), func(b *testing.B) {
 		benchmarkOp(b, "sub", mod, AllAsm)
 	})
 }
