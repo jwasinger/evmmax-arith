@@ -1,9 +1,6 @@
 package evmmax_arith
 
-import (
-	"github.com/jwasinger/evmmax-arith/arith384_asm"
-	"unsafe"
-)
+/*
 
 func MulMont384_asm(outLimbs, xLimbs, yLimbs, modLimbs []uint64, modinv uint64) {
 	x := (*[6]uint64)(unsafe.Pointer(&xLimbs[0]))
@@ -31,3 +28,4 @@ func SubMod384_asm(outLimbs, xLimbs, yLimbs, modLimbs []uint64) {
 
 	arith384_asm.SubMod384(z, x, y, mod)
 }
+*/

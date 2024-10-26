@@ -1,12 +1,6 @@
 package evmmax_arith
 
-import (
-	"fmt"
-	"math/big"
-	"math/rand"
-	"testing"
-)
-
+/*
 func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
 	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, preset384)
 	if err != nil {
@@ -41,7 +35,7 @@ func benchmarkSetmod(b *testing.B, mod *big.Int) {
 		if err != nil {
 			panic(err)
 		}
-	}		
+	}
 }
 
 func BenchmarkOps(b *testing.B) {
@@ -76,3 +70,4 @@ func BenchmarkOps(b *testing.B) {
 		benchmarkOp(b, "sub", mod, AllAsm)
 	})
 }
+*/

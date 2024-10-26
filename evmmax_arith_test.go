@@ -50,17 +50,15 @@ func testOp(t *testing.T, op string, mod *big.Int) {
 
 		switch op {
 		case "mul":
-			if err := fieldCtx.MulMod(0, 1, 2); err != nil {
-				t.Fatalf("error %v", err)
-			}
+			fieldCtx.MulMod(0, 1, 1, 1, 2, 1, 1)
 			expected = new(big.Int).Mul(xInt, yInt)
 			expected.Mod(expected, fieldCtx.modulusInt)
 		case "add":
-			fieldCtx.AddMod(0, 1, 2)
+			fieldCtx.AddMod(0, 1, 1, 1, 2, 1, 1)
 			expected = new(big.Int).Add(xInt, yInt)
 			expected.Mod(expected, mod)
 		case "sub":
-			fieldCtx.SubMod(0, 1, 2)
+			fieldCtx.SubMod(0, 1, 1, 1, 2, 1, 1)
 			expected = new(big.Int).Sub(xInt, yInt)
 			expected.Mod(expected, mod)
 		default:

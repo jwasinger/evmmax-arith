@@ -16,6 +16,9 @@ type FieldContext struct {
 	R2      []uint64
 	modInv  uint64
 
+	modIsBinary       bool // true if the modulus is a power of two
+	useMontgomeryRepr bool // true if values are represented in montgomery form internally
+
 	scratchSpace []uint64
 	AddSubCost   uint64
 	MulCost      uint64
@@ -32,8 +35,8 @@ type FieldContext struct {
 
 const (
 	FallBackOnly = iota
-	MulModAsm = iota
-	AllAsm = iota
+	MulModAsm    = iota
+	AllAsm       = iota
 )
 
 func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*FieldContext, error) {
@@ -86,24 +89,28 @@ func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*Field
 		one:                   one,
 		modulusInt:            mod,
 		elemSize:              uint(paddedSize),
+		useMontgomeryRepr:     true,
 	}
 
-	switch preset384bit {
-	case FallBackOnly:
-		break
-	case MulModAsm:
-		if paddedSize/8 == 6 {
-			m.mulMod = MulMont384_asm
+	/*
+		switch preset384bit {
+		case FallBackOnly:
+			break
+		case MulModAsm:
+			if paddedSize/8 == 6 {
+				m.mulMod = MulMont384_asm
+			}
+		case AllAsm:
+			if paddedSize/8 == 6 {
+				m.mulMod = MulMont384_asm
+				m.addMod = AddMod384_asm
+				m.subMod = SubMod384_asm
+			}
+		default:
+			panic("invalid parameter for 384-bit preset")
 		}
-	case AllAsm:
-		if paddedSize/8 == 6 {
-			m.mulMod = MulMont384_asm
-			m.addMod = AddMod384_asm
-			m.subMod = SubMod384_asm
-		}
-	default:
-		panic("invalid parameter for 384-bit preset")
-	}
+	
+	*/
 
 	return &m, nil
 }
@@ -136,48 +143,47 @@ func negModInverse(mod uint64) uint64 {
 
 // Note: manually inlining the arith funcs here into the opcode handler seems to give overall ~6-7% performance increase on g2 mul
 // benchmark
-func (m *FieldContext) MulMod(out, x, y uint) error {
+func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
-	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
-		return errors.New("out of bounds field element access")
+	for i := uint(0); i < count; i++ {
+		xSrc := (x + i*xStride) * elemSize
+		ySrc := (y + i*yStride) * elemSize
+		dst := (out + i*outStride) * elemSize
+		m.mulMod(m.scratchSpace[dst:dst+elemSize],
+			m.scratchSpace[xSrc:xSrc+elemSize],
+			m.scratchSpace[ySrc:ySrc+elemSize],
+			m.Modulus,
+			m.modInv)
 	}
-	//fmt.Printf("mulmodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
-	m.mulMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
-		m.scratchSpace[x*elemSize:(x+1)*elemSize],
-		m.scratchSpace[y*elemSize:(y+1)*elemSize],
-		m.Modulus,
-		m.modInv)
-	//fmt.Printf(" out(%d)=%s\n", out, limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
-	return nil
 }
 
-func (m *FieldContext) SubMod(out, x, y uint) error {
+func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
-	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
-		return errors.New("out of bounds field element access")
+
+	for i := uint(0); i < count; i++ {
+		xSrc := (x + i*xStride) * elemSize
+		ySrc := (y + i*yStride) * elemSize
+		dst := (out + i*outStride) * elemSize
+		m.subMod(m.scratchSpace[dst:dst+elemSize],
+			m.scratchSpace[xSrc:xSrc+elemSize],
+			m.scratchSpace[ySrc:ySrc+elemSize],
+			m.Modulus)
 	}
-	//fmt.Printf("submodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
-	m.subMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
-		m.scratchSpace[x*elemSize:(x+1)*elemSize],
-		m.scratchSpace[y*elemSize:(y+1)*elemSize],
-		m.Modulus)
-	//fmt.Printf(" out=%s\n", limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
-	return nil
 }
 
-func (m *FieldContext) AddMod(out, x, y uint) error {
+func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
-	if greatest := max(out, x, y); greatest >= m.scratchSpaceElemCount {
-		return errors.New("out of bounds field element access")
+
+	for i := uint(0); i < count; i++ {
+		xSrc := (x + i*xStride) * elemSize
+		ySrc := (y + i*yStride) * elemSize
+		dst := (out + i*outStride) * elemSize
+		m.addMod(m.scratchSpace[dst:dst+elemSize],
+			m.scratchSpace[xSrc:xSrc+elemSize],
+			m.scratchSpace[ySrc:ySrc+elemSize],
+			m.Modulus)
 	}
-	//fmt.Printf("addmodx. x(%d)=%s, y(%d)=%s", x, limbsToInt(m.scratchSpace[x*elemSize:(x+1)*elemSize]), y, limbsToInt(m.scratchSpace[y*elemSize:(y+1)*elemSize]))
-	m.addMod(m.scratchSpace[out*elemSize:(out+1)*elemSize],
-		m.scratchSpace[x*elemSize:(x+1)*elemSize],
-		m.scratchSpace[y*elemSize:(y+1)*elemSize],
-		m.Modulus)
-	//fmt.Printf(" out=%s\n", limbsToInt(m.scratchSpace[out*elemSize:(out+1)*elemSize]))
-	return nil
 }
 
 func (m *FieldContext) Store(dst, count uint, from []byte) error {
@@ -197,14 +203,14 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 			return fmt.Errorf("value (%+v) must be less than modulus (%+v)", val, m.Modulus)
 		}
 
-		//fmt.Printf("store (%d).  norm %s\n", dst+i, limbsToInt(val).String())
-		// convert to Montgomery form
-		m.mulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
-			val,
-			m.R2,
-			m.Modulus,
-			m.modInv)
-		//fmt.Printf("mont %s\n\n", limbsToInt(m.scratchSpace[dstIdx:dstIdx+elemSize]).String())
+		if m.useMontgomeryRepr {
+			// convert to Montgomery form
+			m.mulMod(m.scratchSpace[dstIdx:dstIdx+elemSize],
+				val,
+				m.R2,
+				m.Modulus,
+				m.modInv)
+		}
 		dstIdx++
 	}
 	return nil
@@ -213,13 +219,12 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 func (m *FieldContext) Load(dst []byte, from, count int) {
 	elemSize := len(m.Modulus)
 	var dstIdx int
-	// TODO: source bounds already checked in gas table?
 	for srcIdx := from; srcIdx < from+count; srcIdx++ {
 		res := make([]uint64, elemSize)
-		//fmt.Printf("load (%d).  mont %s\n", srcIdx, limbsToInt(m.scratchSpace[srcIdx:srcIdx+elemSize]).String())
-		// convert from Montgomery to canonical form
-		m.mulMod(res, m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize], m.one, m.Modulus, m.modInv)
-		//fmt.Printf("load (%d).  norm %s\n", srcIdx, limbsToInt(res).String())
+		if m.useMontgomeryRepr {
+			// convert from Montgomery to canonical form
+			m.mulMod(res, m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize], m.one, m.Modulus, m.modInv)
+		}
 		// swap each limb to big endian (the result in dst is a big-endian number)
 		for i := 0; i < elemSize; i++ {
 			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[len(res)-(i+1)])
