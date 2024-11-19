@@ -114,25 +114,6 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 		useMontgomeryRepr:     true,
 	}
 
-	/*
-		switch preset384bit {
-		case FallBackOnly:
-			break
-		case MulModAsm:
-			if paddedSize/8 == 6 {
-				m.mulMod = MulMont384_asm
-			}
-		case AllAsm:
-			if paddedSize/8 == 6 {
-				m.mulMod = MulMont384_asm
-				m.addMod = AddMod384_asm
-				m.subMod = SubMod384_asm
-			}
-		default:
-			panic("invalid parameter for 384-bit preset")
-		}
-	*/
-
 	return &m, nil
 }
 
@@ -150,7 +131,7 @@ func (f *FieldContext) ElemSize() uint {
 }
 
 // compute -mod ** -1 % 1 << 64 .
-// from (paper), used in go-stdlib
+// from ({{insert paper link}}), used in go-stdlib
 func negModInverse(mod uint64) uint64 {
 	k0 := 2 - mod
 	t := mod - 1
@@ -162,8 +143,6 @@ func negModInverse(mod uint64) uint64 {
 	return k0
 }
 
-// Note: manually inlining the arith funcs here into the opcode handler seems to give overall ~6-7% performance increase on g2 mul
-// benchmark
 func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
@@ -177,7 +156,8 @@ func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint
 			m.Modulus,
 			m.modInv)
 	}
-	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
+	// TODO: this will break with non-1 out stride
+	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
 func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint) {
@@ -192,7 +172,8 @@ func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
-	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
+	// TODO: this will break with non-1 out stride
+	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
 func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint) {
@@ -207,7 +188,8 @@ func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
-	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
+	// TODO: this will break with non-1 out stride
+	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
 func (m *FieldContext) Store(dst, count uint, from []byte) error {
