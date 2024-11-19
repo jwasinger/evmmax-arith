@@ -11,12 +11,13 @@ import (
 
 const maxModulusSize = 96 // 768 bits maximum modulus width
 
-type FieldContext struct {
-	Modulus []uint64
-	R2      []uint64
-	modInv  uint64
+// 256 * 768 bit buffer for writing values out before mutating register space
+var outputWriteBuf [3072]uint64
 
-	modIsBinary       bool // true if the modulus is a power of two
+type FieldContext struct {
+	Modulus           []uint64
+	R2                []uint64
+	modInv            uint64
 	useMontgomeryRepr bool // true if values are represented in montgomery form internally
 
 	scratchSpace []uint64
@@ -39,15 +40,19 @@ const (
 	AllAsm       = iota
 )
 
+func isModulusBinary(modulus *big.Int) bool {
+	if modulus.Bit(modulus.BitLen()-1) == 1 && new(big.Int).SetBit(modulus, modulus.BitLen()-1, 0).Cmp(big.NewInt(0)) == 0 {
+		return true
+	}
+	return false
+}
+
 func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*FieldContext, error) {
 	if len(modBytes) > maxModulusSize {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
 	if len(modBytes) == 0 {
 		return nil, errors.New("modulus must be non-empty")
-	}
-	if modBytes[len(modBytes)-1]%2 == 0 {
-		return nil, errors.New("modulus cannot be even")
 	}
 	if modBytes[0] == 0 {
 		return nil, errors.New("most significant byte of modulus must not be zero")
@@ -61,6 +66,24 @@ func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*Field
 
 	mod := new(big.Int).SetBytes(modBytes)
 	paddedSize := int(math.Ceil(float64(len(modBytes))/8.0)) * 8
+	if isModulusBinary(mod) {
+		fmt.Printf("mod bytes are %x\n", modBytes)
+		return &FieldContext{
+			Modulus:               bytesToLimbs(modBytes),
+			mulMod:                MulModBinary,
+			addMod:                AddModBinary,
+			subMod:                SubModBinary,
+			scratchSpace:          make([]uint64, (paddedSize/8)*scratchSize),
+			scratchSpaceElemCount: uint(scratchSize),
+			modulusInt:            mod,
+			elemSize:              uint(paddedSize),
+			useMontgomeryRepr:     false,
+		}, nil
+	}
+	if modBytes[len(modBytes)-1]%2 == 0 {
+		fmt.Println(mod.Text(2))
+		return nil, errors.New("modulus cannot be even")
+	}
 	modInv := negModInverse(mod.Uint64())
 
 	r2 := new(big.Int).Lsh(big.NewInt(1), uint(paddedSize)*8*2)
@@ -109,7 +132,6 @@ func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*Field
 		default:
 			panic("invalid parameter for 384-bit preset")
 		}
-	
 	*/
 
 	return &m, nil
@@ -150,12 +172,13 @@ func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
 		dst := (out + i*outStride) * elemSize
-		m.mulMod(m.scratchSpace[dst:dst+elemSize],
+		m.mulMod(outputWriteBuf[dst:dst+elemSize],
 			m.scratchSpace[xSrc:xSrc+elemSize],
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus,
 			m.modInv)
 	}
+	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
 }
 
 func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint) {
@@ -165,11 +188,12 @@ func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
 		dst := (out + i*outStride) * elemSize
-		m.subMod(m.scratchSpace[dst:dst+elemSize],
+		m.subMod(outputWriteBuf[dst:dst+elemSize],
 			m.scratchSpace[xSrc:xSrc+elemSize],
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
+	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
 }
 
 func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint) {
@@ -179,11 +203,12 @@ func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
 		dst := (out + i*outStride) * elemSize
-		m.addMod(m.scratchSpace[dst:dst+elemSize],
+		m.addMod(outputWriteBuf[dst:dst+elemSize],
 			m.scratchSpace[xSrc:xSrc+elemSize],
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
+	copy(m.scratchSpace[out:out+elemSize*count], outputWriteBuf[out:out+elemSize*count])
 }
 
 func (m *FieldContext) Store(dst, count uint, from []byte) error {
@@ -210,6 +235,8 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 				m.R2,
 				m.Modulus,
 				m.modInv)
+		} else {
+			copy(m.scratchSpace[dstIdx:dstIdx+elemSize], val[:])
 		}
 		dstIdx++
 	}
@@ -224,6 +251,8 @@ func (m *FieldContext) Load(dst []byte, from, count int) {
 		if m.useMontgomeryRepr {
 			// convert from Montgomery to canonical form
 			m.mulMod(res, m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize], m.one, m.Modulus, m.modInv)
+		} else {
+			copy(res[:], m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize])
 		}
 		// swap each limb to big endian (the result in dst is a big-endian number)
 		for i := 0; i < elemSize; i++ {

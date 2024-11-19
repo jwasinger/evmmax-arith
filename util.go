@@ -21,11 +21,21 @@ func limbsToInt(limbs []uint64) *big.Int {
 	return new(big.Int).SetBytes(numBytes)
 }
 
+func reverseEndianess(b []byte) {
+	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
+		b[i], b[j] = b[j], b[i]
+	}
+}
+
 // convert a big-endian byte-slice to little-endian, ascending significance limbs
 func bytesToLimbs(b []byte) []uint64 {
-	limbs := make([]uint64, len(b)/8)
-	for i := 0; i < len(b)/8; i++ {
-		limbs[i] = binary.BigEndian.Uint64(b[i*8 : (i+1)*8])
+	wordCount := (len(b) + 7) / 8
+	paddedBytes := make([]byte, wordCount*8)
+	copy(paddedBytes[:len(b)], b[:])
+
+	limbs := make([]uint64, wordCount)
+	for i := 0; i < wordCount; i++ {
+		limbs[i] = binary.BigEndian.Uint64(paddedBytes[i*8 : (i+1)*8])
 	}
 	// reverse to little-endian limb ordering
 	for i, j := 0, len(limbs)-1; i < j; i, j = i+1, j-1 {
@@ -42,6 +52,7 @@ func limbsToBytes(limbs []uint64) []byte {
 		resOffset := (len(limbs) - (i + 1)) * 8
 		binary.BigEndian.PutUint64(res[resOffset:resOffset+8], limbs[i])
 	}
+
 	return res
 }
 

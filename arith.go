@@ -2,6 +2,7 @@ package evmmax_arith
 
 import (
 	"encoding/binary"
+	"math/big"
 	"math/bits"
 	"reflect"
 	"unsafe"
@@ -243,3 +244,49 @@ func MulMontNonInterleaved(m *Field, zBytes, xBytes, yBytes []byte) error {
 	return nil
 }
 */
+
+func MulModBinary(z, x, y, modulus []uint64, modInv uint64) {
+	result := new(big.Int)
+	result = result.Mul(limbsToInt(x), limbsToInt(y))
+	result = result.Mod(result, limbsToInt(modulus))
+
+	resultBytes := result.Bytes() // big-endian byte slice
+
+	// pad the result to be a multiple of 64 bits
+	paddedResultBytes := make([]byte, len(modulus)*8)
+	copy(paddedResultBytes[len(modulus)*8-len(resultBytes):], resultBytes)
+
+	// place the result bytes into the output words
+	resultLimbs := len(modulus)
+	for i := 0; i < resultLimbs; i++ {
+		z[i] = binary.BigEndian.Uint64(paddedResultBytes[i*8 : (i+1)*8])
+	}
+}
+
+func AddModBinary(z, x, y, modulus []uint64) {
+	result := new(big.Int)
+	result = result.Add(limbsToInt(x), limbsToInt(y))
+	result = result.Mod(result, limbsToInt(modulus))
+
+	resultLimbs := bytesToLimbs(result.Bytes())
+	for i := 0; i < len(resultLimbs); i++ {
+		z[i] = resultLimbs[i]
+	}
+	for i := len(resultLimbs); i < len(z); i++ {
+		z[i] = 0
+	}
+}
+
+func SubModBinary(z, x, y, modulus []uint64) {
+	result := new(big.Int)
+	result = result.Add(limbsToInt(x), limbsToInt(y))
+	result = result.Mod(result, limbsToInt(modulus))
+
+	resultLimbs := bytesToLimbs(result.Bytes())
+	for i := 0; i < len(resultLimbs); i++ {
+		z[i] = resultLimbs[i]
+	}
+	for i := len(resultLimbs); i < len(z); i++ {
+		z[i] = 0
+	}
+}
