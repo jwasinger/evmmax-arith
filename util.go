@@ -30,8 +30,10 @@ func reverseEndianess(b []byte) {
 // convert a big-endian byte-slice to little-endian, ascending significance limbs
 func bytesToLimbs(b []byte) []uint64 {
 	wordCount := (len(b) + 7) / 8
+
+	// pad the bytes to be a multiple of 64bits
 	paddedBytes := make([]byte, wordCount*8)
-	copy(paddedBytes[:len(b)], b[:])
+	copy(paddedBytes[wordCount*8-len(b):], b[:])
 
 	limbs := make([]uint64, wordCount)
 	for i := 0; i < wordCount; i++ {

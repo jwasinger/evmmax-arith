@@ -47,7 +47,8 @@ func isModulusBinary(modulus *big.Int) bool {
 	return false
 }
 
-func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*FieldContext, error) {
+// NewFieldContext instantiates a field context with a given big-endian modulus, number of field elements
+func NewFieldContext(modBytes []byte, scratchSize int, _ int) (*FieldContext, error) {
 	if len(modBytes) > maxModulusSize {
 		return nil, errors.New("modulus cannot be greater than 768 bits")
 	}
@@ -67,7 +68,6 @@ func NewFieldContext(modBytes []byte, scratchSize int, preset384bit int) (*Field
 	mod := new(big.Int).SetBytes(modBytes)
 	paddedSize := int(math.Ceil(float64(len(modBytes))/8.0)) * 8
 	if isModulusBinary(mod) {
-		fmt.Printf("mod bytes are %x\n", modBytes)
 		return &FieldContext{
 			Modulus:               bytesToLimbs(modBytes),
 			mulMod:                MulModBinary,

@@ -96,20 +96,20 @@ func randBinaryModulus(size int) []byte {
 func TestOps(t *testing.T) {
 	for i := 1; i < 96; i++ {
 		mod := new(big.Int).SetBytes(randOddModulus(i))
-		t.Run(fmt.Sprintf("mulmod-%dbyte", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("mulmod-odd-%dbyte", i), func(t *testing.T) {
 			testOp(t, "mul", mod)
 		})
-		t.Run(fmt.Sprintf("addmod-%dbyte", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("addmod-odd-%dbyte", i), func(t *testing.T) {
 			testOp(t, "add", mod)
 
 		})
-		t.Run(fmt.Sprintf("submod-%dbyte", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("submod-odd-%dbyte", i), func(t *testing.T) {
 			testOp(t, "sub", mod)
 		})
 
 		mod = new(big.Int).SetBytes(randBinaryModulus(i))
 		t.Run(fmt.Sprintf("mulmod-binary-%dbyte", i), func(t *testing.T) {
-			testOp(t, "mul", mod)g
+			testOp(t, "mul", mod)
 		})
 		t.Run(fmt.Sprintf("addmod-binary-%dbyte", i), func(t *testing.T) {
 			testOp(t, "add", mod)
