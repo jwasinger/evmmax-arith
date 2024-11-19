@@ -24,7 +24,7 @@ func randBigInt(r *rand.Rand, modulus *big.Int) *big.Int {
 const opRepeat = 10
 
 func testOp(t *testing.T, op string, mod *big.Int) {
-	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, FallBackOnly)
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
 	if err != nil {
 		fmt.Printf("failed to instantiate modulus context: %+v\n", err)
 	}
@@ -101,7 +101,6 @@ func TestOps(t *testing.T) {
 		})
 		t.Run(fmt.Sprintf("addmod-odd-%dbyte", i), func(t *testing.T) {
 			testOp(t, "add", mod)
-
 		})
 		t.Run(fmt.Sprintf("submod-odd-%dbyte", i), func(t *testing.T) {
 			testOp(t, "sub", mod)
@@ -113,7 +112,6 @@ func TestOps(t *testing.T) {
 		})
 		t.Run(fmt.Sprintf("addmod-binary-%dbyte", i), func(t *testing.T) {
 			testOp(t, "add", mod)
-
 		})
 		t.Run(fmt.Sprintf("submod-binary-%dbyte", i), func(t *testing.T) {
 			testOp(t, "sub", mod)

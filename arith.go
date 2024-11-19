@@ -274,7 +274,7 @@ func AddModBinary(z, x, y, modulus []uint64) {
 
 func SubModBinary(z, x, y, modulus []uint64) {
 	result := new(big.Int)
-	result = result.Add(limbsToInt(x), limbsToInt(y))
+	result = result.Sub(limbsToInt(x), limbsToInt(y))
 	result = result.Mod(result, limbsToInt(modulus))
 	placeBEBytesInOutput(z, result.Bytes())
 }

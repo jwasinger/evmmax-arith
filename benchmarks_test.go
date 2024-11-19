@@ -1,8 +1,14 @@
 package evmmax_arith
 
-/*
-func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
-	fieldCtx, err := NewFieldContext(mod.Bytes(), 256, preset384)
+import (
+	"fmt"
+	"math/big"
+	"math/rand"
+	"testing"
+)
+
+func benchmarkOp(b *testing.B, op string, mod *big.Int) {
+	fieldCtx, err := NewFieldContext(mod.Bytes(), 256)
 	if err != nil {
 		panic(err)
 	}
@@ -18,11 +24,11 @@ func benchmarkOp(b *testing.B, op string, mod *big.Int, preset384 int) {
 	for i := 0; i < b.N; i++ {
 		switch op {
 		case "add":
-			fieldCtx.AddMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+			fieldCtx.AddMod(outIdxs[i%256], 1, xIdxs[i%256], 1, yIdxs[i%256], 1, 1)
 		case "sub":
-			fieldCtx.SubMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+			fieldCtx.SubMod(outIdxs[i%256], 1, xIdxs[i%256], 1, yIdxs[i%256], 1, 1)
 		case "mul":
-			fieldCtx.MulMod(outIdxs[i%256], xIdxs[i%256], yIdxs[i%256])
+			fieldCtx.MulMod(outIdxs[i%256], 1, xIdxs[i%256], 1, yIdxs[i%256], 1, 1)
 		default:
 			panic("invalid op")
 		}
@@ -43,16 +49,16 @@ func BenchmarkOps(b *testing.B) {
 		limbs := MaxModulus(i)
 		mod := limbsToInt(limbs)
 
-		b.Run(fmt.Sprintf("add-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "add", mod, FallBackOnly)
+		b.Run(fmt.Sprintf("add-odd-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "add", mod)
 		})
-		b.Run(fmt.Sprintf("sub-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "sub", mod, FallBackOnly)
+		b.Run(fmt.Sprintf("sub-odd-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "sub", mod)
 		})
-		b.Run(fmt.Sprintf("mul-%d-bit", i*64), func(b *testing.B) {
-			benchmarkOp(b, "mul", mod, FallBackOnly)
+		b.Run(fmt.Sprintf("mul-odd-%d-bit", i*64), func(b *testing.B) {
+			benchmarkOp(b, "mul", mod)
 		})
-		b.Run(fmt.Sprintf("setmod-%d-bit", i*64), func(b *testing.B) {
+		b.Run(fmt.Sprintf("setmod-odd-%d-bit", i*64), func(b *testing.B) {
 			benchmarkSetmod(b, mod)
 		})
 	}
@@ -61,13 +67,12 @@ func BenchmarkOps(b *testing.B) {
 	mod := limbsToInt(limbs)
 
 	b.Run(fmt.Sprintf("mul-%d-bit-asm", 384), func(b *testing.B) {
-		benchmarkOp(b, "mul", mod, AllAsm)
+		benchmarkOp(b, "mul", mod)
 	})
 	b.Run(fmt.Sprintf("add-%d-bit-asm", 384), func(b *testing.B) {
-		benchmarkOp(b, "add", mod, AllAsm)
+		benchmarkOp(b, "add", mod)
 	})
 	b.Run(fmt.Sprintf("sub-%d-bit-asm", 384), func(b *testing.B) {
-		benchmarkOp(b, "sub", mod, AllAsm)
+		benchmarkOp(b, "sub", mod)
 	})
 }
-*/
