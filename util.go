@@ -21,12 +21,6 @@ func limbsToInt(limbs []uint64) *big.Int {
 	return new(big.Int).SetBytes(numBytes)
 }
 
-func reverseEndianess(b []byte) {
-	for i, j := 0, len(b)-1; i < j; i, j = i+1, j-1 {
-		b[i], b[j] = b[j], b[i]
-	}
-}
-
 // convert a big-endian byte-slice to little-endian, ascending significance limbs
 func bytesToLimbs(b []byte) []uint64 {
 	wordCount := (len(b) + 7) / 8
