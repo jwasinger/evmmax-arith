@@ -156,7 +156,7 @@ func negModInverse(mod uint64) uint64 {
 }
 
 // MulMod computes 'count' modular multiplications, pairwise multiplying values
-// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// from offsets [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
 // and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
 // placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
 //
@@ -165,6 +165,7 @@ func negModInverse(mod uint64) uint64 {
 func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
+	// perform the multiplications
 	for i := uint(0); i < count; i++ {
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
@@ -175,12 +176,15 @@ func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint
 			m.Modulus,
 			m.modInv)
 	}
-	// TODO: this will break with non-1 out stride
-	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
+	// copy the result from the intermediate scratch buffer back into the context's field element space
+	for i := out; i < out+(count*outStride); i += outStride {
+		offset := i * elemSize
+		copy(m.scratchSpace[offset:offset+elemSize], outputWriteBuf[offset:offset+elemSize])
+	}
 }
 
-// SubMod computes 'count' modular multiplications, pairwise multiplying values
-// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// SubMod computes 'count' modular subtractions, pairwise subtracting values
+// at offsets [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
 // and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
 // placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
 //
@@ -189,6 +193,7 @@ func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint
 func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
+	// perform the subtractions
 	for i := uint(0); i < count; i++ {
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
@@ -198,12 +203,15 @@ func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
-	// TODO: this will break with non-1 out stride
-	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
+	// copy the results from the intermediate scratch buffer back into the context's field element space
+	for i := out; i < out+(count*outStride); i += outStride {
+		offset := i * elemSize
+		copy(m.scratchSpace[offset:offset+elemSize], outputWriteBuf[offset:offset+elemSize])
+	}
 }
 
-// AddMod computes 'count' modular multiplications, pairwise multiplying values
-// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// AddMod computes 'count' modular additions, pairwise adding values
+// at offsets [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
 // and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
 // placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
 //
@@ -212,6 +220,7 @@ func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint
 func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
+	// perform the additions
 	for i := uint(0); i < count; i++ {
 		xSrc := (x + i*xStride) * elemSize
 		ySrc := (y + i*yStride) * elemSize
@@ -221,15 +230,19 @@ func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint
 			m.scratchSpace[ySrc:ySrc+elemSize],
 			m.Modulus)
 	}
-	// TODO: this will break with non-1 out stride
-	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
+	// copy the results from the intermediate scratch buffer back into the context's field element space
+	for i := out; i < out+(count*outStride); i += outStride {
+		offset := i * elemSize
+		copy(m.scratchSpace[offset:offset+elemSize], outputWriteBuf[offset:offset+elemSize])
+	}
 }
 
 // Store takes a byte slice representing 'count' field elements, each of which
 // is sized to the modulus length padded to the nearest 64 bits.  It places them
 // in the allocated field element space starting at offset dst.
 //
-// does not perform any validity checks on the inputs.
+// does not perform bounds checks on the inputs.  Checks that each field element in 'from'
+// is reduced by the modulus.
 func (m *FieldContext) Store(dst, count uint, from []byte) error {
 	elemSize := uint(len(m.Modulus))
 
@@ -237,7 +250,7 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 		srcIdx := i * elemSize * 8
 		dstIdx := dst*elemSize + i*elemSize
 
-		// convert the big-endian bytes to little-endian limbs, descending-significance ordered
+		// swap big-endian bytes to ascending-significance-ordered little-endian limbs internal repr
 		val := bytesToLimbs(from[srcIdx : srcIdx+elemSize*8])
 		if !lt(val, m.Modulus) {
 			return fmt.Errorf("value (%+v) must be less than modulus (%+v)", val, m.Modulus)
@@ -273,7 +286,7 @@ func (m *FieldContext) Load(dst []byte, from, count int) {
 		} else {
 			copy(res[:], m.scratchSpace[srcIdx*elemSize:(srcIdx+1)*elemSize])
 		}
-		// swap each limb to big endian (the result in dst is a big-endian number)
+		// swap to descending-significance (big-endian) limb ordering
 		for i := 0; i < elemSize; i++ {
 			binary.BigEndian.PutUint64(dst[dstIdx+i*8:dstIdx+(i+1)*8], res[len(res)-(i+1)])
 		}
