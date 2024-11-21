@@ -142,8 +142,12 @@ func (f *FieldContext) ElemSize() uint {
 	return f.elemSize
 }
 
-// compute -mod ** -1 % 1 << 64 .  computed via hensel lifting
-// as per the go standard library (TODO: link to the code and paper)
+// compute -mod ** -1 % 1 << 64.
+// from the Go standard library:
+// https://github.com/golang/go/blob/a947912d8ad5398a78f14ceaa80369f60a3f85f8/src/math/big/nat.go#L1214-L1223
+//
+// Algorithm from: Dumas, J.G. "On Newton–Raphson
+// Iteration for Multiplicative Inverses Modulo Prime Powers".
 func negModInverse(mod uint64) uint64 {
 	k0 := 2 - mod
 	t := mod - 1
