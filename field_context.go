@@ -14,11 +14,17 @@ const maxModulusSize = 96 // 768 bits maximum modulus width
 // 256 * 768 bit buffer for writing values out before mutating register space
 var outputWriteBuf [3072]uint64
 
+// FieldContext represents a modulus, an allocated space of reduced field
+// elements, and any internal state necessary to perform efficient modular
+// addition subtraction and multiplication on elements within the space,
+// load/store them to/from the space.
 type FieldContext struct {
-	Modulus           []uint64
-	R2                []uint64
-	modInv            uint64
+	Modulus []uint64
+	R2      []uint64
+	modInv  uint64
+
 	useMontgomeryRepr bool // true if values are represented in montgomery form internally
+	isModulusBinary   bool
 
 	scratchSpace []uint64
 	AddSubCost   uint64
@@ -34,12 +40,7 @@ type FieldContext struct {
 	scratchSpaceElemCount uint
 }
 
-const (
-	FallBackOnly = iota
-	MulModAsm    = iota
-	AllAsm       = iota
-)
-
+// returns true if the modulus is a power of two
 func isModulusBinary(modulus *big.Int) bool {
 	if modulus.Bit(modulus.BitLen()-1) == 1 && new(big.Int).SetBit(modulus, modulus.BitLen()-1, 0).Cmp(big.NewInt(0)) == 0 {
 		return true
@@ -78,6 +79,7 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 			modulusInt:            mod,
 			elemSize:              uint(paddedSize),
 			useMontgomeryRepr:     false,
+			isModulusBinary:       true,
 		}, nil
 	}
 	if modBytes[len(modBytes)-1]%2 == 0 {
@@ -117,21 +119,31 @@ func NewFieldContext(modBytes []byte, scratchSize int) (*FieldContext, error) {
 	return &m, nil
 }
 
+// IsModulusBinary returns whether the modulus is a power of two
+func (f *FieldContext) IsModulusBinary() bool {
+	return f.isModulusBinary
+}
+
+// NumElems returns the number of field elements allocated in this context
 func (f *FieldContext) NumElems() uint {
 	return f.scratchSpaceElemCount
 }
 
+// AllocedSize returns the size of the field elements in bytes, where each
+// field element's size is the size of the modulus padded to be a multiple
+// of 64 bits.
 func (f *FieldContext) AllocedSize() uint {
 	return uint(len(f.scratchSpace) * 8)
 }
 
-// elem size in bytes
+// ElemSize returns the size of field elements: the size of the modulus padded
+// to the nearest multiple of 64 bits.
 func (f *FieldContext) ElemSize() uint {
 	return f.elemSize
 }
 
-// compute -mod ** -1 % 1 << 64 .
-// from ({{insert paper link}}), used in go-stdlib
+// compute -mod ** -1 % 1 << 64 .  computed via hensel lifting
+// as per the go standard library (TODO: link to the code and paper)
 func negModInverse(mod uint64) uint64 {
 	k0 := 2 - mod
 	t := mod - 1
@@ -143,6 +155,13 @@ func negModInverse(mod uint64) uint64 {
 	return k0
 }
 
+// MulMod computes 'count' modular multiplications, pairwise multiplying values
+// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
+// placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
+//
+// inputs/outputs can overlap without affecting the result.  it is not validated
+// that inputs are within bounds.
 func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
@@ -160,6 +179,13 @@ func (m *FieldContext) MulMod(out, outStride, x, xStride, y, yStride, count uint
 	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
+// SubMod computes 'count' modular multiplications, pairwise multiplying values
+// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
+// placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
+//
+// inputs/outputs can overlap without affecting the result.  it is not validated
+// that inputs are within bounds.
 func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
@@ -176,6 +202,13 @@ func (m *FieldContext) SubMod(out, outStride, x, xStride, y, yStride, count uint
 	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
+// AddMod computes 'count' modular multiplications, pairwise multiplying values
+// at [x, x+xStride, x+xStride*2, ..., x+xStride*(count - 1)]
+// and [y, y+yStride, y+yStride*2, ..., y+yStride*(count - 1)]
+// placing the result in [out, out+outStride, out+outStride*2, ..., out+outStride*(count - 1)].
+//
+// inputs/outputs can overlap without affecting the result.  it is not validated
+// that inputs are within bounds.
 func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint) {
 	elemSize := uint(len(m.Modulus))
 
@@ -192,13 +225,14 @@ func (m *FieldContext) AddMod(out, outStride, x, xStride, y, yStride, count uint
 	copy(m.scratchSpace[out*elemSize:(out+count)*elemSize], outputWriteBuf[out*elemSize:(out+count)*elemSize])
 }
 
+// Store takes a byte slice representing 'count' field elements, each of which
+// is sized to the modulus length padded to the nearest 64 bits.  It places them
+// in the allocated field element space starting at offset dst.
+//
+// does not perform any validity checks on the inputs.
 func (m *FieldContext) Store(dst, count uint, from []byte) error {
 	elemSize := uint(len(m.Modulus))
-	dstIdx := dst * elemSize
 
-	if dstIdx+count > m.scratchSpaceElemCount {
-		return errors.New("out of bounds field element store")
-	}
 	for i := uint(0); i < count; i++ {
 		srcIdx := i * elemSize * 8
 		dstIdx := dst*elemSize + i*elemSize
@@ -224,6 +258,10 @@ func (m *FieldContext) Store(dst, count uint, from []byte) error {
 	return nil
 }
 
+// Load loads 'count' number of field elements starting at from, and placing
+// them into dst.
+//
+// does not perform any validity checks on the inputs.
 func (m *FieldContext) Load(dst []byte, from, count int) {
 	elemSize := len(m.Modulus)
 	var dstIdx int
